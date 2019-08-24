@@ -40,3 +40,13 @@ AC_CHECK_FUNCS([localeconv memchr memset])
 
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT
+
+echo
+echo "  target os     = $TARGET_OS"
+echo
+echo "  CC            = $CC"
+echo "  CFLAGS        = $CFLAGS"
+echo "  CXX           = $CXX"
+echo "  CXXFLAGS      = $CXXFLAGS"
+echo "  LDFLAGS       = $LDFLAGS"
+echo 
