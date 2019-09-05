@@ -1447,7 +1447,7 @@ cJSON *_NSPV_JSON(cJSON *argjson)
         return(NSPV_mempooltxids(NSPV_client,coinaddr,CCflag,memfunc,txid,vout));
     }
     else if ( strcmp(method,"faucetget") == 0 )
-        return(NSPV_CC_faucetget());
+        return(NSPV_CC_faucetget(NSPV_client));
     else return(cJSON_Parse("{\"error\":\"invalid method\"}"));
 }
 

@@ -170,6 +170,8 @@ enum opcodetype {
     OP_CHECKSIGVERIFY = 0xad,
     OP_CHECKMULTISIG = 0xae,
     OP_CHECKMULTISIGVERIFY = 0xaf,
+    OP_CHECKCRYPTOCONDITION = 0xcc,
+    OP_CHECKCRYPTOCONDITIONVERIFY = 0xcd,
 
     // expansion
     OP_NOP1 = 0xb0,
