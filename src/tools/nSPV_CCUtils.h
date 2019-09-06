@@ -54,7 +54,7 @@ CC *MakeCCcond1(uint8_t evalcode,uint8_t *pk)
 {
     cstring *ss;
 
-    CC *pks[1]={CCNewSecp256k1(pk)};    
+    CC **pks=CCNewSecp256k1(pk);    
     ss=cstr_new_sz(1);
     ser_varlen(ss,evalcode);
     CC *condCC = CCNewEval(ss->str,ss->len);
@@ -62,9 +62,9 @@ CC *MakeCCcond1(uint8_t evalcode,uint8_t *pk)
     CC *v[2]= {condCC, Sig};
     CC* cond=CCNewThreshold(2, v ,2);
     cstr_free(ss, true);
-    // cc_free(pks[0]);
-    // cc_free(condCC);
-    // cc_free(Sig);
+    cc_free(condCC);
+    cc_free(Sig);
+    cc_free(*pks);
     return cond;
 }
 
