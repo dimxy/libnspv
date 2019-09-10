@@ -27,9 +27,9 @@ extern btc_tx *NSPV_gettx(btc_spv_client *client,bits256 txid,int32_t v,int32_t 
 
 #define FAUCETSIZE (COIN / 10)
 
-cstring *FinalizeCCtx(btc_spv_client *client, btc_tx *mtx, uint64_t txfee, cstring *opret, CCSigData *pData )
+cstring *FinalizeCCtx(btc_spv_client *client, btc_tx *mtx, int64_t txfee, cstring *opret, vector *pData )
 {
-    int32_t i,n,retval=0,isKMD,skipvalidation=0; int64_t change,normalinputs=0,totaloutputs=0,normaloutputs=0,totalinputs=0,normalvins=0,ccvins=0;
+    int32_t i,j,n,retval=0,isKMD,skipvalidation=0; int64_t change,normalinputs=0,totaloutputs=0,normaloutputs=0,totalinputs=0,normalvins=0,ccvins=0;
     btc_tx *vintx=0; uint256 hashBlock; char str[65];
 
     for (i=0; i<(int32_t)mtx->vout->len; i++)
@@ -82,12 +82,31 @@ cstring *FinalizeCCtx(btc_spv_client *client, btc_tx *mtx, uint64_t txfee, cstri
             totalinputs = vout->value;
             if ( IsPayToCryptoCondition(vout->script_pubkey) == 0 )        
                 normalinputs += vout->value;;
-        } else fprintf(stderr,"FinalizeCCTx couldnt find %s mgret.%d\n",bits256_str(str,btc_uint256_to_bits256(vin->prevout.hash)));
+        } else fprintf(stderr,"FinalizeCCTx couldnt find %s\n",bits256_str(str,btc_uint256_to_bits256(vin->prevout.hash)));
     }
     if ( totalinputs >= totaloutputs+2*txfee )
     {
         change = totalinputs - (totaloutputs+txfee);
         btc_tx_add_p2pkh_out(mtx,change,&NSPV_pubkey);
+    }
+    if ( opret->len > 0 )
+        btc_tx_add_data_out(mtx,0,(unsigned char *)opret->str,opret->len); 
+    for (i=0; i<n; i++)
+    {
+        btc_tx_in *vin=vector_idx(mtx->vin,i);
+        btc_tx_out *prevout=vector_idx(vintx->vout,vin->prevout.n);
+        vintx=NSPV_gettx(client,btc_uint256_to_bits256(vin->prevout.hash),0,0);
+        for (j=0;j< pData->len; j++)
+        {
+            CCSigData *p=vector_idx(pData,j);
+            btc_tx_out *vout=btc_tx_out_new();
+            vout->script_pubkey=CCPubKey(p->pcond);
+            vout->value=prevout->value;
+            if (vout->script_pubkey==prevout->script_pubkey && vout->value==prevout->value)
+            {
+                //signit
+            }
+        }   
     }
 }
 
@@ -107,7 +126,7 @@ cJSON *NSPV_CC_faucetget(btc_spv_client *client)
         if ( inputs > nValue )
             CCchange = (inputs - nValue - txfee);
         if ( CCchange != 0 )
-            MakeCC1vout(mtx,EVAL_FAUCET,CCchange,faucetpk.pubkey);
+            vector_add(mtx->vout,MakeCC1vout(EVAL_FAUCET,CCchange,faucetpk.pubkey));
         btc_tx_add_p2pkh_out(mtx,nValue,&NSPV_pubkey);
     // }
     if ((hex=FinalizeCCtx(client,mtx,txfee,NULL,NULL))!=NULL)

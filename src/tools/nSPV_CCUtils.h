@@ -17,6 +17,18 @@ typedef struct _CCSigData {
     char privkey[32];        // private key
 } CCSigData;
 
+
+void endiancpy(uint8_t *dest,uint8_t *src,int32_t len)
+{
+    int32_t i,j=0;
+#if defined(WORDS_BIGENDIAN)
+    for (i=31; i>=0; i--)
+        dest[j++] = src[i];
+#else
+    memcpy(dest,src,len);
+#endif
+}
+
 CC* CCNewEval(char *code,int32_t size)
 {
     CC *cond = cc_new(CC_Eval);
@@ -53,12 +65,32 @@ CC* CCNewSecp256k1(uint8_t* k)
 CC *MakeCCcond1(uint8_t evalcode,uint8_t *pk)
 {
     cstring *ss;
-
-    CC **pks=CCNewSecp256k1(pk);    
+    CC *c[1]={CCNewSecp256k1(pk)};
+    CC **pks=c;    
     ss=cstr_new_sz(1);
     ser_varlen(ss,evalcode);
     CC *condCC = CCNewEval(ss->str,ss->len);
     CC *Sig = CCNewThreshold(1, pks, 1);
+    CC *v[2]= {condCC, Sig};
+    CC* cond=CCNewThreshold(2, v ,2);
+    cstr_free(ss, true);
+    cc_free(condCC);
+    cc_free(Sig);
+    cc_free(*pks);
+    return cond;
+}
+
+CC *MakeCCcond1of2(uint8_t evalcode,uint8_t *pk1, uint8_t *pk2)
+{
+    cstring *ss;
+
+    CC *c[2]={CCNewSecp256k1(pk1),CCNewSecp256k1(pk2)};
+
+    CC **pks=c;    
+    ss=cstr_new_sz(1);
+    ser_varlen(ss,evalcode);
+    CC *condCC = CCNewEval(ss->str,ss->len);
+    CC *Sig = CCNewThreshold(1, pks, 2);
     CC *v[2]= {condCC, Sig};
     CC* cond=CCNewThreshold(2, v ,2);
     cstr_free(ss, true);
@@ -90,19 +122,54 @@ cstring* CCPubKey(const CC *cond)
     return ccpk;
 }
 
-void MakeCC1vout(btc_tx *mtx,uint8_t evalcode, uint64_t satoshis,uint8_t *pk)
+btc_tx_out *MakeCC1vout(uint8_t evalcode, uint64_t nValue,uint8_t *pk)
 {
     CC *payoutCond = MakeCCcond1(evalcode,pk);
     btc_tx_out *vout = btc_tx_out_new();    
     vout->script_pubkey = CCPubKey(payoutCond);
-    vout->value = satoshis;
+    vout->value = nValue;
     cc_free(payoutCond);
-    vector_add(mtx->vout,vout);
+    return(vout);
+}
+
+btc_tx_out *MakeCC1of2vout(uint8_t evalcode,uint64_t nValue,uint8_t *pk1,uint8_t *pk2)
+{
+    btc_tx_out *vout = btc_tx_out_new();    
+    CC *payoutCond = MakeCCcond1of2(evalcode,pk1,pk2);
+    vout->script_pubkey = CCPubKey(payoutCond);
+    vout->value = nValue;
+    cc_free(payoutCond);
+    return(vout);
+}
+
+btc_pubkey *buf2pk(btc_pubkey *pk,uint8_t *buf33)
+{
+    int32_t i; uint8_t *dest;
+    pk->compressed=true;
+    for (i=0; i<33; i++)
+        pk->pubkey[i] = buf33[i];
+    return(pk);
+}
+
+btc_pubkey *CCtxidaddr(btc_spv_client *client,btc_pubkey *pk,char *txidaddr,uint256 txid)
+{
+    uint8_t buf33[33];
+    buf33[0] = 0x02;
+    btc_pubkey_init(pk);
+    endiancpy(&buf33[1],(uint8_t *)&txid,32);
+    buf2pk(pk,buf33);
+    btc_pubkey_getaddr_p2pkh(pk,client->chainparams,txidaddr);
+    return(pk);
+}
+
+bool Getscriptaddress(char *destaddr,const cstring *scriptPubKey)
+{
+    
 }
 
 bool IsPayToCryptoCondition(cstring *script)
 {
-    vector *v=vector_new(sizeof(btc_script_op),btc_script_op_free);
+    vector *v=vector_new(sizeof(btc_script_op),btc_script_op_free_cb);
     btc_script_get_ops(script,v);
     for(int i=0;i<(int32_t)v->len;i++)
     {
