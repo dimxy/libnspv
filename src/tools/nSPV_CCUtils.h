@@ -13,8 +13,11 @@ char FaucetCChexstr[67] = { "03682b255c40d0cde8faee381a1a50bbb89980ff24539cb8518
 uint8_t FaucetCCpriv[32] = { 0xd4, 0x4f, 0xf2, 0x31, 0x71, 0x7d, 0x28, 0x02, 0x4b, 0xc7, 0xdd, 0x71, 0xa0, 0x39, 0xc4, 0xbe, 0x1a, 0xfe, 0xeb, 0xc2, 0x46, 0xda, 0x76, 0xf8, 0x07, 0x53, 0x3d, 0x96, 0xb4, 0xca, 0xa0, 0xe9 };
 
 typedef struct _CCSigData {
-    struct CC *pcond;        // pointer to cryptocondition 
-    char privkey[32];        // private key
+    struct CC *cond;        // pointer to cryptocondition 
+    uint64_t voutValue;
+    cstring * voutScriptPubkey;
+    int32_t vini;
+    bool isCC;
 } CCSigData;
 
 
@@ -100,25 +103,36 @@ CC *MakeCCcond1of2(uint8_t evalcode,uint8_t *pk1, uint8_t *pk2)
     return cond;
 }
 
+void SerializeScript(cstring *script,unsigned char* buf, size_t len)
+{
+    if (len < OP_PUSHDATA1) ser_varlen(script,len);
+    else if (len < 0xFF)
+    {
+        ser_varlen(script,OP_PUSHDATA1);
+        ser_bytes(script,&len,1);
+    }
+    else if (len < 0xFFFF)
+    {
+        ser_varlen(script,OP_PUSHDATA2);
+        ser_u16(script,len);
+    }
+    else
+    {
+        ser_varlen(script,OP_PUSHDATA4);
+        ser_u32(script,len);
+    }
+    ser_bytes(script,buf,len);
+    return;
+}
 cstring* CCPubKey(const CC *cond)
 {
     unsigned char buf[1000],ss[1024]; int32_t n=0;
 
     size_t len = cc_conditionBinary(cond, buf);
     cstring* ccpk = cstr_new_sz(len+24);
-    if (len < OP_PUSHDATA1) ser_varlen(ccpk,len);
-    else if (len < 0xFF)
-    {
-        ser_varlen(ccpk,OP_PUSHDATA1);
-        ser_varlen(ccpk,len);
-    }
-    else if (len < 0xFFFF)
-    {
-        ser_varlen(ccpk,OP_PUSHDATA2);
-        ser_varlen(ccpk,len);
-    }
-    ser_bytes(ccpk,buf,len);
-    ser_varlen(ccpk,OP_CHECKCRYPTOCONDITION);
+    SerializeScript(ccpk,buf,len);
+    unsigned char c=OP_CHECKCRYPTOCONDITION;
+    ser_bytes(ccpk,&c,1);
     return ccpk;
 }
 
@@ -162,9 +176,14 @@ btc_pubkey *CCtxidaddr(btc_spv_client *client,btc_pubkey *pk,char *txidaddr,uint
     return(pk);
 }
 
-bool Getscriptaddress(char *destaddr,const cstring *scriptPubKey)
+void CCSig(const CC *cond,cstring *script)
 {
-    
+    unsigned char buf[10000];
+    size_t len = cc_fulfillmentBinary(cond, buf, 10000);
+    SerializeScript(script,buf,len);
+    unsigned char c=SIGHASH_ALL;
+    ser_bytes(script,&c,1);
+    return;
 }
 
 bool IsPayToCryptoCondition(cstring *script)

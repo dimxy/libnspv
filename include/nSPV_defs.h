@@ -94,6 +94,7 @@ struct rpcrequest_info
 #define NSPV_MEMPOOL_ISSPENT 2
 #define NSPV_MEMPOOL_INMEMPOOL 3
 #define NSPV_MEMPOOL_CCEVALCODE 4
+#define NSPV_REMOTERPC 0x11
 
 #define COIN SATOSHIDEN
 
@@ -212,6 +213,12 @@ struct NSPV_broadcastresp
 {
     bits256 txid;
     int32_t retcode;
+};
+
+struct NSPV_remoterpcresp
+{
+    char method[100];
+    char json[11000];
 };
 
 struct NSPV_CCmtxinfo

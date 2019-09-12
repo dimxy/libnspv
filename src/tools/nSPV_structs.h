@@ -500,6 +500,12 @@ void NSPV_broadcast_purge(struct NSPV_broadcastresp *ptr)
         memset(ptr,0,sizeof(*ptr));
 }
 
+void NSPV_remoterpc_purge(struct NSPV_remoterpcresp *ptr)
+{
+    if ( ptr != 0 )
+        memset(ptr,0,sizeof(*ptr));
+}
+
 cJSON *NSPV_txproof_json(struct NSPV_txproof *ptr)
 {
     char *hexstr; cJSON *result = cJSON_CreateObject();
