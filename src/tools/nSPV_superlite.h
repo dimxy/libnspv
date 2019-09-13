@@ -462,6 +462,11 @@ void komodo_nSPVresp(btc_node *from,uint8_t *response,int32_t len)
                 NSPV_rwbroadcastresp(0,&response[1],&NSPV_broadcastresult);
                 fprintf(stderr,"got broadcast response %u size.%d %s retcode.%d\n",timestamp,len,bits256_str(str,NSPV_broadcastresult.txid),NSPV_broadcastresult.retcode);
                 break;
+            case NSPV_REMOTERPCRESP:
+                NSPV_remoterpc_purge(&NSPV_remoterpcresult);
+                NSPV_rwremoterpcresp(0,&response[1],&NSPV_remoterpcresult,len-1);
+                fprintf(stderr,"got remoterpc response %u size.%d %s\n",timestamp,len,NSPV_remoterpcresult.method);
+                break;
             default: fprintf(stderr,"unexpected response %02x size.%d at %u\n",response[0],len,timestamp);
                 break;
         }
@@ -901,9 +906,11 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *params)
 {
     uint8_t msg[512]; int32_t i,iter,len = 1,slen;
     cJSON *request = cJSON_CreateObject();
+    char *pubkey=utils_uint8_to_hex(NSPV_pubkey.pubkey,33);
 
-    jaddstr(request,"rpc",method);
-    jaddi(request,params);
+    jaddstr(request,"method",method);
+    jaddstr(params,"mypk",pubkey);
+    jaddi(request,params);    
     NSPV_remoterpc_purge(&NSPV_remoterpcresult);
     msg[len++] = NSPV_REMOTERPC;
     char *json=jprint(request,0);
@@ -911,7 +918,7 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *params)
     msg[len++] = slen;
     memcpy(&msg[len],json,slen), len += slen;
     for (iter=0; iter<3; iter++)
-    if ( NSPV_req(client,0,msg,len,NODE_NSPV,msg[1]>>1) != 0 )
+    if ( NSPV_req(client,0,msg,len,NODE_NSPV,NSPV_REMOTERPC>>1) != 0 )
     {
         for (i=0; i<NSPV_POLLITERS; i++)
         {

@@ -89,12 +89,16 @@ struct rpcrequest_info
 #define NSPV_TXIDSRESP 0x0f
 #define NSPV_MEMPOOL 0x10
 #define NSPV_MEMPOOLRESP 0x11
+#define NSPV_CCMODULEUTXOS 0x12
+#define NSPV_CCMODULEUTXOSRESP 0x13
 #define NSPV_MEMPOOL_ALL 0
 #define NSPV_MEMPOOL_ADDRESS 1
 #define NSPV_MEMPOOL_ISSPENT 2
 #define NSPV_MEMPOOL_INMEMPOOL 3
 #define NSPV_MEMPOOL_CCEVALCODE 4
-#define NSPV_REMOTERPC 0x11
+#define NSPV_CC_TXIDS 16
+#define NSPV_REMOTERPC 0x14
+#define NSPV_REMOTERPCRESP 0x15
 
 #define COIN SATOSHIDEN
 
@@ -215,16 +219,16 @@ struct NSPV_broadcastresp
     int32_t retcode;
 };
 
-struct NSPV_remoterpcresp
-{
-    char method[100];
-    char json[11000];
-};
-
 struct NSPV_CCmtxinfo
 {
     struct NSPV_utxosresp U;
     struct NSPV_utxoresp used[NSPV_MAXVINS];
+};
+
+struct NSPV_remoterpcresp
+{
+    char method[64];
+    char json[11000];
 };
 
 struct NSPV_header
