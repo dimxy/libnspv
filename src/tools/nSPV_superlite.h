@@ -923,7 +923,7 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *params)
         for (i=0; i<NSPV_POLLITERS; i++)
         {
             usleep(NSPV_POLLMICROS);
-            if ( strcmp(NSPV_remoterpcresult.json,method) == 0)
+            if ( strcmp(NSPV_remoterpcresult.method,method) == 0)
                 return(cJSON_Parse(NSPV_remoterpcresult.json));
         }
     } else sleep(1);
