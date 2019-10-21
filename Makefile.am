@@ -13,7 +13,8 @@ $(LIBSECP256K1): $(wildcard src/secp256k1/src/*) $(wildcard src/secp256k1/includ
 $(LIBCRYPTOCONDITIONS): 
 	@echo "Building Libcryptoconditions ..." && $(MAKE) -C "$(@D)" "$(@F)"
 
-lib_LTLIBRARIES = libbtc.la
+noinst_LTLIBRARIES = libbtc-pic.la
+lib_LTLIBRARIES = libbtc.la libbtc-pic.la
 include_HEADERS = \
     include/btc/aes256_cbc.h \
     include/btc/base58.h \
@@ -69,9 +70,14 @@ libbtc_la_SOURCES = \
     src/utils.c \
     src/merkle_c.c \
     src/vector.c
-
 libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2
-libbtc_la_LIBADD = $(LIBSECP256K1)
+libbtc_la_LIBADD = $(LIBSECP256K1) -static
+
+#pic version
+libbtc_pic_la_SOURCES = $(libbtc_la_SOURCES)
+libbtc_pic_la_CFLAGS = $(libbtc_la_CFLAGS) -fPIC
+libbtc_pic_la_LIBADD = $(LIBSECP256K1) -static
+
 
 if USE_TESTS
 noinst_PROGRAMS = tests
@@ -208,8 +214,8 @@ libnspv_la_SOURCES = \
 	src/tools/cc/kogswrapper.c 
 libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter
 libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
-libnspv_la_LDFLAGS = -no-undefined
-libnspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium
+libnspv_la_LDFLAGS = -shared -no-undefined
+libnspv_LDADD = libbtc-pic.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium
 
 endif
 
