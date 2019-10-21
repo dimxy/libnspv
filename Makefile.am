@@ -13,7 +13,7 @@ $(LIBSECP256K1): $(wildcard src/secp256k1/src/*) $(wildcard src/secp256k1/includ
 $(LIBCRYPTOCONDITIONS): 
 	@echo "Building Libcryptoconditions ..." && $(MAKE) -C "$(@D)" "$(@F)"
 
-lib_LTLIBRARIES = libbtc.la libnspv.la
+lib_LTLIBRARIES = libbtc.la
 include_HEADERS = \
     include/btc/aes256_cbc.h \
     include/btc/base58.h \
@@ -202,7 +202,7 @@ nspv_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter
 nspv_CPPFLAGS = -I$(top_srcdir)/src
 nspv_LDFLAGS = -static
 
-
+lib_LTLIBRARIES += libnspv.la
 libnspv_la_SOURCES = \
 	src/tools/nspv.c \
 	src/tools/cc/kogswrapper.c 
