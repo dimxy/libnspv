@@ -170,6 +170,7 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
     return((const btc_chainparams *)chain);
 }
 
+#if !defined(LIBNSPV_API)
 int main(int argc, char* argv[])
 {
     int ret = 0;
@@ -386,3 +387,4 @@ int main(int argc, char* argv[])
     pthread_join(thread,NULL);
     return ret;
 }
+#endif
