@@ -207,8 +207,8 @@ libnspv_la_SOURCES = \
 	src/tools/nspv.c \
 	src/tools/cc/kogswrapper.c 
 libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter
-libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -dLIBNSPV_BUILD
-libnspv_la_LDFLAGS = -version-info ${VERSION} -no-undefined
+libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
+libnspv_la_LDFLAGS = -no-undefined
 libnspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium
 
 endif
