@@ -38,11 +38,11 @@ extern "C" {
 #endif
 
     // kogs wrapper functions:
-    int32_t __stdcall LIBNSPV_API LibNSPVSetup(char *chainname, char *errorstr);
-    int32_t __stdcall LIBNSPV_API CCKogsList(uint256 **plist, int32_t *pcount, char *errorstr);
+    int32_t LIBNSPV_API LibNSPVSetup(char *chainname, char *errorstr);
+    int32_t LIBNSPV_API CCKogsList(uint256 **plist, int32_t *pcount, char *errorstr);
 
-    void __stdcall LIBNSPV_API CCWrapperFree(void *ptr);
-    void __stdcall LIBNSPV_API LibNSPVFinish();
+    void LIBNSPV_API CCWrapperFree(void *ptr);
+    void LIBNSPV_API LibNSPVFinish();
 
 #ifdef __cplusplus
 }

@@ -18,8 +18,9 @@
 #include <btc/netspv.h>
 #include <btc/utils.h>
 #include <btc/ecc.h>
-#include "kogswrapper.h"
+
 #include "nSPV_defs.h"
+#include "kogswrapper.h"
 
 btc_chainparams kmd_chainparams_main;
 
@@ -50,7 +51,7 @@ pthread_t libthread;
 
 const char dbfile[] = "nlibnspv.dat";
 
-int32_t __stdcall LIBNSPV_API LibNSPVSetup(char *chainname, char *errorstr)
+int32_t LIBNSPV_API LibNSPVSetup(char *chainname, char *errorstr)
 {
     strcpy(errorstr, "");
     kogschain = NSPV_coinlist_scan(chainname, &kmd_chainparams_main);
@@ -72,7 +73,7 @@ int32_t __stdcall LIBNSPV_API LibNSPVSetup(char *chainname, char *errorstr)
 }
 
 
-int32_t __stdcall LIBNSPV_API CCKogsList(uint256 **plist, int32_t *pcount, char *errorstr)
+int32_t LIBNSPV_API CCKogsList(uint256 **plist, int32_t *pcount, char *errorstr)
 {
     cJSON *request = cJSON_CreateNull();
     cJSON *result = NSPV_remoterpccall(kogsclient, "kogslist", request);
@@ -101,13 +102,13 @@ int32_t __stdcall LIBNSPV_API CCKogsList(uint256 **plist, int32_t *pcount, char 
     return retcode;
 }
 
-void __stdcall LIBNSPV_API CCWrapperFree(void *ptr)
+void LIBNSPV_API CCWrapperFree(void *ptr)
 {
     free(ptr);
 }
 
 
-void __stdcall LIBNSPV_API LibNSPVFinish()
+void LIBNSPV_API LibNSPVFinish()
 {
     btc_spv_client_free(kogsclient);
     pthread_cancel(libthread);
