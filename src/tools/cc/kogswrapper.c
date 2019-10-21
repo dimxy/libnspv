@@ -14,6 +14,7 @@
  *                                                                            *
  ******************************************************************************/
 
+#include <btc/net.h>
 #include <btc/netspv.h>
 #include <btc/utils.h>
 #include <btc/ecc.h>
