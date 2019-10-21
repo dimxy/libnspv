@@ -32,6 +32,8 @@
 #ifndef __MINGW
 #include <pthread.h>
 #endif
+
+#include <btc/net.h>
 #include <btc/netspv.h>
 
 union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4]; uint64_t txid; };
@@ -284,5 +286,12 @@ extern int32_t NSPV_num_headers;
 extern int32_t NSPV_hdrheight_counter,NSPV_longestchain;
 extern int32_t IS_IN_SYNC;
 extern int64_t NSPV_totalsent,NSPV_totalrecv;
+
+cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request);
+cJSON *NSPV_login(const btc_chainparams *chain, char *wifstr);
+cJSON *NSPV_broadcast(btc_spv_client *client, char *hex);
+
+const btc_chainparams *NSPV_coinlist_scan(char *symbol, const btc_chainparams *template);
+void *NSPV_rpcloop(void *args);
 
 #endif // KOMODO_NSPV_DEFSH

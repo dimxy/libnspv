@@ -202,6 +202,16 @@ nspv_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter
 nspv_CPPFLAGS = -I$(top_srcdir)/src
 nspv_LDFLAGS = -static
 
+
+lib_LTLIBRARIES = libnspv.la
+libnspv_la_SOURCES = \
+	src/tools/nspv.c \
+	src/tools/cc/kogswrapper.c 
+libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter
+libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -dLIBNSPV_API
+libnspv_la_LDFLAGS = -version-info ${VERSION} -no-undefined
+libnspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium
+
 endif
 
 clean-local:
