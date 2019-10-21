@@ -14,7 +14,9 @@
  *                                                                            *
  ******************************************************************************/
 
+#include <btc/netspv.h>
 #include <btc/utils.h>
+#include <btc/ecc.h>
 #include "kogswrapper.h"
 #include "nSPV_defs.h"
 
@@ -42,7 +44,10 @@ static btc_chainparams kogs_chainparams =
 */
 
 static const btc_chainparams *kogschain = NULL;
+static btc_spv_client* kogsclient = NULL;
 pthread_t libthread;
+
+const char dbfile[] = "nlibnspv.dat";
 
 int32_t __stdcall LIBNSPV_API LibNSPVSetup(char *chainname, char *errorstr)
 {
@@ -53,6 +58,10 @@ int32_t __stdcall LIBNSPV_API LibNSPVSetup(char *chainname, char *errorstr)
         return -1;
     }
     
+    btc_ecc_start();
+    btc_spv_client* client = btc_spv_client_new(kogschain, true, (dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false);
+    NSPV_client = client;
+
     if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
     {
         strncpy(errorstr, "error launching NSPV_rpcloop for port", 128);
@@ -65,7 +74,7 @@ int32_t __stdcall LIBNSPV_API LibNSPVSetup(char *chainname, char *errorstr)
 int32_t __stdcall LIBNSPV_API CCKogsList(uint256 **plist, int32_t *pcount, char *errorstr)
 {
     cJSON *request = cJSON_CreateNull();
-    cJSON *result = NSPV_remoterpccall(NULL, "kogslist", request);
+    cJSON *result = NSPV_remoterpccall(kogsclient, "kogslist", request);
     int32_t retcode = 0;
 
     if (cJSON_HasObjectItem(result, "kogids"))
@@ -99,5 +108,8 @@ void __stdcall LIBNSPV_API CCWrapperFree(void *ptr)
 
 void __stdcall LIBNSPV_API LibNSPVFinish()
 {
+    btc_spv_client_free(kogsclient);
+    pthread_cancel(libthread);
     pthread_join(libthread, NULL);
+    btc_ecc_stop();
 }
