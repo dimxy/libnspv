@@ -4,6 +4,12 @@ ACLOCAL_AMFLAGS = -I build-aux/m4
 
 DIST_SUBDIRS = src/secp256k1
 
+if ADD_WS2_32
+ws2_32_FLAGS = -Wl,-lws2_32
+else
+ws2_32_FLAGS =
+endif
+
 LIBSECP256K1=src/secp256k1/libsecp256k1.la
 LIBCRYPTOCONDITIONS=src/tools/cryptoconditions/libcryptoconditions.la
 
@@ -199,7 +205,7 @@ inst_PROGRAMS += nspv
 nspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) -lsodium
 nspv_SOURCES = \
 	src/tools/nspv.c 
-nspv_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter
+nspv_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -pthread
 nspv_CPPFLAGS = -I$(top_srcdir)/src
 nspv_LDFLAGS = -static
 
@@ -208,7 +214,7 @@ lib_LTLIBRARIES = libnspv.la
 libnspv_la_SOURCES = \
 	src/tools/nspv.c \
 	src/tools/cc/kogswrapper.c 
-libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 -Wl,-lws2_32 -Wl,-lsodium -Wl,-lpthread
+libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(ws2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread
 libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
 libnspv_la_LDFLAGS = -no-undefined
 libnspv_la_LIBADD = libbtc.la
