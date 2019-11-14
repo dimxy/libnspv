@@ -13,7 +13,7 @@ $(LIBSECP256K1): $(wildcard src/secp256k1/src/*) $(wildcard src/secp256k1/includ
 $(LIBCRYPTOCONDITIONS): 
 	@echo "Building Libcryptoconditions ..." && $(MAKE) -C "$(@D)" "$(@F)"
 
-lib_LTLIBRARIES = libbtc.la
+noinst_LTLIBRARIES = libbtc.la
 include_HEADERS = \
     include/btc/aes256_cbc.h \
     include/btc/base58.h \
@@ -148,8 +148,8 @@ libbtc_la_SOURCES += \
     src/netspv.c \
     src/protocol.c
 
-libbtc_la_LIBADD += $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
-libbtc_la_CFLAGS += $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2
+# libbtc_la_LIBADD += $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
+# libbtc_la_CFLAGS += $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2
 libbtc_la_LDFLAGS = -static
 
 if USE_TESTS
@@ -194,23 +194,24 @@ bitcoin_spv_CPPFLAGS = -I$(top_srcdir)/src
 bitcoin_spv_LDFLAGS = -static
 endif
 
+# building nspv executable
 inst_PROGRAMS += nspv
-nspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium
+nspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) -lsodium
 nspv_SOURCES = \
-src/tools/nspv.c 
-#src/tools/jpeg/jaricom.c src/tools/jpeg/jcapimin.c src/tools/jpeg/jcapistd.c src/tools/jpeg/jcarith.c src/tools/jpeg/jccoefct.c src/tools/jpeg/jccolor.c src/tools/jpeg/jcdctmgr.c src/tools/jpeg/jchuff.c src/tools/jpeg/jcinit.c src/tools/jpeg/jcmainct.c src/tools/jpeg/jcmarker.c src/tools/jpeg/jcmaster.c src/tools/jpeg/jcomapi.c src/tools/jpeg/jcparam.c src/tools/jpeg/jcprepct.c src/tools/jpeg/jcsample.c src/tools/jpeg/jctrans.c src/tools/jpeg/jdapimin.c src/tools/jpeg/jdapistd.c src/tools/jpeg/jdarith.c src/tools/jpeg/jdatadst.c src/tools/jpeg/jdatasrc.c src/tools/jpeg/jdcoefct.c src/tools/jpeg/jdcolor.c src/tools/jpeg/jddctmgr.c src/tools/jpeg/jdhuff.c src/tools/jpeg/jdinput.c src/tools/jpeg/jdmainct.c src/tools/jpeg/jdmarker.c src/tools/jpeg/jdmaster.c src/tools/jpeg/jdmerge.c src/tools/jpeg/jdpostct.c src/tools/jpeg/jdsample.c src/tools/jpeg/jdtrans.c src/tools/jpeg/jerror.c src/tools/jpeg/jfdctflt.c src/tools/jpeg/jfdctfst.c src/tools/jpeg/jfdctint.c src/tools/jpeg/jidctflt.c src/tools/jpeg/jidctfst.c src/tools/jpeg/jidctint.c src/tools/jpeg/jquant1.c src/tools/jpeg/jquant2.c src/tools/jpeg/jutils.c src/tools/jpeg/misc/jmemnobs.c src/tools/jpeg/jmemmgr.c
+	src/tools/nspv.c 
 nspv_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter
 nspv_CPPFLAGS = -I$(top_srcdir)/src
 nspv_LDFLAGS = -static
 
+# building libnspv.so (dll):
 lib_LTLIBRARIES += libnspv.la
 libnspv_la_SOURCES = \
 	src/tools/nspv.c \
 	src/tools/cc/kogswrapper.c 
-libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter
+libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 -Wl,-lws2_32 -Wl,-lsodium -Wl,-lpthread
 libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
-libnspv_la_LDFLAGS = -shared -no-undefined
-libnspv_ls_LIBADD = libbtc.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium
+libnspv_la_LDFLAGS = -no-undefined
+libnspv_la_LIBADD = libbtc.la
 
 endif
 
