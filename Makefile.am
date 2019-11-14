@@ -70,7 +70,7 @@ libbtc_la_SOURCES = \
     src/merkle_c.c \
     src/vector.c
 libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2
-# libbtc_la_LIBADD = $(LIBSECP256K1) 
+libbtc_la_LIBADD = $(LIBSECP256K1) 
 
 
 if USE_TESTS
