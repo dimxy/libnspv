@@ -208,8 +208,7 @@ nspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIB
 #-lpthread -lsodium
 nspv_SOURCES = \
 	src/tools/nspv.c 
-nspv_CFLAGS = $(libbtc_la_CFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2  -Wno-unused-parameter 
-# -pthread 
+nspv_CFLAGS = $(libbtc_la_CFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2  -Wno-unused-parameter -pthread 
 nspv_CPPFLAGS = -I$(top_srcdir)/src
 nspv_LDFLAGS = -static
 
