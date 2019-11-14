@@ -75,7 +75,7 @@ libbtc_la_SOURCES = \
     src/utils.c \
     src/merkle_c.c \
     src/vector.c
-libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2
+libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2 -fPIC
 libbtc_la_LIBADD = $(LIBSECP256K1) 
 
 
@@ -214,7 +214,7 @@ lib_LTLIBRARIES = libnspv.la
 libnspv_la_SOURCES = \
 	src/tools/nspv.c \
 	src/tools/cc/kogswrapper.c 
-libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(ws2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread
+libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(ws2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread -fPIC
 libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
 libnspv_la_LDFLAGS = -no-undefined
 libnspv_la_LIBADD = libbtc.la
