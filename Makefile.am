@@ -156,9 +156,12 @@ libbtc_la_SOURCES += \
     src/netspv.c \
     src/protocol.c
 
-# libbtc_la_LIBADD += $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
-# libbtc_la_CFLAGS += $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2
-libbtc_la_LDFLAGS = -static
+# remove
+libbtc_la_LIBADD += $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
+# remove
+libbtc_la_CFLAGS += $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2
+# add
+# libbtc_la_LDFLAGS = -static
 
 if USE_TESTS
 tests_SOURCES += \
