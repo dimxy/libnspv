@@ -207,7 +207,7 @@ endif
 
 # building nspv executable
 inst_PROGRAMS += nspv
-nspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) -lpthread -lsodium
+nspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium
 #-lpthread -lsodium
 nspv_SOURCES = \
 	src/tools/nspv.c 
