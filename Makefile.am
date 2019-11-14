@@ -204,7 +204,7 @@ nspv_CPPFLAGS = -I$(top_srcdir)/src
 nspv_LDFLAGS = -static
 
 # building libnspv.so (dll):
-lib_LTLIBRARIES += libnspv.la
+lib_LTLIBRARIES = libnspv.la
 libnspv_la_SOURCES = \
 	src/tools/nspv.c \
 	src/tools/cc/kogswrapper.c 
