@@ -70,7 +70,7 @@ libbtc_la_SOURCES = \
     src/merkle_c.c \
     src/vector.c
 libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2
-libbtc_la_LIBADD = $(LIBSECP256K1) 
+# libbtc_la_LIBADD = $(LIBSECP256K1) 
 
 
 if USE_TESTS
@@ -186,7 +186,7 @@ bitcoin_send_tx_CPPFLAGS = -I$(top_srcdir)/src
 bitcoin_send_tx_LDFLAGS = -static
 
 inst_PROGRAMS += bitcoin-spv
-bitcoin_spv_LDADD = libbtc.la
+bitcoin_spv_LDADD = libbtc.la $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
 bitcoin_spv_SOURCES = \
     src/tools/bitcoin-spv.c
 bitcoin_spv_CFLAGS = $(libbtc_la_CFLAGS) -O2
