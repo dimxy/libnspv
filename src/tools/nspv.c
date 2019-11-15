@@ -95,6 +95,15 @@ btc_bool spv_header_message_processed(struct btc_spv_client_ *client, btc_node *
     return true;
 }
 
+#if defined(__ANDROID__) || defined(ANDROID)
+int pthread_cancel(pthread_t h) {
+    int rc = pthread_kill(h, 0);
+	if (rc != 0)
+		printf("error killing thread %d\n", rc);
+	return rc;
+}
+#endif
+
 static btc_bool quit_when_synced = true;
 void spv_sync_completed(btc_spv_client* client) {
     printf("Sync completed, at height %d\n", client->headers_db->getchaintip(client->headers_db_ctx)->height);
