@@ -111,7 +111,8 @@ void LIBNSPV_API CCWrapperFree(void *ptr)
 void LIBNSPV_API LibNSPVFinish()
 {
     btc_spv_client_free(kogsclient);
-    pthread_cancel(libthread);
+    // no pthread_cancel on android
+	// pthread_cancel(libthread);
     pthread_join(libthread, NULL);
     btc_ecc_stop();
 }
