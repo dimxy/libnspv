@@ -18,6 +18,12 @@
 #define __KOGSWRAPPER_H__
 
 #include <btc/btc.h>
+#include <wchar.h>
+
+#define WR_MAXCHAINNAMELEN 64
+#define WR_MAXERRORLEN 128
+typedef int32_t unity_int32_t;
+
 
 #ifndef LIBNSPV_API
 #if defined(_WIN32)
@@ -38,11 +44,12 @@ extern "C" {
 #endif
 
     // kogs wrapper functions:
-    int32_t LIBNSPV_API LibNSPVSetup(char *chainname, char *errorstr);
-    int32_t LIBNSPV_API CCKogsList(uint256 **plist, int32_t *pcount, char *errorstr);
+    unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorStr);
 
-    void LIBNSPV_API CCWrapperFree(void *ptr);
-    void LIBNSPV_API LibNSPVFinish();
+    unity_int32_t LIBNSPV_API uplugin_KogsList(uint256 **plist, int32_t *pcount, wchar_t *wErrorStr);
+
+    void LIBNSPV_API uplugin_free(void *ptr);
+    void LIBNSPV_API uplugin_FinishNSPV();
 
 #ifdef __cplusplus
 }
