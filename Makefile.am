@@ -219,8 +219,8 @@ nspv_LDFLAGS = -static
 # building libnspv.so (dll):
 lib_LTLIBRARIES = libnspv.la
 libnspv_la_SOURCES = \
-	src/tools/nspv.c \
-	src/tools/cc/kogswrapper.c 
+	src/tools/nspv.c
+#	src/tools/cc/kogswrapper.c 
 # using '-Wl,-lcryptoconditions' instead of '$(LIBCRYPTOCONDITIONS)' for MINGW build
 libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(ws2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread $(fpic_FLAGS)
 libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
