@@ -36,6 +36,20 @@
 #include <btc/net.h>
 #include <btc/netspv.h>
 
+#ifndef LIBNSPV_API
+#if defined(_WIN32)
+#ifdef LIBNSPV_BUILD
+#define LIBNSPV_API __declspec(dllexport)
+#else
+#define LIBNSPV_API
+#endif
+#elif defined(__GNUC__) && defined(LIBNSPV_BUILD)
+#define LIBNSPV_API __attribute__((visibility("default")))
+#else
+#define LIBNSPV_API
+#endif
+#endif
+
 union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4]; uint64_t txid; };
 typedef union _bits256 bits256;
 
@@ -291,7 +305,7 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request);
 cJSON *NSPV_login(const btc_chainparams *chain, char *wifstr);
 cJSON *NSPV_broadcast(btc_spv_client *client, char *hex);
 
-const btc_chainparams *NSPV_coinlist_scan(char *symbol, const btc_chainparams *template);
+const LIBNSPV_API btc_chainparams *NSPV_coinlist_scan(char *symbol, const btc_chainparams *template);
 void *NSPV_rpcloop(void *args);
 
 #endif // KOMODO_NSPV_DEFSH
