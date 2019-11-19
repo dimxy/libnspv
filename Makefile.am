@@ -223,7 +223,7 @@ libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
 # link as static
 libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-lsodium -Wl,-lpthread
 libnspv_la_LDFLAGS = -static
-libnspv_la_LIBADD = libbtc.la $(LIBCRYPTOCONDITIONS) # and other .la do not work for MINGW
+libnspv_la_LIBADD = libbtc.la $(LIBCRYPTOCONDITIONS) $(LIBSECP256K1)  # and other .la do not work for MINGW
 
 # link as shared:
 # using '-Wl,-lcryptoconditions' instead of '$(LIBCRYPTOCONDITIONS)' for MINGW build:
