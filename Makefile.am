@@ -220,17 +220,18 @@ libnspv_la_SOURCES = \
 #	src/tools/cc/kogswrapper.c 
 libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
 
-# link as static
-libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 -Wl,-lsodium -Wl,-lpthread
-libnspv_la_LDFLAGS = -static
-# libsec & cc will be linked as so:
-libnspv_la_LIBADD = libbtc.la $(LIBSECP256K1) $(LIBCRYPTOCONDITIONS)  # and other .la do not work for MINGW
+## link as static
+# libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 -Wl,-lsodium -Wl,-lpthread
+# libnspv_la_LDFLAGS = -static
+## libsec & cc will be linked as so:
+# libnspv_la_LIBADD = libbtc.la $(LIBSECP256K1) $(LIBCRYPTOCONDITIONS)  # and other .la do not work for MINGW
 
 # link as shared:
 # using '-Wl,-lcryptoconditions' instead of '$(LIBCRYPTOCONDITIONS)' for MINGW build:
 # libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(ws2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread $(fpic_FLAGS)
-# libnspv_la_LDFLAGS = -no-undefined
-# libnspv_la_LIBADD = libbtc.la  # $(LIBCRYPTOCONDITIONS) and other .la do not work for MINGW
+libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-soname,libcryptoconditions.so -Wl,-soname,libsecp256k1.so $(ws2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread $(fpic_FLAGS)
+libnspv_la_LDFLAGS = -no-undefined
+libnspv_la_LIBADD = libbtc.la  # $(LIBCRYPTOCONDITIONS) and other .la do not work for MINGW
 
 endif
 
