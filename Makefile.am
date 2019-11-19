@@ -156,12 +156,9 @@ libbtc_la_SOURCES += \
     src/netspv.c \
     src/protocol.c
 
-# remove
 libbtc_la_LIBADD += $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
-# remove
 libbtc_la_CFLAGS += $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2
-# add
-# libbtc_la_LDFLAGS = -static
+libbtc_la_LDFLAGS = -static
 
 if USE_TESTS
 tests_SOURCES += \
@@ -221,11 +218,18 @@ lib_LTLIBRARIES = libnspv.la
 libnspv_la_SOURCES = \
 	src/tools/nspv.c
 #	src/tools/cc/kogswrapper.c 
-# using '-Wl,-lcryptoconditions' instead of '$(LIBCRYPTOCONDITIONS)' for MINGW build
-libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(ws2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread $(fpic_FLAGS)
 libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
-libnspv_la_LDFLAGS = -no-undefined
-libnspv_la_LIBADD = libbtc.la  # $(LIBCRYPTOCONDITIONS) and other .la do not work for MINGW
+
+# link as static
+libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-lsodium -Wl,-lpthread
+libnspv_la_LDFLAGS = -static
+libnspv_la_LIBADD = libbtc.la $(LIBCRYPTOCONDITIONS) # and other .la do not work for MINGW
+
+# link as shared:
+# using '-Wl,-lcryptoconditions' instead of '$(LIBCRYPTOCONDITIONS)' for MINGW build:
+# libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(ws2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread $(fpic_FLAGS)
+# libnspv_la_LDFLAGS = -no-undefined
+# libnspv_la_LIBADD = libbtc.la  # $(LIBCRYPTOCONDITIONS) and other .la do not work for MINGW
 
 endif
 
