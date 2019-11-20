@@ -81,7 +81,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
         return -1;
     } */
 
-    wsprintf(wErrorStr, L"no error, kogschain=%0X", kogschain);
+    swprintf(wErrorStr, WR_MAXERRORLEN, L"no error, kogschain=%p", kogschain);
     // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
     return 0;
 }
