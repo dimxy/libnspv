@@ -162,10 +162,22 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
         }
         else
         {
+#ifdef      LIBNSPV_BUILD
+            free(chain);
+            chain = NULL;
+#else
             fprintf(stderr,"parse error of coins file\n");
             exit(-1);
+#endif
         }
         free(filestr);
+    }
+    else
+    {
+#ifdef  LIBNSPV_BUILD
+        free(chain);
+        chain = NULL;
+#endif
     }
     return((const btc_chainparams *)chain);
 }

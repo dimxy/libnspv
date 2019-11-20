@@ -45,10 +45,11 @@ static btc_chainparams kogs_chainparams =
 };
 */
 
-
+static int kogs_plugin_mutex_init = false;
+static portable_mutex_t kogs_plugin_mutex;
 static const btc_chainparams *kogschain = NULL;
 static btc_spv_client* kogsclient = NULL;
-pthread_t libthread;
+static pthread_t libthread;
 
 const char dbfile[] = "nlibnspv.dat";
 
@@ -56,35 +57,49 @@ const char dbfile[] = "nlibnspv.dat";
 unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorStr)
 {
     char chainName[WR_MAXCHAINNAMELEN+1];
+    unity_int32_t rc = 0;
+
+    if (!kogs_plugin_mutex_init) {
+        kogs_plugin_mutex_init = true;
+        portable_mutex_init(&kogs_plugin_mutex);
+    }
+    portable_mutex_lock(&kogs_plugin_mutex);
 
     wcscpy(wErrorStr, L"");
     wcstombs(chainName, wChainName, sizeof(chainName)/sizeof(chainName[0]));
 
-    if (kogschain != NULL) {
-        wcsncpy(wErrorStr, L"NSPV already initialized", WR_MAXERRORLEN);
-        return -1;
-    }
-
-    // fprintf(stderr, "bad message\n");
-    kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
-    if (kogschain == NULL) {
-        wcsncpy(wErrorStr, L"could not find chain", WR_MAXERRORLEN);
-        return -1;
-    }
-    
-    btc_ecc_start();
-    btc_spv_client* client = btc_spv_client_new(kogschain, true, (dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false);
-    NSPV_client = client;
-
-/*    if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
+    if (kogschain != NULL) 
     {
-        wcsncpy(wErrorStr, L"error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
-        return -1;
-    } */
+        // fprintf(stderr, "bad message\n");
+        kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
+        if (kogschain != NULL) 
+        {
+            btc_ecc_start();
+            btc_spv_client* client = btc_spv_client_new(kogschain, true, (dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false);
+            NSPV_client = client;
 
-    swprintf(wErrorStr, WR_MAXERRORLEN, L"no error, kogschain=%p", kogschain);
-    // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
-    return 0;
+            /*    if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
+                {
+                    wcsncpy(wErrorStr, L"error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
+                    return -1;
+                } */
+
+            swprintf(wErrorStr, WR_MAXERRORLEN, L"no error, kogschain=%p", kogschain);
+            // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
+        }
+        else {
+            wcsncpy(wErrorStr, L"could not find chain", WR_MAXERRORLEN);
+            rc = -1;
+        }
+    }
+    else 
+    {
+        wcsncpy(wErrorStr, L"NSPV already initialized", WR_MAXERRORLEN);
+        rc = -1;
+    }
+
+    portable_mutex_unlock(&kogs_plugin_mutex);
+    return rc;
 }
 
 // kogslist rpc wrapper
