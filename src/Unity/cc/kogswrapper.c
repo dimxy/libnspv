@@ -65,8 +65,8 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
         return -1;
     }
 
-    fprintf(stderr, "bad message\n");
-    //kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
+    // fprintf(stderr, "bad message\n");
+    kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
     if (kogschain == NULL) {
         wcsncpy(wErrorStr, L"could not find chain", WR_MAXERRORLEN);
         return -1;
