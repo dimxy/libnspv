@@ -65,7 +65,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
         return -1;
     }
 
-    kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
+    //kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
     if (kogschain == NULL) {
         wcsncpy(wErrorStr, L"could not find chain", WR_MAXERRORLEN);
         return -1;
@@ -75,11 +75,11 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
     btc_spv_client* client = btc_spv_client_new(kogschain, true, (dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false);
     NSPV_client = client;
 
-    if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
+/*    if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
     {
         wcsncpy(wErrorStr, L"error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
         return -1;
-    }
+    } */
     return 0;
 }
 
