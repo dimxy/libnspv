@@ -80,6 +80,9 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
         wcsncpy(wErrorStr, L"error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
         return -1;
     } */
+
+    wsprintf(wErrorStr, L"no error, kogschain=%0X", kogschain);
+    // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
     return 0;
 }
 
