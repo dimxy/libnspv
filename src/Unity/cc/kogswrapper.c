@@ -22,6 +22,8 @@
 #include "nSPV_defs.h"
 #include "kogswrapper.h"
 
+void nspv_log_message(char *format, ...);
+
 btc_chainparams kmd_chainparams_main;
 
 /*
@@ -68,10 +70,14 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
     wcscpy(wErrorStr, L"");
     wcstombs(chainName, wChainName, sizeof(chainName)/sizeof(chainName[0]));
 
+    nspv_log_message("entering, kogschain=%p", kogschain);
+
     if (kogschain != NULL) 
     {
+        nspv_log_message("before NSPV_coinlist_scan");
         // fprintf(stderr, "bad message\n");
         kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
+        nspv_log_message("after NSPV_coinlist_scan, kogschain=%p", kogschain);
         if (kogschain != NULL && kogschain != 0xFFFFFFFFFFFFFFFFLL)
         {
             btc_ecc_start();
