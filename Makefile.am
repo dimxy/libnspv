@@ -215,7 +215,7 @@ nspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium
 #-lpthread -lsodium
 nspv_SOURCES = \
 	src/tools/nspv.c 
-nspv_CFLAGS = $(libbtc_la_CFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2  -Wno-unused-parameter 
+nspv_CFLAGS = $(libbtc_la_CFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2  -Wno-unused-parameter $(android_LOGLIB)
 # -pthread 
 nspv_CPPFLAGS = -I$(top_srcdir)/src
 nspv_LDFLAGS = -static
