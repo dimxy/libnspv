@@ -58,7 +58,7 @@ void nspv_log_message(char *format, ...)
     va_list va_args;
     va_start(va_args, format);
 #if defined(__ANDROID__) || defined(ANDROID)
-    __android_log_vprint(ANDROID_LOG_INFO, format, va_args);
+    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, va_args);
 #else
     vfprintf(stdout, format, va_args);
 #endif
