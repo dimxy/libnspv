@@ -49,6 +49,22 @@
 
 #include <nSPV_defs.h>
 
+#if defined(__ANDROID__) || defined(ANDROID)
+#include <android/log.h>
+#endif
+
+void nspv_log_message(char *format, ...)
+{
+    va_list va_args;
+    va_start(va_args, format);
+#if defined(__ANDROID__) || defined(ANDROID)
+    __android_log_vprint(ANDROID_LOG_INFO, format, va_args);
+#else
+    vfprintf(stdout, format, va_args);
+#endif
+    va_end(va_args);
+}
+
 static struct option long_options[] =
     {
         {"testnet", no_argument, NULL, 't'},
@@ -127,14 +143,14 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
     memset(chain->name,0,sizeof(chain->name));
     if ( (filestr= OS_filestr(&filesize,"coins")) != 0 )
     {
-        //fprintf(stderr,"loaded %ld\n",filesize);
+        nspv_log_message("loaded coins file size=%ld\n",filesize);
         if ( (array= cJSON_Parse(filestr)) != 0 )
         {
             n = cJSON_GetArraySize(array);
             for (i=0; i<n; i++)
             {
                 coin = jitem(array,i);
-                //fprintf(stderr,"%s\n",jprint(coin,0));
+                fprintf(stderr,"checking coin config: %s\n",jprint(coin,0));
                 if ( (name= jstr(coin,"coin")) != 0 && strcmp(name,symbol) == 0 && jstr(coin,"asset") != 0 )
                 {
                     if ( (seeds= jstr(coin,"nSPV")) != 0 && strlen(seeds) < sizeof(chain->dnsseeds[0].domain)-1 && (magic=jstr(coin,"magic")) != 0 && strlen(magic) == 8 )
@@ -148,7 +164,7 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
                         strcpy(tmp,magic);
                         decode_hex((uint8_t *)chain->netmagic,4,tmp);
                         strcpy(chain->name,symbol);
-                        fprintf(stderr,"Found (%s) magic.%s, p2p.%u seeds.(%s)\n",symbol,magic,chain->default_port,seeds);
+                        nspv_log_message("Found (%s) magic.%s, p2p.%u seeds.(%s)\n",symbol,magic,chain->default_port,seeds);
                         break;
                     }
                 }
@@ -162,11 +178,11 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
         }
         else
         {
+            nspv_log_message("parse error of coins file\n");
 #ifdef      LIBNSPV_BUILD
             free(chain);
             chain = NULL;
 #else
-            fprintf(stderr,"parse error of coins file\n");
             exit(-1);
 #endif
         }
@@ -174,9 +190,10 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
     }
     else
     {
+        nspv_log_message("could not find coins file\n");
 #ifdef  LIBNSPV_BUILD
         free(chain);
-        chain = NULL;
+        chain = 0xFFFFFFFFFFFFFFFFLL;
 #endif
     }
     return((const btc_chainparams *)chain);
