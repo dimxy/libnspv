@@ -57,6 +57,13 @@ AC_ARG_ENABLE([net],
   [with_net=$enableval],
   [with_net=yes])
 
+AC_ARG_ENABLE([net],
+  [AS_HELP_STRING([--enable-android-log],
+  [android log support])],
+  [android_log=$enableval],
+  [android_log=yes])
+
+
 case $host in
   *mingw*)
      TARGET_OS=windows
@@ -133,6 +140,7 @@ AM_CONDITIONAL([WITH_TOOLS], [test "x$with_tools" = "xyes"])
 AM_CONDITIONAL([WITH_WALLET], [test "x$with_wallet" = "xyes"])
 AM_CONDITIONAL([WITH_NET], [test "x$with_net" = "xyes"])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x"$TARGET_OS" = x"windows"])
+AM_CONDITIONAL([ANDROID_LOG], [test "x$android_log" = "xyes"])
 
 ac_configure_args="${ac_configure_args} --enable-module-recovery"
 AC_CONFIG_SUBDIRS([src/secp256k1 src/tools/cryptoconditions])
