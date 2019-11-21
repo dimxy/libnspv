@@ -72,7 +72,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
 
     nspv_log_message("entering, kogschain=%p", kogschain);
 
-    if (kogschain != NULL) 
+    if (kogschain == NULL) 
     {
         nspv_log_message("before NSPV_coinlist_scan");
         // fprintf(stderr, "bad message\n");
