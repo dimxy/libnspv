@@ -57,8 +57,8 @@ AC_ARG_ENABLE([net],
   [with_net=$enableval],
   [with_net=yes])
 
-AC_ARG_ENABLE([net],
-  [AS_HELP_STRING([--enable-android-log],
+AC_ARG_ENABLE([androidlog],
+  [AS_HELP_STRING([--enable-androidlog],
   [android log support])],
   [android_log=$enableval],
   [android_log=yes])
@@ -87,6 +87,11 @@ fi
 if test "x$with_net" = xyes; then
   AC_DEFINE_UNQUOTED([WITH_NET],[1],[Define to 1 to enable net compilation])
 fi
+
+if test "x$android_log" = xyes; then
+  AC_DEFINE_UNQUOTED([ANDROID_LOG],[1],[Define to 1 to enable android debug log])
+fi
+
 
 if test "x$enable_debug" = xyes; then
   CFLAGS="$CFLAGS -g3 -O0 -DDEBUG"
