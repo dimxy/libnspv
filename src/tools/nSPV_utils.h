@@ -17,6 +17,10 @@
 #ifndef NSPV_UTILS_H
 #define NSPV_UTILS_H
 
+#if defined(ANDROID) || defined(__ANDROID__)
+#include <android/asset_manager.h>
+#endif
+
 static const bits256 zeroid;
 portable_mutex_t NSPV_netmutex;
 
@@ -513,13 +517,55 @@ void *OS_loadfile(char *fname,char **bufp,long *lenp,long *allocsizep)
     return(buf);
 }
 
+#if defined(ANDROID) || defined(__ANDROID__)
+
+// get vm
+static JavaVM* vm = NULL;
+jint JNI_OnLoad(JavaVM* _vm, void* reserved) {
+    nspv_log_message("JNI_OnLoad received jvm");
+    vm = _vm;
+    return JNI_VERSION_1_6;
+}
+
+// read file from apk assets 
+void *Android_loadfile(char *fname, char **bufp, long *lenp, long *allocsizep)
+{
+    size_t nread;
+    JNIEnv* jni_env = 0;
+    vm->AttachCurrentThread(&env, NULL);  // get env as it is in the thread local storage
+
+    *bufp = NULL;
+    AAsset* asset = AAssetManager_open(mgr, fname, AASSET_MODE_STREAMING);
+    if (asset == NULL) {
+        nspv_log_message("cannot access asset %s", fname);
+        return NULL;
+    }
+    *lenp = AAsset_length(asset);
+    *bufp = malloc(*lenp + 1);
+    nread = AAsset_read(asset, *bufp, *lenp);
+    if (nread != *lenp) {
+        nspv_log_message("cannot read asset buffer, read bytes = %d", nread);
+        free(*bufp);
+        *bufp = NULL;
+    }
+    if (nread > 0)
+        *bufp[nread] = '\0';
+    AAsset_close(asset);
+    return *bufp;
+}
+#endif
+
 void *OS_filestr(long *allocsizep,char *_fname)
 {
     long filesize = 0; char *fname,*buf = 0; void *retptr;
     *allocsizep = 0;
     fname = malloc(strlen(_fname)+1);
     strcpy(fname,_fname);
+#if defined(ANDROID) || defined(__ANDROID__)
+    retptr = OS_loadfile(fname, &buf, &filesize, allocsizep);
+#else
     retptr = OS_loadfile(fname,&buf,&filesize,allocsizep);
+#endif
     free(fname);
     return(retptr);
 }
