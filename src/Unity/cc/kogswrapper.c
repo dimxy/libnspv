@@ -81,29 +81,35 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
         // fprintf(stderr, "bad message\n");
         kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
         nspv_log_message("after NSPV_coinlist_scan, kogschain=%p", kogschain);
-        if (kogschain != NULL && kogschain != 0xFFFFFFFFFFFFFFFFLL)
+        if (kogschain != NULL && kogschain != 0xFFFFFFFFFFFFFFFFLL)   // TODO: avoid 0xFFFFFFFFFFFFFFFFLL use
         {
             btc_ecc_start();
             btc_spv_client* client = btc_spv_client_new(kogschain, true, (dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false);
             NSPV_client = client;
 
-            /*    if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
-                {
-                    wcsncpy(wErrorStr, L"error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
-                    return -1;
-                } */
-
-            swprintf(wErrorStr, WR_MAXERRORLEN, L"no error, kogschain=%p", kogschain);
-            // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
+            if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
+            {
+                wcsncpy(wErrorStr, L"error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
+                rc = -1;
+            } 
+            else 
+            {
+                swprintf(wErrorStr, WR_MAXERRORLEN, L"no error, kogschain=%p", kogschain);
+                // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
+            }
         }
         else {
             if (kogschain == 0xFFFFFFFFFFFFFFFFLL)
+            {
                 wcsncpy(wErrorStr, L"could not find coins file", WR_MAXERRORLEN);
+                kogschain = NULL;
+            }
             else
                 wcsncpy(wErrorStr, L"could not find chain", WR_MAXERRORLEN);
             rc = -1;
+
         }
-        kogschain = NULL;
+        
     }
     else 
     {
