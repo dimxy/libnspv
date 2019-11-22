@@ -10,7 +10,7 @@ JNIEXPORT jint JNICALL
 Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv* env, jclass clazz, jobject assetManager)
 {
     //SLresult result;
-    char fname[] = "coins";
+    char fname[] = "/StreamingAssets/data/coins";
     int rc = 0;
 
     // convert Java string to UTF-8
@@ -20,9 +20,16 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
     // use asset manager to open asset by filename
     AAssetManager* mgr = AAssetManager_fromJava(env, assetManager);
     if (NULL == mgr) {
-        nspv_log_message("cannot access assetmanager");
+        nspv_log_message("cannot access AAssetManager");
         return -1;
     }
+
+    AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
+    const char* filename = (const char*)NULL;
+    while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+        nspv_log_message("read file %s", filename);
+    }
+
     AAsset* asset = AAssetManager_open(mgr, fname, AASSET_MODE_STREAMING);
     // release the Java string and UTF-8
     //(*env)->ReleaseStringUTFChars(env, filename, utf8);
