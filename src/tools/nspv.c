@@ -195,7 +195,7 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
         nspv_log_message("could not find coins file\n");
 #ifdef  LIBNSPV_BUILD
         free(chain);
-        chain = 0xFFFFFFFFFFFFFFFFLL;
+        chain = (void*)0xFFFFFFFFFFFFFFFFLL; // TODO: avoid use 0xFFF..FF
 #endif
     }
     return((const btc_chainparams *)chain);
