@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <jni.h>
 #include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+
 
 void nspv_log_message(char *format, ...);
 
