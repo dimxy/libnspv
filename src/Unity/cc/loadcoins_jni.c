@@ -32,6 +32,10 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
     }
 
     size_t len = AAsset_getLength(asset);
+    if (len == 0) {
+        nspv_log_message("coins asset len is 0");
+        return -1;
+    }
     char *bufp = malloc(len + 1);
     size_t nread = AAsset_read(asset, bufp, len);
     if (nread != len) {
