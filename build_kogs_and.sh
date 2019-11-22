@@ -1,7 +1,7 @@
 
 # gcc -shared ./src/tools/nspv.c -I ./src -I ./src/logdb/include -I ./include -DLIBNSPV_BUILD ./.libs/libbtc.a -o ../libnspv-bin/libnspv.so -O2  -Wno-unused-parameter -Wl,-L./src/secp256k1/.libs -Wl,-L./src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-soname,libcryptoconditions.so -Wl,-soname,libsecp256k1.so -Wl,-lsodium -Wl,-lpthread -fPIC
 
-gcc -shared ./src/Unity/cc/kogswrapper.c ./src/Unity/cc/loadcoins_jni.c -o ../libnspv-bin/libkogsplugin.so -L ./.libs -Wl,-soname,libkogsplugin.so -I ./include/ -I ./src/logdb/include/ -fPIC
+gcc -shared ./src/Unity/cc/kogswrapper.c ./src/Unity/cc/loadcoins_jni.c -o ../libnspv-bin/libkogsplugin.so -L ./.libs -Wl,-soname,libkogsplugin.so -I ./include/ -I ./src/logdb/include/ -fPIC -Wl,-landroid
 # gcc -shared ./src/Unity/cc/kogswrapper.c -o ../libnspv-bin/libkogsplugin.so ./.libs/libnspv.so -I ./include/ -I ./src/logdb/include/ -fPIC
 # static link:
 # gcc -shared ./src/Unity/cc/kogswrapper.c -o ../libnspv-bin/libkogsplugin.so ./.libs/libnspv.a ./src/secp256k1/.libs/libsecp256k1.a -I ./include/ -I ./src/logdb/include/ -fPIC
