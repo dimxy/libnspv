@@ -7,7 +7,7 @@ void nspv_log_message(char *format, ...);
 JNIEXPORT jint JNICALL
 Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv* env, jclass clazz, jobject assetManager)
 {
-    SLresult result;
+    //SLresult result;
     char fname[] = "coins";
     int rc = 0;
 
@@ -31,7 +31,7 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
 
     size_t len = AAsset_length(asset);
     char *bufp = malloc(len + 1);
-    size_t nread = AAsset_read(asset, *bufp, len);
+    size_t nread = AAsset_read(asset, bufp, len);
     if (nread != len) {
         nspv_log_message("cannot read asset buffer, read bytes = %d", nread);
         free(bufp);
