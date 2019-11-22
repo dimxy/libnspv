@@ -2,7 +2,7 @@
 ./configure
 cd src/tools/cryptoconditions
 ./autogen.sh
-./configure --enable-androidlog
+./configure --enable-androidso
 make
 cd ../../..
 make

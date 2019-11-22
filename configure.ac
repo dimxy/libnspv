@@ -57,11 +57,11 @@ AC_ARG_ENABLE([net],
   [with_net=$enableval],
   [with_net=yes])
 
-AC_ARG_ENABLE([androidlog],
-  [AS_HELP_STRING([--enable-androidlog],
-  [android log support])],
-  [android_log=$enableval],
-  [android_log=yes])
+AC_ARG_ENABLE([androidso],
+  [AS_HELP_STRING([--enable-androidso],
+  [android shared object for apk support])],
+  [android_so=$enableval],
+  [android_so=yes])
 
 
 case $host in
@@ -88,8 +88,8 @@ if test "x$with_net" = xyes; then
   AC_DEFINE_UNQUOTED([WITH_NET],[1],[Define to 1 to enable net compilation])
 fi
 
-if test "x$android_log" = xyes; then
-  AC_DEFINE_UNQUOTED([ANDROID_LOG],[1],[Define to 1 to enable android debug log])
+if test "x$android_so" = xyes; then
+  AC_DEFINE_UNQUOTED([ANDROID_SO],[1],[Define to 1 to enable android shared object])
 fi
 
 
@@ -145,7 +145,7 @@ AM_CONDITIONAL([WITH_TOOLS], [test "x$with_tools" = "xyes"])
 AM_CONDITIONAL([WITH_WALLET], [test "x$with_wallet" = "xyes"])
 AM_CONDITIONAL([WITH_NET], [test "x$with_net" = "xyes"])
 AM_CONDITIONAL([TARGET_WINDOWS], [test x"$TARGET_OS" = x"windows"])
-AM_CONDITIONAL([ANDROID_LOG], [test "x$android_log" = "xyes"])
+AM_CONDITIONAL([ANDROID_SO], [test "x$android_so" = "xyes"])
 
 ac_configure_args="${ac_configure_args} --enable-module-recovery"
 AC_CONFIG_SUBDIRS([src/secp256k1 src/tools/cryptoconditions])

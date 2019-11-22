@@ -12,7 +12,7 @@ ws2_32_FLAGS =
 fpic_FLAGS = -fPIC
 endif
 
-if ANDROID_LOG
+if ANDROID_SO
 android_LIBS = -Wl,-llog -Wl,-landroid
 else
 android_LIBS =
@@ -224,7 +224,10 @@ nspv_LDFLAGS = -static
 lib_LTLIBRARIES = libnspv.la
 libnspv_la_SOURCES = \
 	src/tools/nspv.c
-#	src/tools/cc/kogswrapper.c 
+if ANDROID_SO
+libnspv_la_SOURCES += \
+	src/Unity/loadcoins_jni.c 
+endif
 libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
 
 ## link as static
