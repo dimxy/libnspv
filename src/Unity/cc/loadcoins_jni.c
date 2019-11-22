@@ -25,6 +25,7 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
     }
 
     AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
+    nspv_log_message("assetDir %p", assetDir);
     const char* filename = (const char*)NULL;
     while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
         nspv_log_message("read file %s", filename);
