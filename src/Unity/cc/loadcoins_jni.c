@@ -10,7 +10,7 @@ JNIEXPORT jint JNICALL
 Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv* env, jclass clazz, jobject assetManager)
 {
     //SLresult result;
-    char fname[] = "/StreamingAssets/data/coins";
+    char fname[] = "data/coins";
     int rc = 0;
 
     // convert Java string to UTF-8
@@ -26,10 +26,58 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
 
     AAssetDir* assetDir = AAssetManager_openDir(mgr, "");
     nspv_log_message("assetDir %p", assetDir);
-    const char* filename = (const char*)NULL;
-    while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
-        nspv_log_message("read file %s", filename);
+    if (assetDir) {
+        const char* filename = (const char*)NULL;
+        while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            nspv_log_message("read file %s", filename);
+        }
     }
+
+    assetDir = AAssetManager_openDir(mgr, "assets");
+    nspv_log_message("assets assetDir %p", assetDir);
+    if (assetDir) {
+        const char* filename = (const char*)NULL;
+        while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            nspv_log_message("read file %s", filename);
+        }
+    }
+
+    assetDir = AAssetManager_openDir(mgr, "/assets");
+    nspv_log_message("/assets assetDir %p", assetDir);
+    if (assetDir) {
+        const char* filename = (const char*)NULL;
+        while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            nspv_log_message("read file %s", filename);
+        }
+    }
+
+    assetDir = AAssetManager_openDir(mgr, "assets/data");
+    nspv_log_message("assets/data assetDir %p", assetDir);
+    if (assetDir) {
+        const char* filename = (const char*)NULL;
+        while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            nspv_log_message("read file %s", filename);
+        }
+    }
+
+    assetDir = AAssetManager_openDir(mgr, "data");
+    nspv_log_message("data assetDir %p", assetDir);
+    if (assetDir) {
+        const char* filename = (const char*)NULL;
+        while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            nspv_log_message("read file %s", filename);
+        }
+    }
+
+    assetDir = AAssetManager_openDir(mgr, "/data");
+    nspv_log_message("/data assetDir %p", assetDir);
+    if (assetDir) {
+        const char* filename = (const char*)NULL;
+        while ((filename = AAssetDir_getNextFileName(assetDir)) != NULL) {
+            nspv_log_message("read file %s", filename);
+        }
+    }
+
 
     AAsset* asset = AAssetManager_open(mgr, fname, AASSET_MODE_STREAMING);
     // release the Java string and UTF-8
