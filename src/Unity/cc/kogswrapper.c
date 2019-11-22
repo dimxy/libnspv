@@ -27,7 +27,7 @@
 //void nspv_log_message(char *format, ...);
 
 btc_chainparams kmd_chainparams_main;
-
+extern char *coinsCached;
 
 /*
 static btc_chainparams kogs_chainparams =
@@ -77,8 +77,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
 
     if (kogschain == NULL) 
     {
-        nspv_log_message("before NSPV_coinlist_scan");
-        // fprintf(stderr, "bad message\n");
+        nspv_log_message("before NSPV_coinlist_scan, searching chain=%s", chainName);
         kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
         nspv_log_message("after NSPV_coinlist_scan, kogschain=%p", kogschain);
         if (kogschain != NULL && kogschain != 0xFFFFFFFFFFFFFFFFLL)   // TODO: avoid 0xFFFFFFFFFFFFFFFFLL use
@@ -109,7 +108,6 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
             rc = -1;
 
         }
-        
     }
     else 
     {
@@ -165,8 +163,10 @@ void LIBNSPV_API uplugin_FinishNSPV()
     // no pthread_cancel on android:
 	// pthread_cancel(libthread);
     NSPV_STOP_RECEIVED = time(NULL);  // flag to stop thread
-
     pthread_join(libthread, NULL);
+
     btc_ecc_stop();
     kogschain = NULL;
+    if (coinsCached)
+        free(coinsCached);
 }
