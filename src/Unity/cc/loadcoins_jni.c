@@ -29,7 +29,7 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
         return -1;
     }
 
-    size_t len = AAsset_length(asset);
+    size_t len = AAsset_getLength(asset);
     char *bufp = malloc(len + 1);
     size_t nread = AAsset_read(asset, bufp, len);
     if (nread != len) {
