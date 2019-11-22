@@ -525,6 +525,7 @@ void *OS_filestr(long *allocsizep,char *_fname)
     strcpy(fname,_fname);
 #if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
     retptr = coinsCached;  // for android shared object lib use the content received from Unity asset manager
+    *allocsizep = strlen(coinsCached);
 #else
     retptr = OS_loadfile(fname,&buf,&filesize,allocsizep);
 #endif

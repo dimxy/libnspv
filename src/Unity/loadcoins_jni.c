@@ -39,7 +39,7 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
         nspv_log_message("coins asset len is 0");
         return -1;
     }
-    coinsCached = malloc(len + 1);
+    coinsCached = malloc(len + 1); // will be freed in NSPV_coinlist_scan
     size_t nread = AAsset_read(asset, coinsCached, len);
     if (nread != len) {
         nspv_log_message("cannot read asset buffer, read bytes = %d", nread);

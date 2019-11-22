@@ -143,7 +143,7 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
     memcpy(chain,template,sizeof(*chain));
     chain->default_port = 0;
     memset(chain->name,0,sizeof(chain->name));
-    if ( (filestr= OS_filestr(&filesize,"coins")) != 0 )
+    if ( (filestr= OS_filestr(&filesize,"coins")) != NULL )
     {
         nspv_log_message("loaded coins file size=%ld\n",filesize);
         if ( (array= cJSON_Parse(filestr)) != 0 )
@@ -152,7 +152,7 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
             for (i=0; i<n; i++)
             {
                 coin = jitem(array,i);
-                fprintf(stderr,"checking coin config: %s\n",jprint(coin,0));
+                nspv_log_message("checking coin config: %s\n", jprint(coin,0));
                 if ( (name= jstr(coin,"coin")) != 0 && strcmp(name,symbol) == 0 && jstr(coin,"asset") != 0 )
                 {
                     if ( (seeds= jstr(coin,"nSPV")) != 0 && strlen(seeds) < sizeof(chain->dnsseeds[0].domain)-1 && (magic=jstr(coin,"magic")) != 0 && strlen(magic) == 8 )
