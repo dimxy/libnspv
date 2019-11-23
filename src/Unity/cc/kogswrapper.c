@@ -74,7 +74,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
     wcscpy(wErrorStr, L"");
     wcstombs(chainName, wChainName, sizeof(chainName)/sizeof(chainName[0]));
 
-    nspv_log_message("entering, kogschain ptr=%p wChainName=%S", kogschain, wChainName);
+    nspv_log_message("entering, wChainName=%S kogschain ptr=%p", wChainName, kogschain);
 
     if (kogschain == NULL) 
     {
