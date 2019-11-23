@@ -50,12 +50,12 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
         }
         coinsCached[nread] = '\0';
         nspv_log_message("coins file content = %s", coinsCached);
+        AAsset_close(asset);
     }
     else
     {
         nspv_log_message("coins file already loaded");
     }
 
-    AAsset_close(asset);
     return rc;
 }
