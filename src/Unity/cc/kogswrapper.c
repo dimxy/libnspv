@@ -14,6 +14,7 @@
  *                                                                            *
  ******************************************************************************/
 
+#include <stdlib.h> 
 #include <btc/net.h>
 #include <btc/netspv.h>
 #include <btc/utils.h>
@@ -73,7 +74,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
     wcscpy(wErrorStr, L"");
     wcstombs(chainName, wChainName, sizeof(chainName)/sizeof(chainName[0]));
 
-    nspv_log_message("entering, kogschain=%p", kogschain);
+    nspv_log_message("entering, kogschain ptr=%p wChainName=%S", kogschain, wChainName);
 
     if (kogschain == NULL) 
     {
@@ -104,9 +105,8 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
                 kogschain = NULL;
             }
             else
-                wcsncpy(wErrorStr, L"could not find chain", WR_MAXERRORLEN);
+                wcsncpy(wErrorStr, L"could not find chain in coins file", WR_MAXERRORLEN);
             rc = -1;
-
         }
     }
     else 
@@ -158,6 +158,10 @@ void LIBNSPV_API uplugin_free(void *ptr)
 // finish NSPV library
 void LIBNSPV_API uplugin_FinishNSPV()
 {
+    if (!kogs_plugin_mutex_init)
+        return;
+
+    portable_mutex_lock(&kogs_plugin_mutex);
     btc_spv_client_free(kogsclient);
     
     // no pthread_cancel on android:
@@ -166,7 +170,11 @@ void LIBNSPV_API uplugin_FinishNSPV()
     pthread_join(libthread, NULL);
 
     btc_ecc_stop();
+    if (kogschain)
+        free(kogschain);
     kogschain = NULL;
     if (coinsCached)
         free(coinsCached);
+    portable_mutex_unlock(&kogs_plugin_mutex);
+
 }
