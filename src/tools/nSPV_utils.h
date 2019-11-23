@@ -517,17 +517,20 @@ void *OS_loadfile(char *fname,char **bufp,long *lenp,long *allocsizep)
 char *coinsCached = NULL;
 #endif
 
-void *OS_filestr(long *allocsizep,char *_fname)
+void *OS_filestr(long *allocsizep, char *_fname)
 {
-    long filesize = 0; char *fname,*buf = 0; void *retptr;
+    long filesize = 0; char *fname, *buf = 0; void *retptr;
     *allocsizep = 0;
-    fname = malloc(strlen(_fname)+1);
-    strcpy(fname,_fname);
+    fname = malloc(strlen(_fname) + 1);
+    strcpy(fname, _fname);
 #if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
-    *allocsizep = strlen(coinsCached);
-    retptr = malloc(*allocsizep + 1);
-    if (retptr)
-        strcpy(retptr, coinsCached);  // for android shared object lib use the content received from Unity asset
+    retptr = NULL;
+    if (coinsCached) {
+        *allocsizep = strlen(coinsCached);
+        retptr = malloc(*allocsizep + 1);
+        if (retptr)
+            strcpy(retptr, coinsCached);  // for android shared object lib use the content received from Unity asset
+    }
 #else
     retptr = OS_loadfile(fname,&buf,&filesize,allocsizep);
 #endif
