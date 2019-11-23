@@ -44,9 +44,9 @@ extern "C" {
 #endif
 
     // kogs wrapper functions:
-    unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorStr);
+    unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr);
 
-    unity_int32_t LIBNSPV_API uplugin_KogsList(uint256 **plist, int32_t *pcount, wchar_t *wErrorStr);
+    unity_int32_t LIBNSPV_API uplugin_KogsList(uint256 **plist, int32_t *pcount, char *errorStr);
 
     void LIBNSPV_API uplugin_free(void *ptr);
     void LIBNSPV_API uplugin_FinishNSPV();

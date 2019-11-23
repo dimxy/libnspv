@@ -60,9 +60,9 @@ static pthread_t libthread;
 const char dbfile[] = "nlibnspv.dat";
 
 // wrapper for NSPV library init
-unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorStr)
+unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 {
-    char chainName[WR_MAXCHAINNAMELEN+1];
+    //char chainName[WR_MAXCHAINNAMELEN+1];
     unity_int32_t rc = 0;
 
     if (!kogs_plugin_mutex_init) {
@@ -71,17 +71,17 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
     }
     portable_mutex_lock(&kogs_plugin_mutex);
 
-    wcscpy(wErrorStr, L"");
-    wcstombs(chainName, wChainName, sizeof(chainName)/sizeof(chainName[0]));
+    //wcscpy(wErrorStr, L"");
+    //wcstombs(chainName, wChainName, sizeof(chainName)/sizeof(chainName[0]));
 
-    nspv_log_message("entering, wChainName=%S kogschain ptr=%p", wChainName, kogschain);
+    nspv_log_message("entering, chainName=%s kogschain ptr=%p", chainName, kogschain);
 
     if (kogschain == NULL) 
     {
         nspv_log_message("before NSPV_coinlist_scan, searching chain=%s", chainName);
         kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
         nspv_log_message("after NSPV_coinlist_scan, kogschain=%p", kogschain);
-        if (kogschain != NULL && kogschain != 0xFFFFFFFFFFFFFFFFLL)   // TODO: avoid 0xFFFFFFFFFFFFFFFFLL use
+        if (kogschain != NULL && kogschain != (void*)0xFFFFFFFFFFFFFFFFLL)   // TODO: avoid 0xFFFFFFFFFFFFFFFFLL use
         {
             btc_ecc_start();
             btc_spv_client* client = btc_spv_client_new(kogschain, true, (dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false);
@@ -89,29 +89,29 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
 
             if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
             {
-                wcsncpy(wErrorStr, L"error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
+                strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
                 rc = -1;
             } 
             else 
             {
-                swprintf(wErrorStr, WR_MAXERRORLEN, L"no error, kogschain=%p", kogschain);
+                snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
                 // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
             }
         }
         else {
-            if (kogschain == 0xFFFFFFFFFFFFFFFFLL)
+            if (kogschain == (void*)0xFFFFFFFFFFFFFFFFLL)
             {
-                wcsncpy(wErrorStr, L"could not find coins file", WR_MAXERRORLEN);
+                strncpy(errorStr, "could not find coins file", WR_MAXERRORLEN);
                 kogschain = NULL;
             }
             else
-                wcsncpy(wErrorStr, L"could not find chain in coins file", WR_MAXERRORLEN);
+                strncpy(errorStr, "could not find chain in coins file", WR_MAXERRORLEN);
             rc = -1;
         }
     }
     else 
     {
-        wcsncpy(wErrorStr, L"NSPV already initialized", WR_MAXERRORLEN);
+        strncpy(errorStr, "NSPV already initialized", WR_MAXERRORLEN);
         rc = -1;
     }
 
@@ -120,7 +120,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(wchar_t *wChainName, wchar_t *wErrorS
 }
 
 // kogslist rpc wrapper
-unity_int32_t LIBNSPV_API uplugin_KogsList(uint256 **plist, int32_t *pcount, wchar_t *wErrorStr)
+unity_int32_t LIBNSPV_API uplugin_KogsList(uint256 **plist, int32_t *pcount, char *errorStr)
 {
     cJSON *request = cJSON_CreateNull();
     cJSON *result = NSPV_remoterpccall(kogsclient, "kogslist", request);
@@ -128,7 +128,7 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(uint256 **plist, int32_t *pcount, wch
 
     if (cJSON_HasObjectItem(result, "kogids"))
     {
-        wcscpy(wErrorStr, L"");
+        strcpy(errorStr, "");
         if (cJSON_IsArray(cJSON_GetObjectItem(result, "kogids")))  {
             *pcount = cJSON_GetArraySize(result);
             *plist = malloc(sizeof(uint256) * (*pcount));
@@ -141,7 +141,7 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(uint256 **plist, int32_t *pcount, wch
     }
     else
     {
-        wcscpy(wErrorStr, L"no kogids array returned");
+        strcpy(errorStr, "no kogids array returned");
         retcode = -1;
     }
     cJSON_Delete(request);
@@ -166,15 +166,16 @@ void LIBNSPV_API uplugin_FinishNSPV()
     
     // no pthread_cancel on android:
 	// pthread_cancel(libthread);
-    NSPV_STOP_RECEIVED = time(NULL);  // flag to stop thread
+    NSPV_STOP_RECEIVED = (uint32_t)time(NULL);  // flag to stop thread
     pthread_join(libthread, NULL);
 
     btc_ecc_stop();
     if (kogschain)
-        free(kogschain);
+        free((void*)kogschain);
     kogschain = NULL;
-    if (coinsCached)
-        free(coinsCached);
+//  TODO: don't do this here, use OnDestroy() java callback
+//    if (coinsCached)
+//        free(coinsCached);  
     portable_mutex_unlock(&kogs_plugin_mutex);
 
 }
