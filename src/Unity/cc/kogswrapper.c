@@ -80,6 +80,12 @@ typedef struct _HEXTX_ARRAY {
 } HEXTX_ARRAY;
 
 
+static void *run_spv_event_loop(btc_spv_client* client)
+{
+    btc_spv_client_runloop(client);
+    return NULL;
+}
+
 // wrapper for NSPV library init
 unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 {
@@ -117,7 +123,8 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
             nspv_log_message("%s after btc_spv_client_new, kogsclient ptr=%p", __func__, kogsclient);
             if (kogsclient != NULL)
             {
-                if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
+                //if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
+                if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void *)&kogsclient) != 0)  // coonect nodes and process responses
                 {
                     strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
                     retcode = -1;
@@ -135,7 +142,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
                     }
                     else
                     {
-                        btc_node_group_connect_next_nodes(kogsclient->nodegroup);
+                        //btc_node_group_connect_next_nodes(kogsclient->nodegroup);
                     }
                 }
             }
@@ -277,8 +284,9 @@ void LIBNSPV_API uplugin_FinishNSPV()
     
     // no pthread_cancel on android:
 	// pthread_cancel(libthread);
-    NSPV_STOP_RECEIVED = (uint32_t)time(NULL);  // flag to stop thread
-    pthread_join(libthread, NULL);
+    // NSPV_STOP_RECEIVED = (uint32_t)time(NULL);  // flag to stop thread
+    // pthread_join(libthread, NULL);
+    pthread_kill(libthread, 0);
 
     btc_ecc_stop();
     if (kogschain)
