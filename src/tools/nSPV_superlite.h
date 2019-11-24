@@ -926,11 +926,14 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
 
     jaddstr(request,"mypk",pubkey);
     NSPV_remoterpc_purge(&NSPV_remoterpcresult);
-    char *json=cJSON_Print(request);
+
+    char *json = cJSON_Print(request);
     nspv_log_message("%s json=%p (%s)", __func__, json, json ? json : "<NULL>");
-    if (!json) return (NULL);
+    if (!json) 
+        return (NULL);
+
     slen = (int32_t)strlen(json);
-    if (slen >254)
+    if (slen > 254)
     {
         msg = (uint8_t *)malloc(4 + sizeof(slen) + slen);
         len = 3;
