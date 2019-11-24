@@ -174,11 +174,13 @@ unity_int32_t LIBNSPV_API uplugin_TxnsCount(void *inPtr, unity_int32_t *pcount, 
 unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
 {
     cJSON *rpcrequest = cJSON_CreateNull();
-    cJSON *rpcresult = NSPV_remoterpccall(kogsclient, "kogslist", rpcrequest);
+    cJSON *rpcresult = NULL;
     unity_int32_t retcode = 0;
-    HEXTX_ARRAY hextxns;
 
-    nspv_log_message("uplugin_KogsList enterred");
+    nspv_log_message("%s enterred", __func__);
+
+    rpcresult = NSPV_remoterpccall(kogsclient, "kogslist", rpcrequest);
+    nspv_log_message("%s rpcresult=%p", __func__, rpcresult);
 
     strcpy(errorStr, "");
     *inPtrPtr = NULL;
@@ -189,22 +191,25 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
     }
 
     if (cJSON_HasObjectItem(rpcresult, "kogids") &&
-        cJSON_IsArray(cJSON_GetObjectItem(rpcresult, "kogids")))  {
-        hextxns.count = cJSON_GetArraySize(rpcresult);
-        hextxns.txns = calloc(hextxns.count, sizeof(HEXTX));
-        for (int32_t i = 0; i < hextxns.count; i++) 
+        cJSON_IsArray(cJSON_GetObjectItem(rpcresult, "kogids")))  
+    {
+        HEXTX_ARRAY *phextxns = calloc(1, sizeof(HEXTX_ARRAY));
+        phextxns->count = cJSON_GetArraySize(rpcresult);
+        phextxns->txns = calloc(phextxns->count, sizeof(HEXTX));
+        for (int32_t i = 0; i < phextxns->count; i++) 
         {
             cJSON *item = cJSON_GetArrayItem(rpcresult, i);
             if (cJSON_IsString(item)) {
                 // utils_uint256_sethex(item->valuestring, hextxns.txns[i].hextxid);
-                strncpy(hextxns.txns[i].hextxid, item->valuestring, sizeof(hextxns.txns[i].hextxid));
-                nspv_log_message("uplugin_KogsList item->valuestring=%s", item->valuestring);
+                strncpy(phextxns->txns[i].hextxid, item->valuestring, sizeof(phextxns->txns[i].hextxid));
+                nspv_log_message("%s item->valuestring=%s", __func__, item->valuestring);
             }
             else
             {
                 nspv_log_message("uplugin_KogsList json item not string");
             }
         }
+        *inPtrPtr = phextxns;
     }
     else
     {
@@ -213,9 +218,7 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
     }
     cJSON_Delete(rpcrequest);
     cJSON_Delete(rpcresult);
-    if (retcode == 0)
-        *inPtrPtr = &hextxns;
-
+       
     nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
     return retcode;
 }
