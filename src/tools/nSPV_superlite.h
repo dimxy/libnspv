@@ -176,6 +176,7 @@ btc_node *NSPV_req(btc_spv_client *client,btc_node *node,uint8_t *msg,int32_t le
     {
         memset(nodes,0,sizeof(nodes));
         n = 0;
+        nspv_log_message("%s nodes->len %d", __func__, client->nodegroup->nodes->len);
         for (i=0; i<(int32_t)client->nodegroup->nodes->len; i++)
         {
             btc_node *ptr = vector_idx(client->nodegroup->nodes,i);
@@ -193,10 +194,15 @@ btc_node *NSPV_req(btc_spv_client *client,btc_node *node,uint8_t *msg,int32_t le
                 }
             }
         }
-        if ( n > 0 )
+        if (n > 0) {
             node = nodes[rand() % n];
+            nspv_log_message("%s selected node %s", __func__, node->ipaddr);
+        }
         client->nodegroup->NSPV_num_connected_nodes = n;
-    } else flag = 1;
+        
+    } 
+    else 
+        flag = 1;  // seems flag not used
     if ( node != 0 )
     {
         if ( len >= 0xfd )
@@ -212,8 +218,13 @@ btc_node *NSPV_req(btc_spv_client *client,btc_node *node,uint8_t *msg,int32_t le
         //fprintf(stderr,"pushmessage [%d] len.%d\n",msg[1],len);
         node->prevtimes[ind] = timestamp;
         NSPV_totalsent += len;
+        nspv_log_message("%s request sent to node", __func__);
         return(node);
-    } else fprintf(stderr,"no nodes\n");
+    }
+    else {
+        fprintf(stderr, "no nodes\n");
+        nspv_log_message("%s no nodes", __func__);
+    }
     return(0);
 }
 
@@ -916,6 +927,7 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
     jaddstr(request,"mypk",pubkey);
     NSPV_remoterpc_purge(&NSPV_remoterpcresult);
     char *json=cJSON_Print(request);
+    nspv_log_message("%s json=%p (%s)", __func__, json, json ? json : "<NULL>");
     if (!json) return (NULL);
     slen = (int32_t)strlen(json);
     if (slen >254)
@@ -950,6 +962,7 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
             }
         }
     } else sleep(1);
+    nspv_log_message("%s NSPV_req returned null", __func__);
     free(msg);
     return (NULL);
 }
