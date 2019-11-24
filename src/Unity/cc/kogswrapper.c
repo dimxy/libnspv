@@ -134,7 +134,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
                 else
                 {
                     //if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
-                    if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void *)&kogsclient) != 0)  // periodically connect nodes and process responses
+                    if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void *)kogsclient) != 0)  // periodically connect nodes and process responses
                     {
                         strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
                         retcode = -1;
