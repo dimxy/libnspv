@@ -82,10 +82,14 @@ typedef struct _HEXTX_ARRAY {
 unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 {
     //char chainName[WR_MAXCHAINNAMELEN+1];
-    unity_int32_t rc = 0;
+    unity_int32_t retcode = 0;
+
+    strcpy(errorStr, "");
+    nspv_log_message("%s entering, chainName=%s kogschain ptr=%p", __func__, chainName, kogschain);
 
     if (init_state != WR_NOT_INITED) {
         strncpy(errorStr, "NSPV already initialized", WR_MAXERRORLEN);
+        nspv_log_message("%s exiting error %s", __func__, errorStr);
         return -1;
     }
 
@@ -98,13 +102,12 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
     //wcscpy(wErrorStr, L"");
     //wcstombs(chainName, wChainName, sizeof(chainName)/sizeof(chainName[0]));
 
-    nspv_log_message("entering, chainName=%s kogschain ptr=%p", chainName, kogschain);
-
     if (kogschain == NULL) 
     {
         nspv_log_message("before NSPV_coinlist_scan, searching chain=%s", chainName);
         kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
-        nspv_log_message("after NSPV_coinlist_scan, kogschain=%p", kogschain);
+        nspv_log_message("after NSPV_coinlist_scan, kogschain ptr=%p", kogschain);
+
         if (kogschain != NULL && kogschain != (void*)0xFFFFFFFFFFFFFFFFLL)   // TODO: avoid 0xFFFFFFFFFFFFFFFFLL use
         {
             btc_ecc_start();
@@ -114,7 +117,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
             if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
             {
                 strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
-                rc = -1;
+                retcode = -1;
             } 
             else 
             {
@@ -130,55 +133,68 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
             }
             else
                 strncpy(errorStr, "could not find chain in coins file", WR_MAXERRORLEN);
-            rc = -1;
+            retcode = -1;
         }
     }
     else 
     {
         strncpy(errorStr, "NSPV already initialized", WR_MAXERRORLEN);
-        rc = -1;
+        retcode = -1;
     }
 
-    if (rc == 0)
+    if (retcode == 0)
         init_state = WR_INITED;
     portable_mutex_unlock(&kogs_plugin_mutex);
-    return rc;
+
+    nspv_log_message("%s exiting retcode=%d errorStr=%s", __func__, retcode, errorStr);
+    return retcode;
 }
 
 
-unity_int32_t LIBNSPV_API uplugin_TxnsCount(void *inptr, unity_int32_t *pcount)
+unity_int32_t LIBNSPV_API uplugin_TxnsCount(void *inPtr, unity_int32_t *pcount, char *errorStr)
 {
-    if (inptr == NULL)
-        return -1;
+    unity_int32_t retcode = 0;
 
-    HEXTX_ARRAY *phextxns = (HEXTX_ARRAY *)inptr;
-    *pcount = phextxns->count;
-    return 0;
+    nspv_log_message("%s enterred", __func__);
+    strcpy(errorStr, "");
+
+    if (inPtr == NULL) {
+        strcpy(errorStr, "inPtr null");
+        retcode = -1;
+    }
+    else {
+        HEXTX_ARRAY *phextxns = (HEXTX_ARRAY *)inPtr;
+        *pcount = phextxns->count;
+    }
+    nspv_log_message("%s exiting retcode=%d", __func__, retcode);
+    return retcode;
 }
 
 // kogslist rpc wrapper
-unity_int32_t LIBNSPV_API uplugin_KogsList(void *result, char *errorStr)
+unity_int32_t LIBNSPV_API uplugin_KogsList(void *inPtr, char *errorStr)
 {
     cJSON *rpcrequest = cJSON_CreateNull();
     cJSON *rpcresult = NSPV_remoterpccall(kogsclient, "kogslist", rpcrequest);
     unity_int32_t retcode = 0;
     HEXTX_ARRAY hextxns;
 
+    nspv_log_message("uplugin_KogsList enterred");
+
     strcpy(errorStr, "");
-    result = NULL;
+    inPtr = NULL;
 
     if (rpcresult == NULL) {
         strcpy(errorStr, "rpc result is null");
         return -1;
     }
 
-    if (cJSON_HasObjectItem(result, "kogids") &&
-        cJSON_IsArray(cJSON_GetObjectItem(result, "kogids")))  {
-        hextxns.count = cJSON_GetArraySize(result);
+    if (cJSON_HasObjectItem(rpcresult, "kogids") &&
+        cJSON_IsArray(cJSON_GetObjectItem(rpcresult, "kogids")))  {
+        hextxns.count = cJSON_GetArraySize(rpcresult);
         hextxns.txns = calloc(hextxns.count, sizeof(HEXTX));
         for (int32_t i = 0; i < hextxns.count; i++) 
         {
-            cJSON *item = cJSON_GetArrayItem(result, i);
+            cJSON *item = cJSON_GetArrayItem(rpcresult, i);
             if (cJSON_IsString(item)) {
                 // utils_uint256_sethex(item->valuestring, hextxns.txns[i].hextxid);
                 strncpy(hextxns.txns[i].hextxid, item->valuestring, sizeof(hextxns.txns[i].hextxid));
@@ -198,7 +214,9 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(void *result, char *errorStr)
     cJSON_Delete(rpcrequest);
     cJSON_Delete(rpcresult);
     if (retcode == 0)
-        result = &hextxns;
+        inPtr = &hextxns;
+
+    nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
     return retcode;
 }
 
@@ -212,8 +230,9 @@ void LIBNSPV_API uplugin_free(void *ptr)
 
 void LIBNSPV_API uplugin_FinishNSPV()
 {
+    nspv_log_message("%s enterred", __func__);
     if (init_state != WR_INITED) {
-        nspv_log_message("uplugin_FinishNSPV: state not inited");
+        nspv_log_message("%s: exiting, state not inited", __func__);
         return;
     }
 
@@ -241,6 +260,6 @@ void LIBNSPV_API uplugin_FinishNSPV()
 //        free(coinsCached);  
 
     //portable_mutex_unlock(&kogs_plugin_mutex);
-    nspv_log_message("uplugin_FinishNSPV: finished");
     init_state = WR_NOT_INITED;
+    nspv_log_message("%s exiting", __func__);
 }
