@@ -23,7 +23,13 @@
 #include "nSPV_defs.h"
 #include "kogswrapper.h"
 
+enum WR_INIT_STATE {
+    WR_NOT_INITED = 0,
+    WR_INITED,
+    WR_FINISHING
+};
 
+static int init_state = WR_NOT_INITED;
 
 //void nspv_log_message(char *format, ...);
 
@@ -57,13 +63,31 @@ static const btc_chainparams *kogschain = NULL;
 static btc_spv_client* kogsclient = NULL;
 static pthread_t libthread;
 
-const char dbfile[] = "nlibnspv.dat";
+//const char dbfile[] = "nlibnspv.dat";
+const char dbfile[] = "";  // no db in android
+
+typedef struct _HEXTX {
+    char magic[4 + 1];
+    char hextxid[64 + 1];
+    char *hextx;
+} HEXTX;
+
+typedef struct _HEXTX_ARRAY {
+    int count;
+    HEXTX *txns;
+} HEXTX_ARRAY;
+
 
 // wrapper for NSPV library init
 unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 {
     //char chainName[WR_MAXCHAINNAMELEN+1];
     unity_int32_t rc = 0;
+
+    if (init_state != WR_NOT_INITED) {
+        strncpy(errorStr, "NSPV already initialized", WR_MAXERRORLEN);
+        return -1;
+    }
 
     if (!kogs_plugin_mutex_init) {
         kogs_plugin_mutex_init = true;
@@ -84,7 +108,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
         if (kogschain != NULL && kogschain != (void*)0xFFFFFFFFFFFFFFFFLL)   // TODO: avoid 0xFFFFFFFFFFFFFFFFLL use
         {
             btc_ecc_start();
-            btc_spv_client* client = btc_spv_client_new(kogschain, true, (dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false);
+            btc_spv_client* client = btc_spv_client_new(kogschain, true, /*(dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false*/true);
             NSPV_client = client;
 
             if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
@@ -115,37 +139,66 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
         rc = -1;
     }
 
+    if (rc == 0)
+        init_state = WR_INITED;
     portable_mutex_unlock(&kogs_plugin_mutex);
     return rc;
 }
 
-// kogslist rpc wrapper
-unity_int32_t LIBNSPV_API uplugin_KogsList(uint256 **plist, int32_t *pcount, char *errorStr)
-{
-    cJSON *request = cJSON_CreateNull();
-    cJSON *result = NSPV_remoterpccall(kogsclient, "kogslist", request);
-    unity_int32_t retcode = 0;
 
-    if (cJSON_HasObjectItem(result, "kogids"))
-    {
-        strcpy(errorStr, "");
-        if (cJSON_IsArray(cJSON_GetObjectItem(result, "kogids")))  {
-            *pcount = cJSON_GetArraySize(result);
-            *plist = malloc(sizeof(uint256) * (*pcount));
-            for (int32_t i = 0; i < *pcount; i++) {
-                cJSON *item = cJSON_GetArrayItem(result, i);
-                if (cJSON_IsString(item))
-                    utils_uint256_sethex(item->valuestring, (*plist)[i]);
+unity_int32_t LIBNSPV_API uplugin_TxnsCount(void *inptr, unity_int32_t *pcount)
+{
+    if (inptr == NULL)
+        return -1;
+
+    HEXTX_ARRAY *phextxns = (HEXTX_ARRAY *)inptr;
+    *pcount = phextxns->count;
+    return 0;
+}
+
+// kogslist rpc wrapper
+unity_int32_t LIBNSPV_API uplugin_KogsList(void *result, char *errorStr)
+{
+    cJSON *rpcrequest = cJSON_CreateNull();
+    cJSON *rpcresult = NSPV_remoterpccall(kogsclient, "kogslist", rpcrequest);
+    unity_int32_t retcode = 0;
+    HEXTX_ARRAY hextxns;
+
+    strcpy(errorStr, "");
+    result = NULL;
+
+    if (rpcresult == NULL) {
+        strcpy(errorStr, "rpc result is null");
+        return -1;
+    }
+
+    if (cJSON_HasObjectItem(result, "kogids") &&
+        cJSON_IsArray(cJSON_GetObjectItem(result, "kogids")))  {
+        hextxns.count = cJSON_GetArraySize(result);
+        hextxns.txns = calloc(hextxns.count, sizeof(HEXTX));
+        for (int32_t i = 0; i < hextxns.count; i++) 
+        {
+            cJSON *item = cJSON_GetArrayItem(result, i);
+            if (cJSON_IsString(item)) {
+                // utils_uint256_sethex(item->valuestring, hextxns.txns[i].hextxid);
+                strncpy(hextxns.txns[i].hextxid, item->valuestring, sizeof(hextxns.txns[i].hextxid));
+                nspv_log_message("uplugin_KogsList item->valuestring=%s", item->valuestring);
+            }
+            else
+            {
+                nspv_log_message("uplugin_KogsList json item not string");
             }
         }
     }
     else
     {
-        strcpy(errorStr, "no kogids array returned");
+        strcpy(errorStr, "no kogids array returned in rpc result");
         retcode = -1;
     }
-    cJSON_Delete(request);
-    cJSON_Delete(result);
+    cJSON_Delete(rpcrequest);
+    cJSON_Delete(rpcresult);
+    if (retcode == 0)
+        result = &hextxns;
     return retcode;
 }
 
@@ -156,13 +209,22 @@ void LIBNSPV_API uplugin_free(void *ptr)
 }
 
 // finish NSPV library
+
 void LIBNSPV_API uplugin_FinishNSPV()
 {
-    if (!kogs_plugin_mutex_init)
+    if (init_state != WR_INITED) {
+        nspv_log_message("uplugin_FinishNSPV: state not inited");
         return;
+    }
 
-    portable_mutex_lock(&kogs_plugin_mutex);
+    init_state = WR_FINISHING;
+
+    //if (!kogs_plugin_mutex_init)
+    //    return;
+
+    //portable_mutex_lock(&kogs_plugin_mutex);  // seems deadlock if pthread_join
     btc_spv_client_free(kogsclient);
+    kogsclient = NULL;
     
     // no pthread_cancel on android:
 	// pthread_cancel(libthread);
@@ -173,9 +235,12 @@ void LIBNSPV_API uplugin_FinishNSPV()
     if (kogschain)
         free((void*)kogschain);
     kogschain = NULL;
+
 //  TODO: don't do this here, use OnDestroy() java callback
 //    if (coinsCached)
 //        free(coinsCached);  
-    portable_mutex_unlock(&kogs_plugin_mutex);
 
+    //portable_mutex_unlock(&kogs_plugin_mutex);
+    nspv_log_message("uplugin_FinishNSPV: finished");
+    init_state = WR_NOT_INITED;
 }
