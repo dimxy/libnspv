@@ -178,6 +178,7 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
     unity_int32_t retcode = 0;
 
     nspv_log_message("%s enterred", __func__);
+    nspv_log_message("%s inPtrPtr=%p", __func__, inPtrPtr);
 
     rpcresult = NSPV_remoterpccall(kogsclient, "kogslist", rpcrequest);
     nspv_log_message("%s rpcresult=%p", __func__, rpcresult);
