@@ -164,7 +164,8 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 
     // set test pubkey
     char testpk[] = "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc";
-    utils_bin_to_hex(testpk, strlen(testpk), NSPV_pubkey.pubkey);
+    int outl;
+    utils_hex_to_bin(testpk, NSPV_pubkey.pubkey, strlen(testpk), &outl);
     NSPV_pubkey.compressed = 1;
 
     nspv_log_message("%s exiting retcode=%d errorStr=%s", __func__, retcode, errorStr);
