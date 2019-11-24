@@ -133,6 +133,10 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
                         strncpy(errorStr, "no nodes discovered", WR_MAXERRORLEN);
                         retcode = -1;
                     }
+                    else
+                    {
+                        btc_node_group_connect_next_nodes(kogsclient->nodegroup);
+                    }
                 }
             }
             else
@@ -195,7 +199,7 @@ unity_int32_t LIBNSPV_API uplugin_TxnsCount(void *inPtr, unity_int32_t *pcount, 
 // kogslist rpc wrapper
 unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
 {
-    cJSON *rpcrequest = cJSON_CreateNull();
+    cJSON *rpcrequest = cJSON_CreateObject();
     cJSON *rpcresult = NULL;
     unity_int32_t retcode = 0;
 
