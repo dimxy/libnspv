@@ -42,8 +42,12 @@ int net_write_log_printf(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
+#if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
+    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, va_args);
+#else
     printf("DEBUG :");
     vprintf(format, args);
+#endif
     va_end(args);
     return 1;
 }
