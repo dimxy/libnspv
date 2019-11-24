@@ -123,26 +123,26 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
             nspv_log_message("%s after btc_spv_client_new, kogsclient ptr=%p", __func__, kogsclient);
             if (kogsclient != NULL)
             {
-                //if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
-                if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void *)&kogsclient) != 0)  // coonect nodes and process responses
+
+                btc_spv_client_discover_peers(kogsclient, NULL);
+                nspv_log_message("%s discovered nodes %d", __func__, kogsclient->nodegroup->nodes->len);
+                if (kogsclient->nodegroup->nodes->len == 0)
                 {
-                    strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
+                    strncpy(errorStr, "no nodes discovered", WR_MAXERRORLEN);
                     retcode = -1;
                 }
                 else
                 {
-                    //snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
-                    // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
-                    btc_spv_client_discover_peers(kogsclient, NULL);
-                    nspv_log_message("%s discovered nodes &d", __func__, kogsclient->nodegroup->nodes->len);
-                    if (kogsclient->nodegroup->nodes->len == 0)
+                    //if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
+                    if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void *)&kogsclient) != 0)  // periodically connect nodes and process responses
                     {
-                        strncpy(errorStr, "no nodes discovered", WR_MAXERRORLEN);
+                        strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
                         retcode = -1;
                     }
                     else
                     {
-                        //btc_node_group_connect_next_nodes(kogsclient->nodegroup);
+                        //snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
+                        // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
                     }
                 }
             }
