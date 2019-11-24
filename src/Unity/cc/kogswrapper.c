@@ -104,25 +104,32 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 
     if (kogschain == NULL) 
     {
-        nspv_log_message("before NSPV_coinlist_scan, searching chain=%s", chainName);
+        nspv_log_message("%s before NSPV_coinlist_scan, searching chain=%s", __func__, chainName);
         kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
-        nspv_log_message("after NSPV_coinlist_scan, kogschain ptr=%p", kogschain);
+        nspv_log_message("%s after NSPV_coinlist_scan, kogschain ptr=%p", __func__, kogschain);
 
         if (kogschain != NULL && kogschain != (void*)0xFFFFFFFFFFFFFFFFLL)   // TODO: avoid 0xFFFFFFFFFFFFFFFFLL use
         {
             btc_ecc_start();
-            btc_spv_client* client = btc_spv_client_new(kogschain, true, /*(dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false*/true);
-            NSPV_client = client;
-
-            if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
+            kogsclient = btc_spv_client_new(kogschain, true, /*(dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false*/true);
+            nspv_log_message("%s after btc_spv_client_new, kogsclient ptr=%p", __func__, kogsclient);
+            if (kogsclient != NULL)
             {
-                strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
+                if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
+                {
+                    strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
+                    retcode = -1;
+                }
+                else
+                {
+                    //snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
+                    // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
+                }
+            }
+            else
+            {
+                strncpy(errorStr, "cannot create kogsclient", WR_MAXERRORLEN);
                 retcode = -1;
-            } 
-            else 
-            {
-                //snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
-                // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
             }
         }
         else {
