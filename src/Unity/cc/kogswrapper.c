@@ -171,7 +171,7 @@ unity_int32_t LIBNSPV_API uplugin_TxnsCount(void *inPtr, unity_int32_t *pcount, 
 }
 
 // kogslist rpc wrapper
-unity_int32_t LIBNSPV_API uplugin_KogsList(void *inPtr, char *errorStr)
+unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
 {
     cJSON *rpcrequest = cJSON_CreateNull();
     cJSON *rpcresult = NSPV_remoterpccall(kogsclient, "kogslist", rpcrequest);
@@ -181,7 +181,7 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(void *inPtr, char *errorStr)
     nspv_log_message("uplugin_KogsList enterred");
 
     strcpy(errorStr, "");
-    inPtr = NULL;
+    *inPtrPtr = NULL;
 
     if (rpcresult == NULL) {
         strcpy(errorStr, "rpc result is null");
@@ -214,7 +214,7 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(void *inPtr, char *errorStr)
     cJSON_Delete(rpcrequest);
     cJSON_Delete(rpcresult);
     if (retcode == 0)
-        inPtr = &hextxns;
+        *inPtrPtr = &hextxns;
 
     nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
     return retcode;
