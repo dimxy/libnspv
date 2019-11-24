@@ -23,6 +23,8 @@
 #include "nSPV_defs.h"
 #include "kogswrapper.h"
 
+extern btc_pubkey NSPV_pubkey;  // test
+
 enum WR_INIT_STATE {
     WR_NOT_INITED = 0,
     WR_INITED,
@@ -124,6 +126,13 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
                 {
                     //snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
                     // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
+                    btc_spv_client_discover_peers(kogsclient, NULL);
+                    nspv_log_message("%s discovered nodes &d", __func__, kogsclient->nodegroup->nodes->len);
+                    if (kogsclient->nodegroup->nodes->len == 0)
+                    {
+                        strncpy(errorStr, "no nodes discovered", WR_MAXERRORLEN);
+                        retcode = -1;
+                    }
                 }
             }
             else
@@ -152,6 +161,11 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
     if (retcode == 0)
         init_state = WR_INITED;
     portable_mutex_unlock(&kogs_plugin_mutex);
+
+    // set test pubkey
+    char testpk[] = "034777b18effce6f7a849b72de8e6810bf7a7e050274b3782e1b5a13d0263a44dc";
+    utils_bin_to_hex(testpk, strlen(testpk), NSPV_pubkey.pubkey);
+    NSPV_pubkey.compressed = 1;
 
     nspv_log_message("%s exiting retcode=%d errorStr=%s", __func__, retcode, errorStr);
     return retcode;
