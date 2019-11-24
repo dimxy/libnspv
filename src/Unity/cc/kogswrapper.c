@@ -121,7 +121,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
             } 
             else 
             {
-                snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
+                //snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
                 // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
             }
         }
