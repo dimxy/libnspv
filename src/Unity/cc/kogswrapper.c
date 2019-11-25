@@ -230,6 +230,7 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
     }
     portable_mutex_lock(&kogs_plugin_mutex);
 
+    char methodname[] = "kogskoglist";
     cJSON *rpcrequest = cJSON_CreateObject();
     cJSON *rpcresult = NULL;
     unity_int32_t retcode = 0;
@@ -237,7 +238,8 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
     nspv_log_message("%s enterred", __func__);
     nspv_log_message("%s inPtrPtr=%p", __func__, inPtrPtr);
 
-    rpcresult = NSPV_remoterpccall(kogsclient, "kogskoglist", rpcrequest);
+    jaddstr(rpcrequest, "method", methodname);
+    rpcresult = NSPV_remoterpccall(kogsclient, methodname, rpcrequest);
     nspv_log_message("%s rpcresult=%p", __func__, rpcresult);
 
     strcpy(errorStr, "");
