@@ -32,6 +32,15 @@
 #include "cstr.h"
 #include "memory.h"
 
+// LIBNSPV_BUILD means to build shared object lib for use in android apk
+#if (defined(ANDROID) || defined(__ANDROID__)) && defined(LIBNSPV_BUILD)
+#include <stdarg.h>
+#include <android/log.h>
+#include <android/asset_manager.h>
+#endif
+
+void nspv_log_message(const char *format, ...);
+
 #define TO_UINT8_HEX_BUF_LEN 2048
 #define VARINT_LEN 20
 
