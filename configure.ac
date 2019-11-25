@@ -61,7 +61,7 @@ AC_ARG_ENABLE([androidso],
   [AS_HELP_STRING([--enable-androidso],
   [android shared object for apk support])],
   [android_so=$enableval],
-  [android_so=yes])
+  [android_so=no])
 
 
 case $host in
@@ -162,6 +162,7 @@ echo "Options used to compile and link:"
 echo "  with wallet   = $with_wallet"
 echo "  with tools    = $with_tools"
 echo "  with net      = $with_net"
+echo "  android so    = $android_so"
 echo
 echo "  target os     = $TARGET_OS"
 echo
