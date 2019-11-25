@@ -34,6 +34,13 @@
 
 #include <nSPV_defs.h>
 
+#if defined(LIBNSPV_BUILD)
+#include <stdarg.h>
+#if defined(__ANDROID__) || defined(ANDROID) 
+#include <android/log.h>
+#endif
+#endif
+
 static const int BTC_PERIODICAL_NODE_TIMER_S = 5;
 static const int BTC_PING_INTERVAL_S = 180;
 static const int BTC_CONNECT_TIMEOUT_S = 10;

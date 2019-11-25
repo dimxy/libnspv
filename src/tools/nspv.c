@@ -50,6 +50,7 @@
 #include <nSPV_defs.h>
 
 #if defined(LIBNSPV_BUILD)
+#include <stdarg.h>
 #if defined(__ANDROID__) || defined(ANDROID) 
 #include <android/log.h>
 #endif
