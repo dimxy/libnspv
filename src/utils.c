@@ -301,15 +301,3 @@ void btc_file_commit(FILE *file)
 #endif
 }
 
-// log info message
-void nspv_log_message(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-#if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
-    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, args);
-#else
-    vfprintf(stdout, format, args);
-#endif
-    va_end(args);
-}

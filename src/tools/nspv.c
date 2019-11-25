@@ -49,6 +49,13 @@
 
 #include <nSPV_defs.h>
 
+// LIBNSPV_BUILD means to build shared object lib for use in android apk
+#if (defined(ANDROID) || defined(__ANDROID__)) && defined(LIBNSPV_BUILD)
+#include <stdarg.h>
+#include <android/log.h>
+#include <android/asset_manager.h>
+#endif
+
 static struct option long_options[] =
     {
         {"testnet", no_argument, NULL, 't'},
@@ -78,6 +85,19 @@ static void print_usage()
     printf("> nspv -d scan\n\n");
     printf("Sync up, show debug info, don't store headers in file (only in memory), wait for new blocks:\n");
     printf("> nspv -d -f 0 -c scan\n\n");
+}
+
+// log info message
+void nspv_log_message(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+#if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
+    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, args);
+#else
+    vfprintf(stdout, format, args);
+#endif
+    va_end(args);
 }
 
 static bool showError(const char* er)

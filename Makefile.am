@@ -84,7 +84,7 @@ libbtc_la_SOURCES = \
     src/utils.c \
     src/merkle_c.c \
     src/vector.c
-libbtc_la_CPPFLAGS = -DLIBNSPV_BUILD
+# libbtc_la_CPPFLAGS = -DLIBNSPV_BUILD
 libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2 $(FPIC_FLAGS)
 # -DLIBBTC_BUILD
 libbtc_la_LIBADD = $(LIBSECP256K1) 
@@ -166,9 +166,6 @@ libbtc_la_SOURCES += \
     src/protocol.c
 
 libbtc_la_LIBADD += $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
-if ANDROID_SO
-libbtc_la_LIBADD += -landroid -llog 
-endif
 libbtc_la_CFLAGS += $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2
 libbtc_la_LDFLAGS = -static
 
@@ -189,7 +186,7 @@ tests_SOURCES += \
 endif
 instdir=$(prefix)/bin
 inst_PROGRAMS = bitcointool
-bitcointool_LDADD = libbtc.la -landroid -llog
+bitcointool_LDADD = libbtc.la
 bitcointool_SOURCES = \
     src/tools/bitcointool.c
 bitcointool_CFLAGS = $(libbtc_la_CFLAGS) -O2
