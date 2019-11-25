@@ -35,7 +35,25 @@ static int init_state = WR_NOT_INITED;
 
 //void nspv_log_message(char *format, ...);
 
-btc_chainparams kmd_chainparams_main;
+btc_chainparams kmd_chainparams_template =
+{
+    "KMD",
+    60,
+    85,
+    "bc", // const char bech32_hrp[5]
+    188,
+    0x0488ADE4, // uint32_t b58prefix_bip32_privkey
+    0x0488B21E, // uint32_t b58prefix_bip32_pubkey
+    { 0xf9, 0xee, 0xe4, 0x8d },
+    { 0x02, 0x7e, 0x37, 0x58, 0xc3, 0xa6, 0x5b, 0x12, 0xaa, 0x10, 0x46, 0x46, 0x2b, 0x48, 0x6d, 0x0a, 0x63, 0xbf, 0xa1, 0xbe, 0xae, 0x32, 0x78, 0x97, 0xf5, 0x6c, 0x5c, 0xfb, 0x7d, 0xaa, 0xae, 0x71 }, //{0x6f, 0xe2, 0x8c, 0x0a, 0xb6, 0xf1, 0xb3, 0x72, 0xc1, 0xa6, 0xa2, 0x46, 0xae, 0x63, 0xf7, 0x4f, 0x93, 0x1e, 0x83, 0x65, 0xe1, 0x5a, 0x08, 0x9c, 0x68, 0xd6, 0x19, 0x00, 0x00, 0x00, 0x00, 0x00},
+    7770,7771,
+    { { "5.9.102.210, 45.32.19.196, 5.9.253.195, 78.47.196.146, 23.254.165.16, 136.243.58.134, 5.9.253.196, 5.9.253.197, 5.9.253.198, 5.9.253.199, 5.9.253.200, 5.9.253.201, 5.9.253.202, 5.9.253.203" }, 0 },
+    60,
+    170007,
+    MAX_TX_SIZE_AFTER_SAPLING,
+    1,1,0,
+};
+
 extern char *coinsCached;
 
 /*
@@ -113,7 +131,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
     if (kogschain == NULL) 
     {
         nspv_log_message("%s before NSPV_coinlist_scan, searching chain=%s", __func__, chainName);
-        kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_main);
+        kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_template);
         nspv_log_message("%s after NSPV_coinlist_scan, kogschain ptr=%p", __func__, kogschain);
 
         if (kogschain != NULL && kogschain != (void*)0xFFFFFFFFFFFFFFFFLL)   // TODO: avoid 0xFFFFFFFFFFFFFFFFLL use
