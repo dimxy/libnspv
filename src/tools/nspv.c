@@ -49,25 +49,6 @@
 
 #include <nSPV_defs.h>
 
-#if defined(LIBNSPV_BUILD)
-#include <stdarg.h>
-#if defined(__ANDROID__) || defined(ANDROID) 
-#include <android/log.h>
-#endif
-#endif
-
-void nspv_log_message(char *format, ...)
-{
-    va_list va_args;
-    va_start(va_args, format);
-#if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
-    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, va_args);
-#else
-    vfprintf(stdout, format, va_args);
-#endif
-    va_end(va_args);
-}
-
 static struct option long_options[] =
     {
         {"testnet", no_argument, NULL, 't'},
