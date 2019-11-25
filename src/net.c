@@ -45,12 +45,26 @@ static const int BTC_PERIODICAL_NODE_TIMER_S = 5;
 static const int BTC_PING_INTERVAL_S = 180;
 static const int BTC_CONNECT_TIMEOUT_S = 10;
 
+// log info message
+void nspv_log_message(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+#if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
+    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, args);
+#else
+    vfprintf(stdout, format, args);
+#endif
+    va_end(args);
+}
+
+// log debug message
 int net_write_log_printf(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
 #if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
-    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, va_args);
+    __android_log_vprint(ANDROID_LOG_DEBUG, "libnspv", format, args);
 #else
     printf("DEBUG :");
     vprintf(format, args);
