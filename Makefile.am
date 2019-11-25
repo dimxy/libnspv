@@ -84,7 +84,8 @@ libbtc_la_SOURCES = \
     src/utils.c \
     src/merkle_c.c \
     src/vector.c
-libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2 $(fpic_FLAGS) -DLIBNSPV_BUILD
+libbtc_la_CPPFLAGS = -DLIBNSPV_BUILD
+libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2 $(fpic_FLAGS)
 # -DLIBBTC_BUILD
 libbtc_la_LIBADD = $(LIBSECP256K1) 
 
@@ -216,7 +217,7 @@ nspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium
 #-lpthread -lsodium
 nspv_SOURCES = \
 	src/tools/nspv.c 
-nspv_CFLAGS = $(libbtc_la_CFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2  -Wno-unused-parameter $(android_LOGLIB)
+nspv_CFLAGS = $(libbtc_la_CFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2  -Wno-unused-parameter 
 # -pthread 
 nspv_CPPFLAGS = -I$(top_srcdir)/src
 nspv_LDFLAGS = -static
