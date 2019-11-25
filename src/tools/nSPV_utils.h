@@ -17,10 +17,6 @@
 #ifndef NSPV_UTILS_H
 #define NSPV_UTILS_H
 
-#if (defined(ANDROID) || defined(__ANDROID__)) && defined(BUILD_LIBNSPV)
-#include <android/asset_manager.h>
-#endif
-
 static const bits256 zeroid;
 portable_mutex_t NSPV_netmutex;
 
