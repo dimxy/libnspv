@@ -61,7 +61,7 @@ AC_ARG_ENABLE([androidso],
   [AS_HELP_STRING([--enable-androidso],
   [android shared object for apk support])],
   [android_so=$enableval],
-  [android_so=yes])
+  [android_so=no])
 
 
 case $host in
