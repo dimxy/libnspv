@@ -14,10 +14,8 @@ endif
 
 if ANDROID_SO
 ANDROID_LIBS_CFLAGS = -Wl,-llog -Wl,-landroid
-ANDROID_LIBS = -llog -landroid
 else
 ANDROID_LIBS_CFLAGS =
-ANDROID_LIBS =
 endif
 
 
@@ -168,6 +166,9 @@ libbtc_la_SOURCES += \
     src/protocol.c
 
 libbtc_la_LIBADD += $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
+if ANDROID_SO
+libbtc_la_LIBADD += -landroid -llog 
+endif
 libbtc_la_CFLAGS += $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2
 libbtc_la_LDFLAGS = -static
 
@@ -188,7 +189,7 @@ tests_SOURCES += \
 endif
 instdir=$(prefix)/bin
 inst_PROGRAMS = bitcointool
-bitcointool_LDADD = libbtc.la $(ANDROID_LIBS)
+bitcointool_LDADD = libbtc.la -landroid -llog
 bitcointool_SOURCES = \
     src/tools/bitcointool.c
 bitcointool_CFLAGS = $(libbtc_la_CFLAGS) -O2
@@ -197,7 +198,7 @@ bitcointool_LDFLAGS = -static
 
 if WITH_NET
 inst_PROGRAMS += bitcoin-send-tx
-bitcoin_send_tx_LDADD = libbtc.la $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ANDROID_LIBS)
+bitcoin_send_tx_LDADD = libbtc.la $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
 bitcoin_send_tx_SOURCES = \
     src/tools/bitcoin-send-tx.c
 bitcoin_send_tx_CFLAGS = $(libbtc_la_CFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2 
