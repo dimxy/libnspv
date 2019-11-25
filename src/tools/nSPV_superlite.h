@@ -306,178 +306,182 @@ int32_t validate_notarization(bits256 notarization, uint32_t timestamp)
     return(retval);
 }
 
-void komodo_nSPVresp(btc_node *from,uint8_t *response,int32_t len) 
+void komodo_nSPVresp(btc_node *from, uint8_t *response, int32_t len)
 {
     struct NSPV_inforesp I; struct NSPV_txproof tmp_txproofresult;
-    char str[65],str2[65]; uint32_t timestamp = (uint32_t)time(NULL);
+    char str[65], str2[65]; uint32_t timestamp = (uint32_t)time(NULL);
     const btc_chainparams *chain = from->nodegroup->chainparams; int32_t lag;
     //sprintf(NSPV_lastpeer,"nodeid.%d",from->nodeid);
-    strcpy(NSPV_lastpeer,from->ipaddr);
-    if ( len > 0 )
+    strcpy(NSPV_lastpeer, from->ipaddr);
+    if (len > 0)
     {
         NSPV_totalrecv += len;
-        switch ( response[0] )
+        switch (response[0])
         {
-            case NSPV_INFORESP:
-                I = NSPV_inforesult;
+        case NSPV_INFORESP:
+            I = NSPV_inforesult;
+            NSPV_inforesp_purge(&NSPV_inforesult);
+            NSPV_rwinforesp(0, &response[1], &NSPV_inforesult, len);
+            //nspv_log_message("got info version.%d response %u from.%d size.%d hdrheight.%d \n",NSPV_inforesult.version,timestamp,from->nodeid,len,NSPV_inforesult.hdrheight); // update current height and ntrz status
+            bits256 hdrhash = NSPV_hdrhash(&(NSPV_inforesult.H));
+            // update node version. 
+            from->version = NSPV_inforesult.version;
+            if (from->version < NSPV_PROTOCOL_VERSION)
+            {
+                from->banscore += 11;
+                nspv_log_message("[NODE:%i] %s is old version.%d < %d \n", from->nodeid, from->ipaddr, from->version, NSPV_PROTOCOL_VERSION);
+                return;
+            }
+            // insert block header into array 
+            if (NSPV_inforesult.hdrheight >= NSPV_lastntz.height && havehdr(hdrhash) == -1)
+            {
+                // empty half the array to prevent trying to over fill it. 
+                if (NSPV_num_headers == NSPV_MAX_BLOCK_HEADERS)
+                {
+                    nspv_log_message("array of headers is full,clearing before height.%i\n", I.height - (NSPV_MAX_BLOCK_HEADERS >> 1));
+                    reset_headers(I.height - (NSPV_MAX_BLOCK_HEADERS >> 1));
+                }
+                //fprintf(stderr, "added  block.%i\n", NSPV_inforesult.hdrheight);
+                NSPV_blockheaders[NSPV_num_headers].height = NSPV_inforesult.hdrheight;
+                NSPV_blockheaders[NSPV_num_headers].blockhash = hdrhash;
+                NSPV_blockheaders[NSPV_num_headers].hashPrevBlock = NSPV_inforesult.H.hashPrevBlock;
+                NSPV_num_headers++;
+            }
+            if ((lag = I.height - NSPV_inforesult.height) > 0)
+            {
                 NSPV_inforesp_purge(&NSPV_inforesult);
-                NSPV_rwinforesp(0,&response[1],&NSPV_inforesult,len);
-                //fprintf(stderr,"got info version.%d response %u from.%d size.%d hdrheight.%d \n",NSPV_inforesult.version,timestamp,from->nodeid,len,NSPV_inforesult.hdrheight); // update current height and ntrz status
-                bits256 hdrhash = NSPV_hdrhash(&(NSPV_inforesult.H));
-                // update node version. 
-                from->version = NSPV_inforesult.version;
-                if  ( from->version < NSPV_PROTOCOL_VERSION )
+                NSPV_inforesult = I;
+                if (IS_IN_SYNC == 1 && lag > 2)
                 {
-                    from->banscore += 11;
-                    fprintf(stderr,"[NODE:%i] %s is old version.%d < %d \n",from->nodeid,from->ipaddr,from->version, NSPV_PROTOCOL_VERSION);
-                    return;
+                    from->banscore += lag;
+                    nspv_log_message("[NODE:%i] is not in sync lag.%i, banscore.%i\n", from->nodeid, lag, from->banscore);
                 }
-                // insert block header into array 
-                if ( NSPV_inforesult.hdrheight >= NSPV_lastntz.height && havehdr(hdrhash) == -1 )
+            }
+            else
+            {
+                if (NSPV_inforesult.height > I.height)
+                    nspv_log_message("[NODE:%i] ht.%i hdrheight.%i lastntzht.%i esthdrleft.%i\n", from->nodeid, NSPV_inforesult.height, NSPV_inforesult.hdrheight, NSPV_lastntz.height, check_headers(1));
+                // fetch the notarization tx to validate it when it arives. 
+                if (NSPV_lastntz.height < NSPV_inforesult.notarization.height)
                 {
-                    // empty half the array to prevent trying to over fill it. 
-                    if ( NSPV_num_headers == NSPV_MAX_BLOCK_HEADERS )
+                    static int32_t counter = 0;
+                    if (counter < 1)
+                        NSPV_txproof(0, NSPV_client, 0, NSPV_inforesult.notarization.txid, -1);
+                    counter++;
+                    if (counter > 5)
+                        counter = 0;
+                }
+                // if we have enough headers and they validate back to the last notarization update the tiptime/synced chain status
+                if (check_headers(0) == 0 && validate_headers(NSPV_inforesult.blockhash) != 0)
+                {
+                    //fprintf(stderr, "[NODE:%i] validated header at height.%i \n",from->nodeid, NSPV_inforesult.height);
+                    NSPV_tiptime = NSPV_inforesult.H.nTime;
+                    IS_IN_SYNC = 1;
+                    if (NSPV_inforesult.height > (int32_t)from->bestknownheight)
+                        from->bestknownheight = NSPV_inforesult.height;
+                    if (NSPV_inforesult.height > NSPV_longestchain)
                     {
-                        fprintf(stderr, "array of headers is full,clearing before height.%i\n", I.height-(NSPV_MAX_BLOCK_HEADERS>>1));
-                        reset_headers(I.height-(NSPV_MAX_BLOCK_HEADERS>>1));
+                        nspv_log_message(">>>>>>>>>> longestchain.%i fromnode.%i runtime.%us\n", NSPV_inforesult.height, from->nodeid, (uint32_t)time(NULL) - starttime);
+                        NSPV_longestchain = NSPV_inforesult.height;
                     }
-                    //fprintf(stderr, "added  block.%i\n", NSPV_inforesult.hdrheight);
-                    NSPV_blockheaders[NSPV_num_headers].height = NSPV_inforesult.hdrheight;
-                    NSPV_blockheaders[NSPV_num_headers].blockhash = hdrhash;
-                    NSPV_blockheaders[NSPV_num_headers].hashPrevBlock = NSPV_inforesult.H.hashPrevBlock;
-                    NSPV_num_headers++;
                 }
-                if ( (lag= I.height-NSPV_inforesult.height) > 0 )
+                else if (IS_IN_SYNC == 1)
                 {
+                    // we dont update the chain tip if it cannot be linked back to last notarization
                     NSPV_inforesp_purge(&NSPV_inforesult);
                     NSPV_inforesult = I;
-                    if ( IS_IN_SYNC == 1 && lag > 2 )
+                    // set in sync false, so we can try and fetch more previous headers to get back in sync. 
+                    IS_IN_SYNC = 0;
+                }
+                else IS_IN_SYNC = 0;
+                if (IS_IN_SYNC == 1)
+                {
+                    // validate the block header sent is in the main chain.
+                    if (validate_headers(hdrhash) == 0)
                     {
-                        from->banscore += lag;
-                        fprintf(stderr, "[NODE:%i] is not in sync lag.%i, banscore.%i\n",from->nodeid, lag, from->banscore);
+                        from->banscore += 1;
+                        nspv_log_message("[%s] sent invalid header banscore.%i\n", from->ipaddr, from->banscore);
+                    }
+                }
+            }
+            break;
+        case NSPV_UTXOSRESP:
+            NSPV_utxosresp_purge(&NSPV_utxosresult);
+            NSPV_rwutxosresp(0, &response[1], &NSPV_utxosresult);
+            nspv_log_message("got utxos response %s %u size.%d numtxos.%d\n", from->ipaddr, timestamp, len, NSPV_utxosresult.numutxos);
+            if (NSPV_utxosresult.nodeheight >= NSPV_inforesult.height)
+            {
+                NSPV_balance = NSPV_utxosresult.total;
+                NSPV_rewards = NSPV_utxosresult.interest;
+            }
+            break;
+        case NSPV_TXIDSRESP:
+            NSPV_txidsresp_purge(&NSPV_txidsresult);
+            NSPV_rwtxidsresp(0, &response[1], &NSPV_txidsresult);
+            nspv_log_message("got txids response %u size.%d %s CC.%d num.%d\n", timestamp, len, NSPV_txidsresult.coinaddr, NSPV_txidsresult.CCflag, NSPV_txidsresult.numtxids);
+            break;
+        case NSPV_MEMPOOLRESP:
+            NSPV_mempoolresp_purge(&NSPV_mempoolresult);
+            NSPV_rwmempoolresp(0, &response[1], &NSPV_mempoolresult);
+            nspv_log_message("got mempool response %s %u size.%d (%s) CC.%d num.%d memfunc.%d %s/v%d\n", from->ipaddr, timestamp, len, NSPV_mempoolresult.coinaddr, NSPV_mempoolresult.CCflag, NSPV_mempoolresult.numtxids, NSPV_mempoolresult.memfunc, bits256_str(str, NSPV_mempoolresult.txid), NSPV_mempoolresult.vout);
+            break;
+        case NSPV_NTZSRESP:
+            NSPV_ntzsresp_purge(&NSPV_ntzsresult);
+            NSPV_rwntzsresp(0, &response[1], &NSPV_ntzsresult);
+            if (NSPV_ntzsresp_find(NSPV_ntzsresult.reqheight) == 0)
+                NSPV_ntzsresp_add(&NSPV_ntzsresult);
+            nspv_log_message("got ntzs response %u size.%d %s prev.%d, %s next.%d\n", timestamp, len, bits256_str(str, NSPV_ntzsresult.prevntz.txid), NSPV_ntzsresult.prevntz.height, bits256_str(str2, NSPV_ntzsresult.nextntz.txid), NSPV_ntzsresult.nextntz.height);
+            break;
+        case NSPV_NTZSPROOFRESP:
+            NSPV_ntzsproofresp_purge(&NSPV_ntzsproofresult);
+            NSPV_rwntzsproofresp(0, &response[1], &NSPV_ntzsproofresult);
+            if (NSPV_ntzsproof_find(NSPV_ntzsproofresult.prevtxid, NSPV_ntzsproofresult.nexttxid) == 0)
+                NSPV_ntzsproof_add(&NSPV_ntzsproofresult);
+            nspv_log_message("got ntzproof response %u size.%d prev.%d next.%d\n", timestamp, len, NSPV_ntzsproofresult.common.prevht, NSPV_ntzsproofresult.common.nextht);
+            break;
+        case NSPV_TXPROOFRESP:
+            tmp_txproofresult = NSPV_txproofresult;
+            NSPV_txproof_purge(&NSPV_txproofresult);
+            NSPV_rwtxproof(0, &response[1], &NSPV_txproofresult);
+            if (bits256_nonz(NSPV_txproofresult.txid) != 0)
+            {
+                // validate the notarization transaction that was fetched. 
+                if (bits256_cmp(NSPV_txproofresult.txid, NSPV_inforesult.notarization.txid) == 0)
+                {
+                    if (validate_notarization(NSPV_inforesult.notarization.txid, NSPV_inforesult.notarization.timestamp) != 0)
+                    {
+                        NSPV_lastntz = NSPV_inforesult.notarization;
+                        NSPV_hdrheight_counter = NSPV_lastntz.height;
+                        reset_headers(NSPV_lastntz.height);
+                        nspv_log_message("new notarization at height.%i\n", NSPV_lastntz.height);
                     }
                 }
                 else
-                {
-                    if ( NSPV_inforesult.height > I.height )
-                        fprintf(stderr, "[NODE:%i] ht.%i hdrheight.%i lastntzht.%i esthdrleft.%i\n",from->nodeid, NSPV_inforesult.height, NSPV_inforesult.hdrheight, NSPV_lastntz.height, check_headers(1));
-                    // fetch the notarization tx to validate it when it arives. 
-                    if ( NSPV_lastntz.height < NSPV_inforesult.notarization.height )
-                    {
-                        static int32_t counter = 0;
-                        if ( counter < 1 )
-                            NSPV_txproof(0,NSPV_client, 0, NSPV_inforesult.notarization.txid, -1);
-                        counter++;
-                        if ( counter > 5 ) 
-                            counter = 0;
-                    }
-                    // if we have enough headers and they validate back to the last notarization update the tiptime/synced chain status
-                    if ( check_headers(0) == 0 && validate_headers(NSPV_inforesult.blockhash) != 0 )
-                    {
-                        //fprintf(stderr, "[NODE:%i] validated header at height.%i \n",from->nodeid, NSPV_inforesult.height);
-                        NSPV_tiptime = NSPV_inforesult.H.nTime;
-                        IS_IN_SYNC = 1;
-                        if ( NSPV_inforesult.height > (int32_t)from->bestknownheight )
-                            from->bestknownheight = NSPV_inforesult.height;
-                        if ( NSPV_inforesult.height > NSPV_longestchain )
-                        {
-                            fprintf(stderr, ">>>>>>>>>> longestchain.%i fromnode.%i runtime.%us\n",NSPV_inforesult.height,from->nodeid,(uint32_t)time(NULL)-starttime);
-                            NSPV_longestchain = NSPV_inforesult.height;
-                        }
-                    } 
-                    else if ( IS_IN_SYNC == 1 )
-                    {
-                        // we dont update the chain tip if it cannot be linked back to last notarization
-                        NSPV_inforesp_purge(&NSPV_inforesult);
-                        NSPV_inforesult = I;
-                        // set in sync false, so we can try and fetch more previous headers to get back in sync. 
-                        IS_IN_SYNC = 0;
-                    }
-                    else IS_IN_SYNC = 0;
-                    if ( IS_IN_SYNC == 1 )
-                    {
-                        // validate the block header sent is in the main chain.
-                        if ( validate_headers(hdrhash) == 0 )
-                        {
-                            from->banscore += 1;
-                            fprintf(stderr, "[%s] sent invalid header banscore.%i\n",from->ipaddr, from->banscore);
-                        }
-                    }
-                }
-                break;
-            case NSPV_UTXOSRESP:
-                NSPV_utxosresp_purge(&NSPV_utxosresult);
-                NSPV_rwutxosresp(0,&response[1],&NSPV_utxosresult);
-                fprintf(stderr,"got utxos response %s %u size.%d numtxos.%d\n",from->ipaddr,timestamp,len,NSPV_utxosresult.numutxos);
-                if ( NSPV_utxosresult.nodeheight >= NSPV_inforesult.height )
-                {
-                    NSPV_balance = NSPV_utxosresult.total;
-                    NSPV_rewards = NSPV_utxosresult.interest;
-                }
-                break;
-            case NSPV_TXIDSRESP:
-                NSPV_txidsresp_purge(&NSPV_txidsresult);
-                NSPV_rwtxidsresp(0,&response[1],&NSPV_txidsresult);
-                fprintf(stderr,"got txids response %u size.%d %s CC.%d num.%d\n",timestamp,len,NSPV_txidsresult.coinaddr,NSPV_txidsresult.CCflag,NSPV_txidsresult.numtxids);
-                break;
-            case NSPV_MEMPOOLRESP:
-                NSPV_mempoolresp_purge(&NSPV_mempoolresult);
-                NSPV_rwmempoolresp(0,&response[1],&NSPV_mempoolresult);
-                fprintf(stderr,"got mempool response %s %u size.%d (%s) CC.%d num.%d memfunc.%d %s/v%d\n",from->ipaddr,timestamp,len,NSPV_mempoolresult.coinaddr,NSPV_mempoolresult.CCflag,NSPV_mempoolresult.numtxids,NSPV_mempoolresult.memfunc,bits256_str(str,NSPV_mempoolresult.txid),NSPV_mempoolresult.vout);
-                break;
-            case NSPV_NTZSRESP:
-                NSPV_ntzsresp_purge(&NSPV_ntzsresult);
-                NSPV_rwntzsresp(0,&response[1],&NSPV_ntzsresult);
-                if ( NSPV_ntzsresp_find(NSPV_ntzsresult.reqheight) == 0 )
-                    NSPV_ntzsresp_add(&NSPV_ntzsresult);
-                fprintf(stderr,"got ntzs response %u size.%d %s prev.%d, %s next.%d\n",timestamp,len,bits256_str(str,NSPV_ntzsresult.prevntz.txid),NSPV_ntzsresult.prevntz.height,bits256_str(str2,NSPV_ntzsresult.nextntz.txid),NSPV_ntzsresult.nextntz.height);
-                break;
-            case NSPV_NTZSPROOFRESP:
-                NSPV_ntzsproofresp_purge(&NSPV_ntzsproofresult);
-                NSPV_rwntzsproofresp(0,&response[1],&NSPV_ntzsproofresult);
-                if ( NSPV_ntzsproof_find(NSPV_ntzsproofresult.prevtxid,NSPV_ntzsproofresult.nexttxid) == 0 )
-                    NSPV_ntzsproof_add(&NSPV_ntzsproofresult);
-                fprintf(stderr,"got ntzproof response %u size.%d prev.%d next.%d\n",timestamp,len,NSPV_ntzsproofresult.common.prevht,NSPV_ntzsproofresult.common.nextht);
-                break;
-            case NSPV_TXPROOFRESP:
-                tmp_txproofresult = NSPV_txproofresult;
-                NSPV_txproof_purge(&NSPV_txproofresult);
-                NSPV_rwtxproof(0,&response[1],&NSPV_txproofresult);
-                if ( bits256_nonz(NSPV_txproofresult.txid) != 0 )
-                {
-                    // validate the notarization transaction that was fetched. 
-                    if ( bits256_cmp(NSPV_txproofresult.txid, NSPV_inforesult.notarization.txid) == 0 ) 
-                    {
-                        if ( validate_notarization(NSPV_inforesult.notarization.txid, NSPV_inforesult.notarization.timestamp) != 0 )
-                        {
-                            NSPV_lastntz = NSPV_inforesult.notarization;
-                            NSPV_hdrheight_counter = NSPV_lastntz.height;
-                            reset_headers(NSPV_lastntz.height);
-                            fprintf(stderr, "new notarization at height.%i\n", NSPV_lastntz.height);
-                        }
-                    }
-                    else if ( NSPV_txproof_find(NSPV_txproofresult.txid,NSPV_txproofresult.height) == 0 )
+                    if (NSPV_txproof_find(NSPV_txproofresult.txid, NSPV_txproofresult.height) == 0)
                         NSPV_txproof_add(&NSPV_txproofresult);
-                } else NSPV_txproofresult = tmp_txproofresult;
-                fprintf(stderr,"got txproof response %u size.%d %s ht.%d\n",timestamp,len,bits256_str(str,NSPV_txproofresult.txid),NSPV_txproofresult.height);
-                break;
-            case NSPV_SPENTINFORESP:
-                NSPV_spentinfo_purge(&NSPV_spentresult);
-                NSPV_rwspentinfo(0,&response[1],&NSPV_spentresult);
-                fprintf(stderr,"got spentinfo response %u size.%d\n",timestamp,len);
-                break;
-            case NSPV_BROADCASTRESP:
-                NSPV_broadcast_purge(&NSPV_broadcastresult);
-                NSPV_rwbroadcastresp(0,&response[1],&NSPV_broadcastresult);
-                fprintf(stderr,"got broadcast response %u size.%d %s retcode.%d\n",timestamp,len,bits256_str(str,NSPV_broadcastresult.txid),NSPV_broadcastresult.retcode);
-                break;
-            case NSPV_REMOTERPCRESP:
-                NSPV_remoterpc_purge(&NSPV_remoterpcresult);
-                NSPV_rwremoterpcresp(0,&response[1],&NSPV_remoterpcresult,len-1);
-                fprintf(stderr,"got remoterpc response %u size.%d %s\n",timestamp,len,NSPV_remoterpcresult.method);
-                break;
-            default: fprintf(stderr,"unexpected response %02x size.%d at %u\n",response[0],len,timestamp);
-                break;
+            }
+            else
+                NSPV_txproofresult = tmp_txproofresult;
+            nspv_log_message("got txproof response %u size.%d %s ht.%d\n", timestamp, len, bits256_str(str, NSPV_txproofresult.txid), NSPV_txproofresult.height);
+            break;
+        case NSPV_SPENTINFORESP:
+            NSPV_spentinfo_purge(&NSPV_spentresult);
+            NSPV_rwspentinfo(0, &response[1], &NSPV_spentresult);
+            nspv_log_message("got spentinfo response %u size.%d\n", timestamp, len);
+            break;
+        case NSPV_BROADCASTRESP:
+            NSPV_broadcast_purge(&NSPV_broadcastresult);
+            NSPV_rwbroadcastresp(0, &response[1], &NSPV_broadcastresult);
+            nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, NSPV_broadcastresult.txid), NSPV_broadcastresult.retcode);
+            break;
+        case NSPV_REMOTERPCRESP:
+            NSPV_remoterpc_purge(&NSPV_remoterpcresult);
+            NSPV_rwremoterpcresp(0, &response[1], &NSPV_remoterpcresult, len - 1);
+            nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, NSPV_remoterpcresult.method);
+            break;
+        default:
+            nspv_log_message("unexpected response %02x size.%d at %u\n", response[0], len, timestamp);
+            break;
         }
     }
 }
@@ -966,7 +970,7 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
             }
         }
     } else sleep(1);
-    nspv_log_message("%s NSPV_req returned null", __func__);
+    nspv_log_message("%s returning null", __func__);
     free(msg);
     return (NULL);
 }

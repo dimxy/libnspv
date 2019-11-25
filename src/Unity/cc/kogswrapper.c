@@ -224,6 +224,12 @@ unity_int32_t LIBNSPV_API uplugin_TxnsCount(void *inPtr, unity_int32_t *pcount, 
 // kogslist rpc wrapper
 unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
 {
+    if (!kogs_plugin_mutex_init) {
+        strcpy(errorStr, "not inited");
+        return -1;
+    }
+    portable_mutex_lock(&kogs_plugin_mutex);
+
     cJSON *rpcrequest = cJSON_CreateObject();
     cJSON *rpcresult = NULL;
     unity_int32_t retcode = 0;
@@ -237,41 +243,44 @@ unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr)
     strcpy(errorStr, "");
     *inPtrPtr = NULL;
 
-    if (rpcresult == NULL) {
-        strcpy(errorStr, "rpc result is null");
-        return -1;
-    }
+    if (rpcresult != NULL) {
 
-    if (cJSON_HasObjectItem(rpcresult, "kogids") &&
-        cJSON_IsArray(cJSON_GetObjectItem(rpcresult, "kogids")))  
-    {
-        HEXTX_ARRAY *phextxns = calloc(1, sizeof(HEXTX_ARRAY));
-        phextxns->count = cJSON_GetArraySize(rpcresult);
-        phextxns->txns = calloc(phextxns->count, sizeof(HEXTX));
-        for (int32_t i = 0; i < phextxns->count; i++) 
+        if (cJSON_HasObjectItem(rpcresult, "kogids") &&
+            cJSON_IsArray(cJSON_GetObjectItem(rpcresult, "kogids")))
         {
-            cJSON *item = cJSON_GetArrayItem(rpcresult, i);
-            if (cJSON_IsString(item)) {
-                // utils_uint256_sethex(item->valuestring, hextxns.txns[i].hextxid);
-                strncpy(phextxns->txns[i].hextxid, item->valuestring, sizeof(phextxns->txns[i].hextxid));
-                nspv_log_message("%s item->valuestring=%s", __func__, item->valuestring);
-            }
-            else
+            HEXTX_ARRAY *phextxns = calloc(1, sizeof(HEXTX_ARRAY));
+            phextxns->count = cJSON_GetArraySize(rpcresult);
+            phextxns->txns = calloc(phextxns->count, sizeof(HEXTX));
+            for (int32_t i = 0; i < phextxns->count; i++)
             {
-                nspv_log_message("uplugin_KogsList json item not string");
+                cJSON *item = cJSON_GetArrayItem(rpcresult, i);
+                if (cJSON_IsString(item)) {
+                    // utils_uint256_sethex(item->valuestring, hextxns.txns[i].hextxid);
+                    strncpy(phextxns->txns[i].hextxid, item->valuestring, sizeof(phextxns->txns[i].hextxid));
+                    nspv_log_message("%s item->valuestring=%s", __func__, item->valuestring);
+                }
+                else
+                {
+                    nspv_log_message("uplugin_KogsList json item not string");
+                }
             }
+            *inPtrPtr = phextxns;
         }
-        *inPtrPtr = phextxns;
+        else
+        {
+            strcpy(errorStr, "no kogids array returned in rpc result");
+            retcode = -1;
+        }
     }
-    else
-    {
-        strcpy(errorStr, "no kogids array returned in rpc result");
+    else {
+        strcpy(errorStr, "rpc result is null");
         retcode = -1;
     }
     cJSON_Delete(rpcrequest);
     cJSON_Delete(rpcresult);
        
     nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
+    portable_mutex_unlock(&kogs_plugin_mutex);
     return retcode;
 }
 
