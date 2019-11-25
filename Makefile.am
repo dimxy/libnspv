@@ -189,7 +189,7 @@ inst_PROGRAMS = bitcointool
 bitcointool_LDADD = libbtc.la
 bitcointool_SOURCES = \
     src/tools/bitcointool.c
-bitcointool_CFLAGS = $(libbtc_la_CFLAGS) -O2
+bitcointool_CFLAGS = $(libbtc_la_CFLAGS) -O2 $(ANDROID_LIBS)
 bitcointool_CPPFLAGS = -I$(top_srcdir)/src
 bitcointool_LDFLAGS = -static
 
