@@ -537,7 +537,6 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
                 strncpy(errorStr, "cannot serialize 'result' object", WR_MAXERRORLEN);
             }
             nspv_log_message("%s json result=%s", __func__, jsonStr ? jsonStr : "null-ptr");
-            *resultPtrPtr = 
         }
         else
         {
