@@ -310,6 +310,8 @@ cJSON *NSPV_broadcast(btc_spv_client *client, char *hex);
 const btc_chainparams *NSPV_coinlist_scan(char *symbol, const btc_chainparams *template);
 void *NSPV_rpcloop(void *args);
 
+cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata);
+
 void nspv_log_message(const char *format, ...);
 
 #endif // KOMODO_NSPV_DEFSH

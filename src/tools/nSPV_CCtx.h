@@ -17,6 +17,7 @@
 #ifndef NSPV_CCTX_H
 #define NSPV_CCTX_H
 
+#include "nSPV_defs.h"
 #include "nSPV_CCUtils.h"
 // @blackjok3r and @mihailo implement the CC tx creation functions here
 // instead of a swissarmy knife finalizeCCtx, i think it is better to pass in the specific info needed into a CC signing function. this would eliminate the comparing to all the different possibilities
@@ -30,8 +31,11 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *err)
     int32_t i,n,vini; cstring *finalHex,*hex; cJSON *sigData=NULL; char ccerror[NSPV_MAXERRORLEN]; int64_t voutValue;
     
     if (!cJSON_HasObjectItem(txdata, "hex")) {
-        strncpy(err, "No field \"hex\" in JSON response from fullnode", NSPV_MAXERRORLEN);
+        // return(cstr_new("No field \"hex\" in JSON response from fullnode"));
+        nspv_log_message("%s No field \"hex\" in JSON response from fullnode", __func__);
+        return NULL;
     }
+
     hex=cstr_new(jstr(txdata,"hex"));
     cstr_append_c(hex,0);
     btc_tx *mtx=btc_tx_decodehex(hex->str);
@@ -60,8 +64,10 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *err)
             if (cond==NULL || ccerror[0])
             {
                 btc_tx_free(mtx);
-                if (cond) cc_free(cond);
-                strncpy(err, ccerror, NSPV_MAXERRORLEN);
+                if (cond) 
+                    cc_free(cond);
+                //return cstr_new(error);
+                nspv_log_message("%s cc error %s", __func__, error);
                 return NULL;
             }
             cstring *script=CCPubKey(cond);
@@ -84,7 +90,8 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *err)
             cstring *voutScriptPubkey=cstr_new((char *)utils_hex_to_uint8(jstr(item,"scriptPubKey")));
             if (NSPV_SignTx(mtx,vini,voutValue,voutScriptPubkey,0)==0)
             {
-                fprintf(stderr,"signing error for vini.%d\n",vini);
+                //fprintf(stderr,"signing error for vini.%d\n",vini);
+                nspv_log_message("signing error for vini.%d\n", vini);
                 cstr_free(voutScriptPubkey,1);
                 btc_tx_free(mtx);
                 snprintf(err, NSPV_MAXERRORLEN, "signing error for vini.%d", vini);

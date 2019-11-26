@@ -439,7 +439,7 @@ unity_int32_t LIBNSPV_API uplugin_GetTx(void *inPtr, unity_int32_t index, char *
 }
 */
 
-// kogslist rpc wrapper
+// cc rpc caller 
 unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **resultPtrPtr, char *errorStr)
 {
     char cc_error[WR_MAXCCERRORLEN];
@@ -449,6 +449,11 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
 
     if (!kogs_plugin_mutex_init) {
         strncpy(errorStr, "not inited", WR_MAXERRORLEN);
+        return -1;
+    }
+    if (init_state != WR_INITED) {
+        nspv_log_message("%s: exiting, state not inited", __func__);
+        strcpy(errorStr, "not inited");
         return -1;
     }
 
@@ -481,8 +486,9 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
 
     portable_mutex_lock(&kogs_plugin_mutex);
     jrpcresult = NSPV_remoterpccall(kogsclient, method, jrpcrequest);
-    nspv_log_message("%s rpcresult ptr=%p", __func__, jrpcresult);
     portable_mutex_unlock(&kogs_plugin_mutex);
+
+    nspv_log_message("%s rpcresult ptr=%p", __func__, jrpcresult);
 
     strcpy(errorStr, "");
     *resultPtrPtr = NULL;
@@ -536,10 +542,109 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
         retcode = -1;
     }
     cJSON_Delete(jrpcrequest);
+    if (jparams)
+        cJSON_Delete(jparams);
    
     nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
     return retcode;
 }
+
+// FinalizeCCTx wrapper
+unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtrPtr, char *errorStr)
+{
+    unity_int32_t retcode = 0;
+
+    nspv_log_message("%s enterred", __func__);
+    strcpy(errorStr, "");
+    if (init_state != WR_INITED) {
+        nspv_log_message("%s: exiting, state not inited", __func__);
+        strcpy(errorStr, "not inited");
+        return -1;
+    }
+
+    if (txdataStr == NULL) {
+        strncpy(errorStr, "txdata is null", WR_MAXERRORLEN);
+        return -1;
+    }
+    if (resultPtrPtr == NULL) {
+        strncpy(errorStr, "resultPtrPtr is null", WR_MAXERRORLEN);
+        return -1;
+    }
+
+    *resultPtrPtr = NULL;
+
+    cJSON *jtxdata = cJSON_Parse(txdataStr);
+    if (jtxdata == NULL) {
+        strncpy(errorStr, "could not parse txdata", WR_MAXERRORLEN);
+        return -1;
+    }
+
+    cstring *cstrTx = FinalizeCCtx(kogsclient, jtxdata);
+    if (cstrTx != NULL) {
+        char *bufStr = malloc(cstrTx->len+1);
+        strcpy(bufStr, cstrTx->str);
+        *resultPtrPtr = bufStr;
+    }
+    else {
+        strncpy(errorStr, "could not sign tx", WR_MAXERRORLEN);
+        retcode = -1;
+    }
+    if (jtxdata)
+        cJSON_Delete(jtxdata);
+    if (cstrTx)
+        cstr_free(cstrTx, true);
+
+    nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
+    return retcode;
+}
+
+
+// BroadcastTx wrapper
+unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrPtr, char *errorStr)
+{
+    unity_int32_t retcode = 0;
+
+    nspv_log_message("%s enterred", __func__);
+    strcpy(errorStr, "");
+
+    if (!kogs_plugin_mutex_init) {
+        strncpy(errorStr, "not inited", WR_MAXERRORLEN);
+        return -1;
+    }
+    if (init_state != WR_INITED) {
+        nspv_log_message("%s: exiting, state not inited", __func__);
+        strcpy(errorStr, "not inited");
+        return -1;
+    }
+
+    if (txdataStr == NULL) {
+        strncpy(errorStr, "txdata is null", WR_MAXERRORLEN);
+        return -1;
+    }
+    if (resultPtrPtr == NULL) {
+        strncpy(errorStr, "resultPtrPtr is null", WR_MAXERRORLEN);
+        return -1;
+    }
+
+    *resultPtrPtr = NULL;
+
+    portable_mutex_lock(&kogs_plugin_mutex);
+    cJSON *jresult = NSPV_broadcast(NSPV_client, txdataStr);
+    portable_mutex_unlock(&kogs_plugin_mutex);
+    if (jresult != NULL) {
+        *resultPtrPtr = cJSON_Print(jresult);
+    }
+    else {
+        strncpy(errorStr, "broadcast result null", WR_MAXERRORLEN);
+        retcode = -1;
+    }
+    if (jresult)
+        cJSON_Delete(jresult);
+  
+    nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
+    return retcode;
+}
+
 
 // free mem allocated by wrapper
 void LIBNSPV_API uplugin_free(void *ptr)
@@ -585,3 +690,4 @@ void LIBNSPV_API uplugin_FinishNSPV()
     init_state = WR_NOT_INITED;
     nspv_log_message("%s exiting", __func__);
 }
+
