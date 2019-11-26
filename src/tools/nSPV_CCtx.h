@@ -41,12 +41,14 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *err)
     btc_tx *mtx=btc_tx_decodehex(hex->str);
     cstr_free(hex,1);
     if (!mtx) {
-        strncpy(err, "Invalid hex in JSON response from fullnode", NSPV_MAXERRORLEN);
+        nspv_log_message("%s Invalid hex tx in JSON response from fullnode (could not parse into mtx)", __func__);
+        //return(cstr_new("Invalid hex in JSON response from fullnode"));
         return NULL;
     }
     sigData=jarray(&n,txdata,"SigData");
     if (!sigData) {
-        strncpy(err, "No field \"SigData\" in JSON response from fullnode", NSPV_MAXERRORLEN);
+        nspv_log_message("%s No field \"SigData\" in JSON response from fullnode", __func__);
+        // return(cstr_new("No field \"SigData\" in JSON response from fullnode"));
         return NULL;
     }
     for (i=0; i<n; i++)
