@@ -473,6 +473,7 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
 
         if (jparams != NULL && !cJSON_IsArray(jparams)) {
             strncpy(errorStr, "params not an array", WR_MAXERRORLEN);
+            cJSON_Delete(jparams);
             return -1;
         }
     }
@@ -482,7 +483,7 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
 
     jaddstr(jrpcrequest, "method", method);
     if (jparams)
-        jadd(jrpcrequest, params, jparams); // add params if it is parsed array
+        jadd(jrpcrequest, params, jparams); // add params if it is valid array
 
     portable_mutex_lock(&kogs_plugin_mutex);
     jrpcresult = NSPV_remoterpccall(kogsclient, method, jrpcrequest);
@@ -527,8 +528,16 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
                 strncpy(errorStr, "no kogids array returned in rpc result", WR_MAXERRORLEN);
                 retcode = -1;
             } */
-            *resultPtrPtr = cJSON_Print(jresult);
-            nspv_log_message("%s json result=%s", __func__, (char*)*resultPtrPtr);
+            char *jsonStr = cJSON_Print(jresult);
+            if (jsonStr != NULL) {
+                *resultPtrPtr = jsonStr;
+            }
+            else {
+                retcode = -1;
+                strncpy(errorStr, "cannot serialize 'result' object", WR_MAXERRORLEN);
+            }
+            nspv_log_message("%s json result=%s", __func__, jsonStr ? jsonStr : "null-ptr");
+            *resultPtrPtr = 
         }
         else
         {
@@ -538,12 +547,14 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
         cJSON_Delete(jrpcresult);
     }
     else {
-        strncpy(errorStr, "rpc result is null", WR_MAXERRORLEN);
+        snprintf(errorStr, WR_MAXERRORLEN, "rpc result invalid %s", cc_error);
         retcode = -1;
     }
     cJSON_Delete(jrpcrequest);
-    if (jparams)
-        cJSON_Delete(jparams);
+
+    // dont do delete as we added it to jrpcrequest!
+    // if (jparams)
+    //    cJSON_Delete(jparams);
    
     nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
     return retcode;
