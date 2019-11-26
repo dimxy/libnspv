@@ -17,6 +17,7 @@
 #ifndef NSPV_CCTX_H
 #define NSPV_CCTX_H
 
+#include "nSPV_defs.h"
 #include "nSPV_CCUtils.h"
 // @blackjok3r and @mihailo implement the CC tx creation functions here
 // instead of a swissarmy knife finalizeCCtx, i think it is better to pass in the specific info needed into a CC signing function. this would eliminate the comparing to all the different possibilities
@@ -29,7 +30,12 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
 {
     int32_t i,n,vini; cstring *finalHex,*hex; cJSON *sigData=NULL; char error[256]; int64_t voutValue;
     
-    if (!cJSON_HasObjectItem(txdata,"hex")) return(cstr_new("No field \"hex\" in JSON response from fullnode"));
+    if (!cJSON_HasObjectItem(txdata, "hex")) {
+        // return(cstr_new("No field \"hex\" in JSON response from fullnode"));
+        nspv_log_message("%s No field \"hex\" in JSON response from fullnode", __func__);
+        return NULL;
+    }
+
     hex=cstr_new(jstr(txdata,"hex"));
     cstr_append_c(hex,0);
     btc_tx *mtx=btc_tx_decodehex(hex->str);
@@ -52,8 +58,11 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
             if (cond==NULL || error[0])
             {
                 btc_tx_free(mtx);
-                if (cond) cc_free(cond);
-                return cstr_new(error);
+                if (cond) 
+                    cc_free(cond);
+                //return cstr_new(error);
+                nspv_log_message("%s cc error %s", __func__, error);
+                return NULL;
             }
             cstring *script=CCPubKey(cond);
             sigHash=NSPV_sapling_sighash(mtx,vini,voutValue,(unsigned char *)script->str,script->len);
@@ -75,10 +84,12 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
             cstring *voutScriptPubkey=cstr_new((char *)utils_hex_to_uint8(jstr(item,"scriptPubKey")));
             if (NSPV_SignTx(mtx,vini,voutValue,voutScriptPubkey,0)==0)
             {
-                fprintf(stderr,"signing error for vini.%d\n",vini);
+                //fprintf(stderr,"signing error for vini.%d\n",vini);
+                nspv_log_message("signing error for vini.%d\n", vini);
                 cstr_free(voutScriptPubkey,1);
                 btc_tx_free(mtx);
-                return(cstr_new(""));
+                // return(cstr_new(""));
+                return NULL;
             }
             cstr_free(voutScriptPubkey,1);
         }
