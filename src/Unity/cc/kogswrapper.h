@@ -22,8 +22,16 @@
 
 #define WR_MAXCHAINNAMELEN 64
 #define WR_MAXERRORLEN 128
-typedef int32_t unity_int32_t;
+#define WR_MAXCCERRORLEN 64
 
+enum WR_INIT_STATE {
+    WR_NOT_INITED = 0,
+    WR_INITED,
+    WR_FINISHING
+};
+
+
+typedef int32_t unity_int32_t;
 
 #ifndef LIBNSPV_API
 #if defined(_WIN32)
@@ -45,8 +53,11 @@ extern "C" {
 
     // kogs wrapper functions:
     unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr);
-
+    unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr);
     unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr);
+    unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **resultPtrPtr, char *errorStr);
+    unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen, char *errorStr);
+    unity_int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *errorStr);
 
     void LIBNSPV_API uplugin_free(void *inPtr);
     void LIBNSPV_API uplugin_FinishNSPV();
