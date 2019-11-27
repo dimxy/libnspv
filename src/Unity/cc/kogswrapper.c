@@ -437,6 +437,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
         char *bufStr = malloc(cstrTx->len+1);
         strcpy(bufStr, cstrTx->str);
         *resultPtrPtr = bufStr;
+        nspv_log_message("%s signed tx=%s", __func__, bufStr);
     }
     else {
         strncpy(errorStr, "could not sign tx", WR_MAXERRORLEN);
