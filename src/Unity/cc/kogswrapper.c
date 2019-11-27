@@ -85,7 +85,6 @@ static void *run_spv_event_loop(btc_spv_client* client)
 // check cJSON result from libnspv
 static cJSON *check_jresult(cJSON *jmsg, char *error)
 {
-    cJSON *jccresult = NULL;
     strcpy(error, "");
     if (jmsg)
     {
@@ -123,7 +122,7 @@ static cJSON *check_jresult(cJSON *jmsg, char *error)
     else {
         strncpy(error, "null", WR_MAXCCERRORLEN);
     }
-    return false;
+    return NULL;
 }
 
 /*
@@ -321,130 +320,6 @@ unity_int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *error
     return retcode;
 }
 
-
-/*
-// access element count in HEXTX object
-unity_int32_t LIBNSPV_API uplugin_TxnsCount(void *inPtr, unity_int32_t *pcount, char *errorStr)
-{
-    unity_int32_t retcode = 0;
-
-    nspv_log_message("%s enterred", __func__);
-    strcpy(errorStr, "");
-
-    if (check_hextxns(inPtr)) 
-    {
-        HEXTX_ARRAY *phextxns = (HEXTX_ARRAY *)inPtr;
-        *pcount = phextxns->count;
-    }
-    else
-    {
-        strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
-        retcode = -1;
-    }
-    nspv_log_message("%s exiting retcode=%d", __func__, retcode);
-    return retcode;
-}
-
-// get a txid from hextxns struct
-unity_int32_t LIBNSPV_API uplugin_GetTxid(void *inPtr, unity_int32_t index, char *txidout, char *errorStr)
-{
-    unity_int32_t retcode = 0;
-
-    nspv_log_message("%s enterred", __func__);
-    strcpy(errorStr, "");
-
-    if (check_hextxns(inPtr)) 
-    {
-        HEXTX_ARRAY *phextxns = (HEXTX_ARRAY *)inPtr;
-        if (index >= 0 && index < phextxns->count)  {
-            strncpy(txidout, phextxns->txns[index].hextxid, HTXID_LEN);
-            txidout[HTXID_LEN] = '\0';
-        }
-        else {
-            strncpy(errorStr, "index out of range", WR_MAXERRORLEN);
-            retcode = -1;
-        }
-    }
-    else    {
-        strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
-        retcode = -1;
-    }
-    
-    nspv_log_message("%s exiting retcode=%d", __func__, retcode);
-    return retcode;
-}
-
-// get a hex tx len from hextxns struct
-unity_int32_t LIBNSPV_API uplugin_GetTxSize(void *inPtr, unity_int32_t index, unity_int32_t *txSize, char *errorStr)
-{
-    unity_int32_t retcode = 0;
-
-    nspv_log_message("%s enterred", __func__);
-    strcpy(errorStr, "");
-
-    if (check_hextxns(inPtr))
-    {
-        HEXTX_ARRAY *phextxns = (HEXTX_ARRAY *)inPtr;
-        if (index >= 0 && index < phextxns->count)
-        {
-            if (phextxns->txns[index].hextx)   {
-                *txSize = (unity_int32_t)strlen(phextxns->txns[index].hextx);
-            }
-            else   {
-                strncpy(errorStr, "tx is null", WR_MAXERRORLEN);
-                retcode = -1;
-            }
-        }
-        else {
-            strncpy(errorStr, "index out of range", WR_MAXERRORLEN);
-            retcode = -1;
-        }
-    }
-    else {
-        strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
-        retcode = -1;
-    }
-
-    nspv_log_message("%s exiting retcode=%d", __func__, retcode);
-    return retcode;
-}
-
-// get a hex tx into char buf from hextxns struct
-unity_int32_t LIBNSPV_API uplugin_GetTx(void *inPtr, unity_int32_t index, char *tx, char *errorStr)
-{
-    unity_int32_t retcode = 0;
-
-    nspv_log_message("%s enterred", __func__);
-    strcpy(errorStr, "");
-
-    if (check_hextxns(inPtr))
-    {
-        HEXTX_ARRAY *phextxns = (HEXTX_ARRAY *)inPtr;
-        if (index >= 0 && index < phextxns->count)
-        {
-            if (phextxns->txns[index].hextx)   {
-                strcpy(tx, phextxns->txns[index].hextx);
-            }
-            else   {
-                strncpy(errorStr, "tx is null", WR_MAXERRORLEN);
-                retcode = -1;
-            }
-        }
-        else {
-            strncpy(errorStr, "index out of range", WR_MAXERRORLEN);
-            retcode = -1;
-        }
-    }
-    else {
-        strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
-        retcode = -1;
-    }
-
-    nspv_log_message("%s exiting retcode=%d", __func__, retcode);
-    return retcode;
-}
-*/
-
 // cc rpc caller 
 unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **resultPtrPtr, char *errorStr)
 {
@@ -496,6 +371,9 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
     portable_mutex_unlock(&kogs_plugin_mutex);
 
     nspv_log_message("%s rpcresult ptr=%p", __func__, jrpcresult);
+    char *debStr = cJSON_Print(jrpcresult);
+    nspv_log_message("%s rpcresult str=%s", __func__, debStr ? debStr : "null-str");
+    if (debStr) cJSON_free(debStr);
 
     strcpy(errorStr, "");
     *resultPtrPtr = NULL;
