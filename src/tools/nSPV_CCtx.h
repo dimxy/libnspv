@@ -32,7 +32,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *err)
     
     if (!cJSON_HasObjectItem(txdata, "hex")) {
         // return(cstr_new("No field \"hex\" in JSON response from fullnode"));
-        nspv_log_message("%s No field \"hex\" in JSON response from fullnode", __func__);
+        nspv_log_message("%s No field \"hex\" in JSON response from fullnode\n", __func__);
         return NULL;
     }
 
@@ -41,13 +41,13 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *err)
     btc_tx *mtx=btc_tx_decodehex(hex->str);
     cstr_free(hex,1);
     if (!mtx) {
-        nspv_log_message("%s Invalid hex tx in JSON response from fullnode (could not parse into mtx)", __func__);
+        nspv_log_message("%s Invalid hex tx in JSON response from fullnode (could not parse into mtx)\n", __func__);
         //return(cstr_new("Invalid hex in JSON response from fullnode"));
         return NULL;
     }
     sigData=jarray(&n,txdata,"SigData");
     if (!sigData) {
-        nspv_log_message("%s No field \"SigData\" in JSON response from fullnode", __func__);
+        nspv_log_message("%s No field \"SigData\" in JSON response from fullnode\n", __func__);
         // return(cstr_new("No field \"SigData\" in JSON response from fullnode"));
         return NULL;
     }
@@ -69,7 +69,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *err)
                 if (cond) 
                     cc_free(cond);
                 //return cstr_new(error);
-                nspv_log_message("%s cc error %s", __func__, error);
+                nspv_log_message("%s cc error %s\n", __func__, error);
                 return NULL;
             }
             cstring *script=CCPubKey(cond);

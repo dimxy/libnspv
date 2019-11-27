@@ -111,11 +111,13 @@ static cJSON *check_jresult(cJSON *json, char *error)
             cJSON *jresult = cJSON_GetObjectItem(json, "result");
 
             // check if cc level error exists
-            if (cJSON_HasObjectItem(jresult, "error") &&
-                cJSON_GetObjectItem(jresult, "error")->valuestring != NULL)
+            if (cJSON_HasObjectItem(jresult, "error"))
             {
-                snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", cJSON_GetObjectItem(jresult, "error")->valuestring);
-                return NULL;
+                cJSON * jccerror = cJSON_GetObjectItem(jresult, "error");
+                if (cJSON_IsString(jccerror) && jccerror->valuestring != NULL) {
+                    snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", cJSON_GetObjectItem(jresult, "error")->valuestring);
+                    return NULL;
+                }
             }
             // application result exists and error is empty
 
@@ -360,7 +362,9 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
 
     nspv_log_message("%s rpcresult ptr=%p", __func__, jrpcresult);
     char *debStr = cJSON_Print(jrpcresult);
-    nspv_log_message("%s rpcresult str=%s", __func__, debStr ? debStr : "null-str");
+    nspv_log_message("%s rpcresult 1/2 str=%s", __func__, debStr ? debStr : "null-str");
+    nspv_log_message("%s rpcresult 2/2 str=%s", __func__, debStr ? debStr+980 : "null-str");
+
     if (debStr) cJSON_free(debStr);
 
     strcpy(errorStr, "");
@@ -475,7 +479,7 @@ unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrP
     *resultPtrPtr = NULL;
 
     portable_mutex_lock(&kogs_plugin_mutex);
-    cJSON *jresult = NSPV_broadcast(NSPV_client, txdataStr);
+    cJSON *jresult = NSPV_broadcast(kogsclient, txdataStr);
     portable_mutex_unlock(&kogs_plugin_mutex);
     if (jresult != NULL) {
         *resultPtrPtr = cJSON_Print(jresult);

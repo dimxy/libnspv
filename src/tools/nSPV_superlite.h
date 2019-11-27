@@ -176,7 +176,7 @@ btc_node *NSPV_req(btc_spv_client *client,btc_node *node,uint8_t *msg,int32_t le
     {
         memset(nodes,0,sizeof(nodes));
         n = 0;
-        nspv_log_message("%s nodes->len %d", __func__, client->nodegroup->nodes->len);
+        nspv_log_message("%s nodes->len %d\n", __func__, client->nodegroup->nodes->len);
         for (i=0; i<(int32_t)client->nodegroup->nodes->len; i++)
         {
             btc_node *ptr = vector_idx(client->nodegroup->nodes,i);
@@ -196,7 +196,7 @@ btc_node *NSPV_req(btc_spv_client *client,btc_node *node,uint8_t *msg,int32_t le
         }
         if (n > 0) {
             node = nodes[rand() % n];
-            nspv_log_message("%s selected node %s", __func__, node->ipaddr);
+            nspv_log_message("%s selected node %s\n", __func__, node->ipaddr);
         }
         client->nodegroup->NSPV_num_connected_nodes = n;
         
@@ -218,12 +218,12 @@ btc_node *NSPV_req(btc_spv_client *client,btc_node *node,uint8_t *msg,int32_t le
         //fprintf(stderr,"pushmessage [%d] len.%d\n",msg[1],len);
         node->prevtimes[ind] = timestamp;
         NSPV_totalsent += len;
-        nspv_log_message("%s request sent to node", __func__);
+        nspv_log_message("%s request sent to node\n", __func__);
         return(node);
     }
     else {
-        fprintf(stderr, "no nodes\n");
-        nspv_log_message("%s no nodes", __func__);
+        //fprintf(stderr, "no nodes\n");
+        nspv_log_message("%s no nodes\n", __func__);
     }
     return(0);
 }
@@ -927,13 +927,13 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
 {
     uint8_t *msg; int32_t i,iter,len,slen;
     char *pubkey=utils_uint8_to_hex(NSPV_pubkey.pubkey,33);
-    nspv_log_message("%s pubkey=%s", __func__, pubkey);  //TODO: remove
+    nspv_log_message("%s pubkey=%s\n", __func__, pubkey);  //TODO: remove
 
     jaddstr(request,"mypk",pubkey);
     NSPV_remoterpc_purge(&NSPV_remoterpcresult);
 
     char *json = cJSON_Print(request);
-    nspv_log_message("%s json=%p (%s)", __func__, json, json ? json : "<NULL>");  // TODO: remove
+    nspv_log_message("%s request json=%p (%s)\n", __func__, json, json ? json : "<NULL>");  // TODO: remove
     if (!json) 
         return (NULL);
 
