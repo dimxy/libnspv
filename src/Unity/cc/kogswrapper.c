@@ -93,16 +93,19 @@ static cJSON *check_jresult(cJSON *json, char *error)
         {
             cJSON * jerror = cJSON_GetObjectItem(json, "error");
             if (cJSON_IsObject(jerror)) {
+                // if like this:  { "error" : { "code" : -30020, "message" : "some-error-message" } }
                 cJSON * jerrMessage = cJSON_GetObjectItem(jerror, "message");
 
                 // add nspv error:
                 snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", (jerrMessage ? jerrMessage->valuestring : "null"));
+                return NULL;
             }
-            else {
+            else if (jerror->valuestring != NULL)   {
+                // { "error" : "some-error-message" } }
                 // add nspv error:
                 snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", jerror->valuestring ? jerror->valuestring : "null");
+                return NULL;
             }
-            return NULL;
         }
         
         if (cJSON_HasObjectItem(json, "result"))
