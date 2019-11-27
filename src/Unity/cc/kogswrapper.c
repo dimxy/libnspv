@@ -83,8 +83,9 @@ static void *run_spv_event_loop(btc_spv_client* client)
 // helpers:
 
 // check cJSON result from libnspv
-static btc_bool check_jresult(cJSON *jmsg, char *error)
+static cJSON *check_jresult(cJSON *jmsg, char *error)
 {
+    cJSON *jccresult = NULL;
     strcpy(error, "");
     if (jmsg)
     {
@@ -94,28 +95,33 @@ static btc_bool check_jresult(cJSON *jmsg, char *error)
         {
             // add nspv error:
             snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", cJSON_GetObjectItem(jmsg, "error")->valuestring);
-            return false;
+            return NULL;
         }
         
         if (cJSON_HasObjectItem(jmsg, "result"))
         { 
             // get app data container
-            cJSON *jccresult = cJSON_GetObjectItem(jmsg, "result");
+            cJSON *jresult = cJSON_GetObjectItem(jmsg, "result");
 
             // check if cc level error exists
-            if (cJSON_HasObjectItem(jccresult, "error") &&
-                cJSON_GetObjectItem(jccresult, "error")->valuestring != NULL)
+            if (cJSON_HasObjectItem(jresult, "error") &&
+                cJSON_GetObjectItem(jresult, "error")->valuestring != NULL)
             {
-                snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", cJSON_GetObjectItem(jccresult, "error")->valuestring);
-                return false;
+                snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", cJSON_GetObjectItem(jresult, "error")->valuestring);
+                return NULL;
             }
             // application result exists and error is empty
-            return true;
+
+            if (cJSON_IsObject(jresult))    // { "result" : { "result": "success", ...} }
+                return jresult;             
+            else                            // { "result": "success", "hex": "A356143FD..." }
+                return jmsg;
+
         }
-        strcpy(error, "no result object");
+        strncpy(error, "no result object", WR_MAXCCERRORLEN);
     }
     else {
-        strcpy(error, "null");
+        strncpy(error, "null", WR_MAXCCERRORLEN);
     }
     return false;
 }
@@ -494,55 +500,19 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
     strcpy(errorStr, "");
     *resultPtrPtr = NULL;
 
-    if (check_jresult(jrpcresult, cc_error))
+    cJSON *jresult;
+    if ((jresult = check_jresult(jrpcresult, cc_error)) != NULL)
     {
-        cJSON *jresult = cJSON_GetObjectItem(jrpcresult, "result");
-        if (jresult != NULL)
-        {
-/*          cJSON *jkogids = cJSON_GetObjectItem(jresult, "kogids");
-
-            if (jkogids && cJSON_IsArray(jkogids))
-            {
-                HEXTX_ARRAY *phextxns = create_new_hextxns();
-                phextxns->count = cJSON_GetArraySize(jkogids);
-                phextxns->txns = calloc(phextxns->count, sizeof(HEXTX));
-                for (int32_t i = 0; i < phextxns->count; i++)
-                {
-                    cJSON *item = cJSON_GetArrayItem(jkogids, i);
-                    if (cJSON_IsString(item)) 
-                    {
-                        // utils_uint256_sethex(item->valuestring, hextxns.txns[i].hextxid);
-                        strncpy(phextxns->txns[i].hextxid, item->valuestring, sizeof(phextxns->txns[i].hextxid));
-                        nspv_log_message("%s item->valuestring=%s", __func__, item->valuestring);
-                    }
-                    else
-                    {
-                        nspv_log_message("%s json array item not string", __func__);
-                    }
-                }
-                *inPtrPtr = phextxns;
-                
-            }
-            else
-            {
-                strncpy(errorStr, "no kogids array returned in rpc result", WR_MAXERRORLEN);
-                retcode = -1;
-            } */
-            char *jsonStr = cJSON_Print(jresult);
-            if (jsonStr != NULL) {
-                *resultPtrPtr = jsonStr;
-            }
-            else {
-                retcode = -1;
-                strncpy(errorStr, "cannot serialize 'result' object", WR_MAXERRORLEN);
-            }
-            nspv_log_message("%s json result=%s", __func__, jsonStr ? jsonStr : "null-ptr");
+        char *jsonStr = cJSON_Print(jresult);
+        if (jsonStr != NULL) {
+            *resultPtrPtr = jsonStr;
         }
-        else
-        {
-            strncpy(errorStr, "no 'result' item in rpc result", WR_MAXERRORLEN);
+        else {
             retcode = -1;
+            strncpy(errorStr, "cannot serialize 'result' object", WR_MAXERRORLEN);
         }
+        nspv_log_message("%s json result=%s", __func__, jsonStr ? jsonStr : "null-ptr");
+
         cJSON_Delete(jrpcresult);
     }
     else {
