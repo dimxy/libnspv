@@ -83,24 +83,32 @@ static void *run_spv_event_loop(btc_spv_client* client)
 // helpers:
 
 // check cJSON result from libnspv
-static cJSON *check_jresult(cJSON *jmsg, char *error)
+static cJSON *check_jresult(cJSON *json, char *error)
 {
     strcpy(error, "");
-    if (jmsg)
+    if (json)
     {
         // check if nspv level error exists
-        if (cJSON_HasObjectItem(jmsg, "error") &&
-            cJSON_GetObjectItem(jmsg, "error")->valuestring != NULL)
+        if (cJSON_HasObjectItem(json, "error"))
         {
-            // add nspv error:
-            snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", cJSON_GetObjectItem(jmsg, "error")->valuestring);
+            cJSON * jerror = cJSON_GetObjectItem(json, "error");
+            if (cJSON_IsObject(jerror)) {
+                cJSON * jerrMessage = cJSON_GetObjectItem(jerror, "message");
+
+                // add nspv error:
+                snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", (jerrMessage ? jerrMessage->valuestring : "null"));
+            }
+            else {
+                // add nspv error:
+                snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", jerror->valuestring ? jerror->valuestring : "null");
+            }
             return NULL;
         }
         
-        if (cJSON_HasObjectItem(jmsg, "result"))
+        if (cJSON_HasObjectItem(json, "result"))
         { 
             // get app data container
-            cJSON *jresult = cJSON_GetObjectItem(jmsg, "result");
+            cJSON *jresult = cJSON_GetObjectItem(json, "result");
 
             // check if cc level error exists
             if (cJSON_HasObjectItem(jresult, "error") &&
@@ -114,7 +122,7 @@ static cJSON *check_jresult(cJSON *jmsg, char *error)
             if (cJSON_IsObject(jresult))    // { "result" : { "result": "success", ...} }
                 return jresult;             
             else                            // { "result": "success", "hex": "A356143FD..." }
-                return jmsg;
+                return json;
 
         }
         strncpy(error, "no result object", WR_MAXCCERRORLEN);
@@ -125,27 +133,7 @@ static cJSON *check_jresult(cJSON *jmsg, char *error)
     return NULL;
 }
 
-/*
-// create new txns struct
-static HEXTX_ARRAY *create_new_hextxns()
-{
-    HEXTX_ARRAY *phextxns = calloc(1, sizeof(HEXTX_ARRAY));
-    strcpy(phextxns->magic, HTXN_MAGIC);
-    return phextxns;
-}
-
-// check if pointer to valid txns struct
-static int check_hextxns(const HEXTX_ARRAY *phextxns)
-{
-    if (phextxns && strcmp(phextxns->magic, HTXN_MAGIC) == 0)
-        return true;
-    else
-        return false;
-}*/
-
 // helpers end
-// helpers end
-
 
 // wrapper for NSPV library init
 unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
@@ -364,7 +352,7 @@ unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **
 
     jaddstr(jrpcrequest, "method", method);
     if (jparams)
-        jadd(jrpcrequest, params, jparams); // add params if it is valid array
+        jadd(jrpcrequest, "params", jparams); // add params if it is valid array
 
     portable_mutex_lock(&kogs_plugin_mutex);
     jrpcresult = NSPV_remoterpccall(kogsclient, method, jrpcrequest);
