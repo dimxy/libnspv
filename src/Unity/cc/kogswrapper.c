@@ -243,6 +243,7 @@ unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
 {
     unity_int32_t retcode = 0;
     char cc_error[WR_MAXCCERRORLEN];
+    nspv_log_message("%s enterred", __func__);
 
     if (!kogs_plugin_mutex_init) {
         strcpy(errorStr, "not inited");
@@ -253,11 +254,12 @@ unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
         nspv_log_message("%s %s", __func__, errorStr);
         return -1;
     }
-
-    portable_mutex_lock(&kogs_plugin_mutex);
     strcpy(errorStr, "");
 
+    portable_mutex_lock(&kogs_plugin_mutex);    
     cJSON *jresult = NSPV_login(kogschain, wifStr);
+    portable_mutex_unlock(&kogs_plugin_mutex);
+
     if (!check_jresult(jresult, cc_error)) {
         snprintf(errorStr, WR_MAXCCERRORLEN, "could not login to LibNSPV %s", cc_error);
         retcode = -1;
@@ -266,7 +268,9 @@ unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
     if (jresult)
         cJSON_Delete(jresult);
 
-    portable_mutex_unlock(&kogs_plugin_mutex);
+    
+    nspv_log_message("%s exiting retcode=%d", __func__, retcode);
+
     return retcode;
 }
 
@@ -425,6 +429,9 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
     }
 
     *resultPtrPtr = NULL;
+
+    nspv_log_message("%s source tx 1/2=%s", __func__, txdataStr);
+    nspv_log_message("%s source tx 2/2=%s", __func__, txdataStr + 982);
 
     cJSON *jtxdata = cJSON_Parse(txdataStr);
     if (jtxdata == NULL) {
