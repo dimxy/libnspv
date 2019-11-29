@@ -146,6 +146,15 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
     //char chainName[WR_MAXCHAINNAMELEN+1];
     unity_int32_t retcode = 0;
 
+#ifdef MINGW
+#include <unistd.h>
+    char cwd[256];
+    getcwd(cwd, sizeof(cwd));
+    nspv_log_message("%s cwd=%s", __func__, cwd);
+    snprintf(errorStr, "cwd=%d", cwd);
+    return -1;
+#endif
+
     strcpy(errorStr, "");
     nspv_log_message("%s entering, chainName=%s kogschain ptr=%p", __func__, chainName, kogschain);
 
@@ -160,9 +169,6 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
         portable_mutex_init(&kogs_plugin_mutex);
     }
     portable_mutex_lock(&kogs_plugin_mutex);
-
-    //wcscpy(wErrorStr, L"");
-    //wcstombs(chainName, wChainName, sizeof(chainName)/sizeof(chainName[0]));
 
     if (kogschain == NULL) 
     {
