@@ -55,7 +55,8 @@ extern "C" {
     unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr);
     unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr);
     //unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr);
-    unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **resultPtrPtr, char *errorStr);
+    unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void **resultPtrPtr, char *errorStr);
+    unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPtrPtr, char *errorStr);
     unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtrPtr, char *errorStr);
     unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrPtr, char *errorStr);
 
