@@ -318,7 +318,82 @@ unity_int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *error
 }
 
 // cc rpc caller 
-unity_int32_t LIBNSPV_API uplugin_CallMethod(char *method, char *params, void **resultPtrPtr, char *errorStr)
+unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPtrPtr, char *errorStr)
+{
+    char cc_error[WR_MAXCCERRORLEN];
+
+    nspv_log_message("%s enterred", __func__);
+    nspv_log_message("%s resultPtrPtr=%p", __func__, resultPtrPtr);
+
+    if (!kogs_plugin_mutex_init) {
+        strncpy(errorStr, "not inited", WR_MAXERRORLEN);
+        return -1;
+    }
+    if (init_state != WR_INITED) {
+        nspv_log_message("%s: exiting, state not inited", __func__);
+        strcpy(errorStr, "not inited");
+        return -1;
+    }
+
+    if (jsonStr == NULL || strlen(jsonStr) == 0) {
+        strncpy(errorStr, "method is null or empty", WR_MAXERRORLEN);
+        return -1;
+    }
+
+    cJSON *jrpcrequest = cJSON_Parse(jsonStr);
+    if (jrpcrequest == NULL) {  
+        strncpy(errorStr, "could not parse json request", WR_MAXERRORLEN);
+        return -1;
+    }
+
+    cJSON *jmethod = cJSON_GetObjectItem(jrpcrequest, "method");
+    if (jmethod == NULL || !cJSON_IsString(jmethod)) {
+        strncpy(errorStr, "could not find method param in json request", WR_MAXERRORLEN);
+        return -1;
+    }
+
+    cJSON *jrpcresult = NULL;
+    unity_int32_t retcode = 0;
+
+    portable_mutex_lock(&kogs_plugin_mutex);
+    jrpcresult = NSPV_remoterpccall(kogsclient, jmethod->valuestring, jrpcrequest);
+    portable_mutex_unlock(&kogs_plugin_mutex);
+
+    nspv_log_message("%s rpcresult ptr=%p", __func__, jrpcresult);
+    char *debStr = cJSON_Print(jrpcresult);
+    nspv_log_message("%s rpcresult 1/2 str=%s", __func__, debStr ? debStr : "null-str");
+    nspv_log_message("%s rpcresult 2/2 str=%s", __func__, debStr ? debStr + 980 : "null-str");
+    if (debStr) cJSON_free(debStr);
+
+    strcpy(errorStr, "");
+    *resultPtrPtr = NULL;
+
+    cJSON *jresult;
+    if ((jresult = check_jresult(jrpcresult, cc_error)) != NULL)
+    {
+        char *jsonStr = cJSON_Print(jresult);
+        if (jsonStr != NULL) {
+            *resultPtrPtr = jsonStr;
+        }
+        else {
+            retcode = -1;
+            strncpy(errorStr, "cannot serialize 'result' object", WR_MAXERRORLEN);
+        }
+        nspv_log_message("%s json result=%s", __func__, jsonStr ? jsonStr : "null-ptr");
+
+        cJSON_Delete(jrpcresult);
+    }
+    else {
+        snprintf(errorStr, WR_MAXERRORLEN, "rpc result invalid %s", cc_error);
+        retcode = -1;
+    }
+    cJSON_Delete(jrpcrequest);
+
+    nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
+    return retcode;
+}
+// cc rpc caller with json
+unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void **resultPtrPtr, char *errorStr)
 {
     char cc_error[WR_MAXCCERRORLEN];
 
