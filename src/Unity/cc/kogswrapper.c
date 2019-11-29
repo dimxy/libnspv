@@ -145,17 +145,6 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 {
     unity_int32_t retcode = 0;
 
-/* find current working dir on Unity for c apps:
-// it is actually the project path
-#ifdef MINGW
-#include <unistd.h>
-    char cwd[256];
-    getcwd(cwd, sizeof(cwd));
-    nspv_log_message("%s cwd=%s", __func__, cwd);
-    snprintf(errorStr, "cwd=%d", cwd);
-    return -1;
-#endif
-*/
     strcpy(errorStr, "");
     nspv_log_message("%s entering, chainName=%s kogschain ptr=%p", __func__, chainName, kogschain);
 
@@ -216,7 +205,17 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
         else {
             if (kogschain == (void*)0xFFFFFFFFFFFFFFFFLL)
             {
+                // find current working dir on Unity for c apps:
+                // it is actually the project path
+#if !defined(ANDROID) && !defined(__ANDROID__)
+#include <unistd.h>
+                char cwd[256];
+                getcwd(cwd, sizeof(cwd));
+                nspv_log_message("%s cwd=%s", __func__, cwd);
+                snprintf(errorStr, WR_MAXERRORLEN, "could not find coins file, cwd=%s", cwd);
+#else
                 strncpy(errorStr, "could not find coins file", WR_MAXERRORLEN);
+#endif
                 kogschain = NULL;
             }
             else
