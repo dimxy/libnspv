@@ -143,9 +143,10 @@ static cJSON *check_jresult(cJSON *json, char *error)
 // wrapper for NSPV library init
 unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 {
-    //char chainName[WR_MAXCHAINNAMELEN+1];
     unity_int32_t retcode = 0;
 
+/* find current working dir on Unity for c apps:
+// it is actually the project path
 #ifdef MINGW
 #include <unistd.h>
     char cwd[256];
@@ -154,7 +155,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
     snprintf(errorStr, "cwd=%d", cwd);
     return -1;
 #endif
-
+*/
     strcpy(errorStr, "");
     nspv_log_message("%s entering, chainName=%s kogschain ptr=%p", __func__, chainName, kogschain);
 
