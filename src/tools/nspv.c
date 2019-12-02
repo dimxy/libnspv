@@ -100,8 +100,10 @@ void nspv_log_message(const char *format, ...)
     if (fdebug == NULL) {
         fdebug = fopen("nspv-debug.log", "a");
     }
-    if (fdebug)
+    if (fdebug) {
         vfprintf(fdebug, format, args);
+        fflush(fdebug);
+    }
 #else
     vfprintf(stdout, format, args);
 #endif
