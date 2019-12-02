@@ -97,8 +97,9 @@ static cJSON *check_jresult(cJSON *json, char *error)
                 cJSON * jmessage = cJSON_GetObjectItem(jerror, "message");
 
                 // add cc error:
-                snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", (jmessage ? jmessage->valuestring : "null"));
-                nspv_log_message("%s cc-error %s", __func__, error);
+                snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s\n", (jmessage ? jmessage->valuestring : "null"));
+                error[WR_MAXCCERRORLEN - 1] = '\0';
+                nspv_log_message("%s cc-error %s\n", __func__, error);
 
                 return NULL;
             }
@@ -106,7 +107,8 @@ static cJSON *check_jresult(cJSON *json, char *error)
                 // { "error" : "some-error-message" } }
                 // add nspv error:
                 snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", (jerror->valuestring ? jerror->valuestring : "null"));
-                nspv_log_message("%s nspv-error %s", __func__, error);
+                error[WR_MAXCCERRORLEN - 1] = '\0';
+                nspv_log_message("%s nspv-error %s\n", __func__, error);
 
                 return NULL;
             }
@@ -129,6 +131,7 @@ static cJSON *check_jresult(cJSON *json, char *error)
                 cJSON * jccerror = cJSON_GetObjectItem(jresult, "error");
                 if (cJSON_IsString(jccerror) && jccerror->valuestring != NULL) {
                     snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", cJSON_GetObjectItem(jresult, "error")->valuestring);
+                    error[WR_MAXCCERRORLEN - 1] = '\0';
                     return NULL;
                 }
             }
@@ -156,11 +159,11 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
     unity_int32_t retcode = 0;
 
     strcpy(errorStr, "");
-    nspv_log_message("%s entering, chainName=%s kogschain ptr=%p", __func__, chainName, kogschain);
+    nspv_log_message("%s entering, chainName=%s kogschain ptr=%p\n", __func__, chainName, kogschain);
 
     if (init_state != WR_NOT_INITED) {
         strncpy(errorStr, "NSPV already initialized", WR_MAXERRORLEN);
-        nspv_log_message("%s exiting with error %s", __func__, errorStr);
+        nspv_log_message("%s exiting with error %s\n", __func__, errorStr);
         return -1;
     }
 
@@ -172,20 +175,20 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 
     if (kogschain == NULL) 
     {
-        nspv_log_message("%s before NSPV_coinlist_scan, searching chain=%s", __func__, chainName);
+        nspv_log_message("%s before NSPV_coinlist_scan, searching chain=%s\n", __func__, chainName);
         kogschain = NSPV_coinlist_scan(chainName, &kmd_chainparams_template);
-        nspv_log_message("%s after NSPV_coinlist_scan, kogschain ptr=%p", __func__, kogschain);
+        nspv_log_message("%s after NSPV_coinlist_scan, kogschain ptr=%p\n", __func__, kogschain);
 
         if (kogschain != NULL && kogschain != (void*)0xFFFFFFFFFFFFFFFFLL)   // TODO: avoid 0xFFFFFFFFFFFFFFFFLL use
         {
             btc_ecc_start();
             kogsclient = btc_spv_client_new(kogschain, true, /*(dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false*/true);
-            nspv_log_message("%s after btc_spv_client_new, kogsclient ptr=%p", __func__, kogsclient);
+            nspv_log_message("%s after btc_spv_client_new, kogsclient ptr=%p\n", __func__, kogsclient);
             if (kogsclient != NULL)
             {
 
                 btc_spv_client_discover_peers(kogsclient, NULL);
-                nspv_log_message("%s discovered nodes %d", __func__, kogsclient->nodegroup->nodes->len);
+                nspv_log_message("%s discovered nodes %d\n", __func__, kogsclient->nodegroup->nodes->len);
                 if (kogsclient->nodegroup->nodes->len == 0)
                 {
                     strncpy(errorStr, "no nodes discovered", WR_MAXERRORLEN);
@@ -202,6 +205,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
                     else
                     {
                         //snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
+                        // errorStr[WR_MAXERRORLEN - 1] = '\0';
                         // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
                     }
                 }
@@ -221,8 +225,9 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 #include <unistd.h>
                 char cwd[256];
                 getcwd(cwd, sizeof(cwd));
-                nspv_log_message("%s cwd=%s", __func__, cwd);
+                nspv_log_message("%s cwd=%s\n", __func__, cwd);
                 snprintf(errorStr, WR_MAXERRORLEN, "could not find coins file, cwd=%s", cwd);
+                errorStr[WR_MAXERRORLEN - 1] = '\0';
 #else
                 strncpy(errorStr, "could not find coins file", WR_MAXERRORLEN);
 #endif
@@ -249,7 +254,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
     //utils_hex_to_bin(testpk, NSPV_pubkey.pubkey, strlen(testpk), &outl);
     //NSPV_pubkey.compressed = 1;
 
-    nspv_log_message("%s exiting retcode=%d errorStr=%s", __func__, retcode, errorStr);
+    nspv_log_message("%s exiting retcode=%d errorStr=%s\n", __func__, retcode, errorStr);
     return retcode;
 }
 
@@ -259,7 +264,7 @@ unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
 {
     unity_int32_t retcode = 0;
     char cc_error[WR_MAXCCERRORLEN];
-    nspv_log_message("%s enterred", __func__);
+    nspv_log_message("%s enterred\n", __func__);
 
     if (!kogs_plugin_mutex_init) {
         strcpy(errorStr, "not inited");
@@ -267,7 +272,7 @@ unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
     }
     if (init_state != WR_INITED) {
         strncpy(errorStr, "LibNSPV not initialized", WR_MAXERRORLEN);
-        nspv_log_message("%s %s", __func__, errorStr);
+        nspv_log_message("%s LibNSPV not initialized\n", __func__);
         return -1;
     }
     strcpy(errorStr, "");
@@ -278,6 +283,7 @@ unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
 
     if (!check_jresult(jresult, cc_error)) {
         snprintf(errorStr, WR_MAXCCERRORLEN, "could not login to LibNSPV %s", cc_error);
+        errorStr[WR_MAXERRORLEN - 1] = '\0';
         retcode = -1;
     }
 
@@ -285,7 +291,7 @@ unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
         cJSON_Delete(jresult);
 
     
-    nspv_log_message("%s exiting retcode=%d", __func__, retcode);
+    nspv_log_message("%s exiting retcode=%d\n", __func__, retcode);
 
     return retcode;
 }
@@ -401,6 +407,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     }
     else {
         snprintf(errorStr, WR_MAXERRORLEN, "rpc result invalid %s", cc_error);
+        errorStr[WR_MAXERRORLEN - 1] = '\0';
         retcode = -1;
     }
     cJSON_Delete(jrpcrequest);
@@ -485,6 +492,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     }
     else {
         snprintf(errorStr, WR_MAXERRORLEN, "rpc result invalid %s", cc_error);
+        errorStr[WR_MAXERRORLEN - 1] = '\0';
         retcode = -1;
     }
     cJSON_Delete(jrpcrequest);
