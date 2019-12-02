@@ -302,7 +302,7 @@ unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen,
 {
     unity_int32_t retcode = 0;
 
-    nspv_log_message("%s enterred\n" __func__);
+    nspv_log_message("%s enterred\n", __func__);
     strcpy(errorStr, "");
 
     if (inPtr != NULL)
