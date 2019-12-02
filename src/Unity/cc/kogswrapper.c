@@ -302,7 +302,7 @@ unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen,
 {
     unity_int32_t retcode = 0;
 
-    nspv_log_message("%s enterred", __func__);
+    nspv_log_message("%s enterred\n" __func__);
     strcpy(errorStr, "");
 
     if (inPtr != NULL)
@@ -314,7 +314,7 @@ unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen,
         strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
         retcode = -1;
     }
-    nspv_log_message("%s exiting retcode=%d", __func__, retcode);
+    nspv_log_message("%s exiting retcode=%d\n", __func__, retcode);
     return retcode;
 }
 
@@ -323,7 +323,7 @@ unity_int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *error
 {
     unity_int32_t retcode = 0;
 
-    nspv_log_message("%s enterred", __func__);
+    nspv_log_message("%s enterred\n", __func__);
     strcpy(errorStr, "");
 
     if (inPtr != NULL)
@@ -335,7 +335,7 @@ unity_int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *error
         strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
         retcode = -1;
     }
-    nspv_log_message("%s exiting retcode=%d", __func__, retcode);
+    nspv_log_message("%s exiting retcode=%d\n", __func__, retcode);
     return retcode;
 }
 
@@ -344,15 +344,15 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
 {
     char cc_error[WR_MAXCCERRORLEN];
 
-    nspv_log_message("%s enterred", __func__);
-    nspv_log_message("%s resultPtrPtr=%p", __func__, resultPtrPtr);
+    nspv_log_message("%s enterred\n", __func__);
+    nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
 
     if (!kogs_plugin_mutex_init) {
         strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
     if (init_state != WR_INITED) {
-        nspv_log_message("%s: exiting, state not inited", __func__);
+        nspv_log_message("%s: exiting, state not inited\n", __func__);
         strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
@@ -381,10 +381,10 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     jrpcresult = NSPV_remoterpccall(kogsclient, jmethod->valuestring, jrpcrequest);
     portable_mutex_unlock(&kogs_plugin_mutex);
 
-    nspv_log_message("%s rpcresult ptr=%p", __func__, jrpcresult);
+    nspv_log_message("%s rpcresult ptr=%p\n", __func__, jrpcresult);
     char *debStr = cJSON_Print(jrpcresult);
-    nspv_log_message("%s rpcresult 1/2 str=%s", __func__, debStr ? debStr : "null-str");
-    nspv_log_message("%s rpcresult 2/2 str=%s", __func__, debStr ? debStr + 980 : "null-str");
+    nspv_log_message("%s rpcresult 1/2 str=%s\n", __func__, debStr ? debStr : "null-str");
+    nspv_log_message("%s rpcresult 2/2 str=%s\n", __func__, debStr ? debStr + 980 : "null-str");
     if (debStr) cJSON_free(debStr);
 
     strcpy(errorStr, "");
@@ -401,7 +401,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
             retcode = -1;
             strncpy(errorStr, "cannot serialize 'result' object to string", WR_MAXERRORLEN);
         }
-        nspv_log_message("%s json result=%s", __func__, jsonStr ? jsonStr : "null-ptr");
+        nspv_log_message("%s json result=%s\n", __func__, jsonStr ? jsonStr : "null-ptr");
 
         cJSON_Delete(jrpcresult);
     }
@@ -412,7 +412,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     }
     cJSON_Delete(jrpcrequest);
 
-    nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
+    nspv_log_message("%s exiting retcode=%d %s\n", __func__, retcode, errorStr);
     return retcode;
 }
 // cc rpc caller with json
@@ -420,15 +420,15 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
 {
     char cc_error[WR_MAXCCERRORLEN];
 
-    nspv_log_message("%s enterred", __func__);
-    nspv_log_message("%s resultPtrPtr=%p", __func__, resultPtrPtr);
+    nspv_log_message("%s enterred\n", __func__);
+    nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
 
     if (!kogs_plugin_mutex_init) {
         strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
     if (init_state != WR_INITED) {
-        nspv_log_message("%s: exiting, state not inited", __func__);
+        nspv_log_message("%s: exiting, state not inited\n", __func__);
         strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
@@ -465,10 +465,10 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     jrpcresult = NSPV_remoterpccall(kogsclient, method, jrpcrequest);
     portable_mutex_unlock(&kogs_plugin_mutex);
 
-    nspv_log_message("%s rpcresult ptr=%p", __func__, jrpcresult);
+    nspv_log_message("%s rpcresult ptr=%p\n", __func__, jrpcresult);
     char *debStr = cJSON_Print(jrpcresult);
-    nspv_log_message("%s rpcresult 1/2 str=%s", __func__, debStr ? debStr : "null-str");
-    nspv_log_message("%s rpcresult 2/2 str=%s", __func__, debStr ? debStr+980 : "null-str");
+    nspv_log_message("%s rpcresult 1/2 str=%s\n", __func__, debStr ? debStr : "null-str");
+    nspv_log_message("%s rpcresult 2/2 str=%s\n", __func__, debStr ? debStr+980 : "null-str");
 
     if (debStr) cJSON_free(debStr);
 
@@ -486,7 +486,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
             retcode = -1;
             strncpy(errorStr, "cannot serialize 'result' object", WR_MAXERRORLEN);
         }
-        nspv_log_message("%s json result=%s", __func__, jsonStr ? jsonStr : "null-ptr");
+        nspv_log_message("%s json result=%s\n", __func__, jsonStr ? jsonStr : "null-ptr");
 
         cJSON_Delete(jrpcresult);
     }
@@ -501,7 +501,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     // if (jparams)
     //    cJSON_Delete(jparams);
    
-    nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
+    nspv_log_message("%s exiting retcode=%d %s\n", __func__, retcode, errorStr);
     return retcode;
 }
 
@@ -510,10 +510,10 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
 {
     unity_int32_t retcode = 0;
 
-    nspv_log_message("%s enterred", __func__);
+    nspv_log_message("%s enterred\n", __func__);
     strcpy(errorStr, "");
     if (init_state != WR_INITED) {
-        nspv_log_message("%s: exiting, state not inited", __func__);
+        nspv_log_message("%s: exiting, state not inited\n", __func__);
         strcpy(errorStr, "not inited");
         return -1;
     }
@@ -529,8 +529,8 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
 
     *resultPtrPtr = NULL;
 
-    nspv_log_message("%s source tx 1/2=%s", __func__, txdataStr);
-    nspv_log_message("%s source tx 2/2=%s", __func__, txdataStr + 982);
+    nspv_log_message("%s source tx 1/2=%s\n", __func__, txdataStr);
+    nspv_log_message("%s source tx 2/2=%s\n", __func__, txdataStr + 982);
 
     cJSON *jtxdata = cJSON_Parse(txdataStr);
     if (jtxdata == NULL) {
@@ -543,8 +543,8 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
         char *bufStr = malloc(cstrTx->len+1);
         strcpy(bufStr, cstrTx->str);
         *resultPtrPtr = bufStr;
-        nspv_log_message("%s signed tx 1/2=%s", __func__, bufStr);
-        nspv_log_message("%s signed tx 2/2=%s", __func__, bufStr+982);
+        nspv_log_message("%s signed tx 1/2=%s\n", __func__, bufStr);
+        nspv_log_message("%s signed tx 2/2=%s\n", __func__, bufStr+982);
     }
     else {
         strncpy(errorStr, "could not sign tx", WR_MAXERRORLEN);
@@ -555,7 +555,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
     if (cstrTx)
         cstr_free(cstrTx, true);
 
-    nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
+    nspv_log_message("%s exiting retcode=%d %s\n", __func__, retcode, errorStr);
     return retcode;
 }
 
@@ -565,7 +565,7 @@ unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrP
 {
     unity_int32_t retcode = 0;
 
-    nspv_log_message("%s enterred", __func__);
+    nspv_log_message("%s enterred\n", __func__);
     strcpy(errorStr, "");
 
     if (!kogs_plugin_mutex_init) {
@@ -573,7 +573,7 @@ unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrP
         return -1;
     }
     if (init_state != WR_INITED) {
-        nspv_log_message("%s: exiting, state not inited", __func__);
+        nspv_log_message("%s: exiting, state not inited\n", __func__);
         strcpy(errorStr, "not inited");
         return -1;
     }
@@ -602,7 +602,7 @@ unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrP
     if (jresult)
         cJSON_Delete(jresult);
   
-    nspv_log_message("%s exiting retcode=%d %s", __func__, retcode, errorStr);
+    nspv_log_message("%s exiting retcode=%d %s\n", __func__, retcode, errorStr);
     return retcode;
 }
 
@@ -619,7 +619,7 @@ void LIBNSPV_API uplugin_FinishNSPV()
 {
     nspv_log_message("%s enterred", __func__);
     if (init_state != WR_INITED) {
-        nspv_log_message("%s: exiting, state not inited", __func__);
+        nspv_log_message("%s: exiting, state not inited\n", __func__);
         return;
     }
 
@@ -649,6 +649,5 @@ void LIBNSPV_API uplugin_FinishNSPV()
 
     //portable_mutex_unlock(&kogs_plugin_mutex);
     init_state = WR_NOT_INITED;
-    nspv_log_message("%s exiting", __func__);
+    nspv_log_message("%s exiting\n", __func__);
 }
-
