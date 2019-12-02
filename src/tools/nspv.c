@@ -98,7 +98,7 @@ void nspv_log_message(const char *format, ...)
     static FILE *fdebug = NULL;
     // TODO: make fdebug open multithreaded 
     if (fdebug == NULL) {
-        fdebug = fopen("nspv-debug.log", "w+");
+        fdebug = fopen("nspv-debug.log", "a");
     }
     if (fdebug)
         vfprintf(fdebug, format, args);
