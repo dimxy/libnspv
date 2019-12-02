@@ -94,27 +94,37 @@ static cJSON *check_jresult(cJSON *json, char *error)
             cJSON * jerror = cJSON_GetObjectItem(json, "error");
             if (cJSON_IsObject(jerror)) {
                 // if like this:  { "error" : { "code" : -30020, "message" : "some-error-message" } }
-                cJSON * jerrMessage = cJSON_GetObjectItem(jerror, "message");
+                cJSON * jmessage = cJSON_GetObjectItem(jerror, "message");
 
-                // add nspv error:
-                snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", (jerrMessage ? jerrMessage->valuestring : "null"));
+                // add cc error:
+                snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", (jmessage ? jmessage->valuestring : "null"));
+                nspv_log_message("%s cc-error %s", __func__, error);
+
                 return NULL;
             }
             else if (jerror->valuestring != NULL)   {
                 // { "error" : "some-error-message" } }
                 // add nspv error:
-                snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", jerror->valuestring ? jerror->valuestring : "null");
+                snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", (jerror->valuestring ? jerror->valuestring : "null"));
+                nspv_log_message("%s nspv-error %s", __func__, error);
+
                 return NULL;
+            }
+            else {
+                // no error, continue
             }
         }
         
         if (cJSON_HasObjectItem(json, "result"))
         { 
+            // check result as object, like this:
+            //  { "result" : { "result": "error", "error": "some-error..."} }
+
             // get app data container
             cJSON *jresult = cJSON_GetObjectItem(json, "result");
 
             // check if cc level error exists
-            if (cJSON_HasObjectItem(jresult, "error"))
+            if (cJSON_IsObject(jresult) && cJSON_HasObjectItem(jresult, "error"))
             {
                 cJSON * jccerror = cJSON_GetObjectItem(jresult, "error");
                 if (cJSON_IsString(jccerror) && jccerror->valuestring != NULL) {
@@ -122,8 +132,8 @@ static cJSON *check_jresult(cJSON *json, char *error)
                     return NULL;
                 }
             }
-            // application result exists and error is empty
 
+            // application result exists and error is empty
             if (cJSON_IsObject(jresult))    // { "result" : { "result": "success", ...} }
                 return jresult;             
             else                            // { "result": "success", "hex": "A356143FD..." }
@@ -337,7 +347,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     }
     if (init_state != WR_INITED) {
         nspv_log_message("%s: exiting, state not inited", __func__);
-        strcpy(errorStr, "not inited");
+        strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
 
@@ -383,7 +393,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
         }
         else {
             retcode = -1;
-            strncpy(errorStr, "cannot serialize 'result' object", WR_MAXERRORLEN);
+            strncpy(errorStr, "cannot serialize 'result' object to string", WR_MAXERRORLEN);
         }
         nspv_log_message("%s json result=%s", __func__, jsonStr ? jsonStr : "null-ptr");
 
@@ -412,7 +422,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     }
     if (init_state != WR_INITED) {
         nspv_log_message("%s: exiting, state not inited", __func__);
-        strcpy(errorStr, "not inited");
+        strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
 
