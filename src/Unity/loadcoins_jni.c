@@ -23,7 +23,7 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
         // use asset manager to open asset by filename
         AAssetManager* mgr = AAssetManager_fromJava(env, assetManager);
         if (NULL == mgr) {
-            nspv_log_message("cannot access AAssetManager");
+            nspv_log_message("cannot access AAssetManager\n");
             return -1;
         }
 
@@ -31,30 +31,30 @@ Java_com_DefaultCompany_TestAndroidSO_MyUnityPlayerActivity_loadCoinsFile(JNIEnv
         // release the Java string and UTF-8
         //(*env)->ReleaseStringUTFChars(env, filename, utf8);
         if (asset == NULL) {
-            nspv_log_message("cannot access asset %s", fname);
+            nspv_log_message("cannot access asset %s\n", fname);
             return -1;
         }
 
         size_t len = AAsset_getLength(asset);
         if (len == 0) {
-            nspv_log_message("coins asset len is 0");
+            nspv_log_message("coins asset len is 0\n");
             return -1;
         }
         coinsCached = malloc(len + 1); // will be freed in NSPV_coinlist_scan
         size_t nread = AAsset_read(asset, coinsCached, len);
         if (nread != len) {
-            nspv_log_message("cannot read asset buffer, read bytes = %d", nread);
+            nspv_log_message("cannot read asset buffer, read bytes = %d\n", nread);
             free(coinsCached);
             coinsCached = NULL;
             rc = -1;
         }
         coinsCached[nread] = '\0';
-        nspv_log_message("coins file content = %s", coinsCached);
+        nspv_log_message("coins file content = %s\n", coinsCached);
         AAsset_close(asset);
     }
     else
     {
-        nspv_log_message("coins file already loaded");
+        nspv_log_message("coins file already loaded\n");
     }
 
     return rc;

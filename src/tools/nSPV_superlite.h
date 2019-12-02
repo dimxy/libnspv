@@ -970,7 +970,7 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
             }
         }
     } else sleep(1);
-    nspv_log_message("%s returning null", __func__);
+    nspv_log_message("%s returning null response\n", __func__);
     free(msg);
     return (NULL);
 }
