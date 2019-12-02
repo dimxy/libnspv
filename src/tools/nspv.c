@@ -94,6 +94,14 @@ void nspv_log_message(const char *format, ...)
     va_start(args, format);
 #if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
     __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, args);
+#elif defined(LIBNSPV_BUILD)
+    static FILE *fdebug = NULL;
+    // TODO: make fdebug open multithreaded 
+    if (fdebug == NULL) {
+        fdebug = fopen("nspv-debug.log", "w+");
+    }
+    if (fdebug)
+        vfprintf(fdebug, format, args);
 #else
     vfprintf(stdout, format, args);
 #endif
