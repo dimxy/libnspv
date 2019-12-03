@@ -48,7 +48,15 @@ static const int BTC_CONNECT_TIMEOUT_S = 10;
 #if defined(LIBNSPV_BUILD)
 #if !defined(__ANDROID__) && !defined(ANDROID)
 // for the lib logging is to a file
-FILE *nspv_get_fdebug();
+FILE *nspv_get_fdebug()
+{
+    static FILE *fdebug = NULL;
+    // TODO: make fdebug open multithreaded 
+    if (fdebug == NULL) {
+        fdebug = fopen("nspv-debug.log", "a");
+    }
+    return fdebug;
+}
 #endif
 #endif;
 
