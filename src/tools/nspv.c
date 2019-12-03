@@ -87,23 +87,37 @@ static void print_usage()
     printf("> nspv -d -f 0 -c scan\n\n");
 }
 
-// log info message
-void nspv_log_message(const char *format, ...)
+#if defined(LIBNSPV_BUILD)
+#if !defined(__ANDROID__) && !defined(ANDROID)
+FILE *nspv_get_fdebug()
 {
-    va_list args;
-    va_start(args, format);
-#if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
-    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, args);
-#elif defined(LIBNSPV_BUILD)
     static FILE *fdebug = NULL;
     // TODO: make fdebug open multithreaded 
     if (fdebug == NULL) {
         fdebug = fopen("nspv-debug.log", "a");
     }
-    if (fdebug) {
+    return fdebug;
+}
+#endif
+#endif;
+
+// log info message
+void nspv_log_message(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+#if defined(LIBNSPV_BUILD)
+#if defined(__ANDROID__) || defined(ANDROID)
+    // print to android log
+    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, args);
+#else
+    // for shared object lib print to debug file
+    FILE *fdebug = nspv_get_fdebug();
+    if (fdebug != NULL) {
         vfprintf(fdebug, format, args);
         fflush(fdebug);
     }
+#endif
 #else
     vfprintf(stdout, format, args);
 #endif
