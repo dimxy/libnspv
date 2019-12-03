@@ -45,13 +45,29 @@ static const int BTC_PERIODICAL_NODE_TIMER_S = 5;
 static const int BTC_PING_INTERVAL_S = 180;
 static const int BTC_CONNECT_TIMEOUT_S = 10;
 
+#if defined(LIBNSPV_BUILD)
+#if !defined(__ANDROID__) && !defined(ANDROID)
+// for the lib logging is to a file
+FILE *nspv_get_fdebug();
+#endif
+#endif;
+
 // callback for logging debug messages
 int net_write_log_printf(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-#if (defined(__ANDROID__) || defined(ANDROID)) && defined(LIBNSPV_BUILD)
+#if defined(LIBNSPV_BUILD)
+#if defined(__ANDROID__) || defined(ANDROID)
     __android_log_vprint(ANDROID_LOG_DEBUG, "libnspv", format, args);
+#else
+    // for shared object lib print to debug file
+    FILE *fdebug = nspv_get_fdebug();
+    if (fdebug != NULL) {
+        vfprintf(fdebug, format, args);
+        fflush(fdebug);
+    }
+#endif
 #else
     printf("DEBUG :");
     vprintf(format, args);
