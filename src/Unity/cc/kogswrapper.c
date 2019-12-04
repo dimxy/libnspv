@@ -378,7 +378,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     nspv_log_message("%s rpcresult ptr=%p\n", __func__, jrpcresult);
     char *debStr = cJSON_Print(jrpcresult);
     nspv_log_message("%s rpcresult 1/2 str=%s\n", __func__, debStr ? debStr : "null-str");
-    nspv_log_message("%s rpcresult 2/2 str=%s\n", __func__, debStr ? debStr + 980 : "null-str");
+    nspv_log_message("%s rpcresult 2/2 str=%s\n", __func__, debStr && strlen(debStr) > 980 ? debStr + 980 : "null-str");
     if (debStr) cJSON_free(debStr);
 
     safe_strncpy(errorStr, "", WR_MAXERRORLEN);
