@@ -89,7 +89,7 @@ libbtc_la_SOURCES = \
 libbtc_la_CPPFLAGS = -DLIBNSPV_BUILD
 libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2 $(FPIC_FLAGS)
 # -DLIBBTC_BUILD
-libbtc_la_LIBADD = $(LIBSECP256K1) ANDROID_LIBS_CFLAGS2
+libbtc_la_LIBADD = $(LIBSECP256K1) $(ANDROID_LIBS_CFLAGS2)
 
 
 if USE_TESTS
