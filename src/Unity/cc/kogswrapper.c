@@ -58,21 +58,20 @@ static pthread_t libthread;
 //const char dbfile[] = "nlibnspv.dat";
 const char dbfile[] = "";  // no db in android
 
-/*
-#define HTXID_LEN 64 
-const char HTXN_MAGIC[] = "HTXN";
+static void safe_strncpy(char *dst, const char *src, size_t n)
+{
+    strncpy(dst, src, n);
+    dst[n - 1] = '\0';
+}
 
-typedef struct _HEXTX {
-    char hextxid[HTXID_LEN + 1];
-    char *hextx;
-} HEXTX;
+static void safe_snprintf(char *dst, size_t n, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    vsnprintf(dst, n, format, args);
+    va_end(args);
+}
 
-typedef struct _HEXTX_ARRAY {
-    char magic[4 + 1];
-    int count;
-    HEXTX *txns;
-} HEXTX_ARRAY;
-*/
 
 static void *run_spv_event_loop(btc_spv_client* client)
 {
@@ -85,7 +84,7 @@ static void *run_spv_event_loop(btc_spv_client* client)
 // check cJSON result from libnspv
 static cJSON *check_jresult(cJSON *json, char *error)
 {
-    strcpy(error, "");
+    safe_strncpy(error, "", WR_MAXERRORLEN);
     if (json)
     {
         // check if nspv level error exists
@@ -97,8 +96,7 @@ static cJSON *check_jresult(cJSON *json, char *error)
                 cJSON * jmessage = cJSON_GetObjectItem(jerror, "message");
 
                 // add cc error:
-                snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s\n", (jmessage ? jmessage->valuestring : "null"));
-                error[WR_MAXCCERRORLEN - 1] = '\0';
+                safe_snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s\n", (jmessage ? jmessage->valuestring : "null"));
                 nspv_log_message("%s cc-error %s\n", __func__, error);
 
                 return NULL;
@@ -106,8 +104,7 @@ static cJSON *check_jresult(cJSON *json, char *error)
             else if (jerror->valuestring != NULL)   {
                 // { "error" : "some-error-message" } }
                 // add nspv error:
-                snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", (jerror->valuestring ? jerror->valuestring : "null"));
-                error[WR_MAXCCERRORLEN - 1] = '\0';
+                safe_snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", (jerror->valuestring ? jerror->valuestring : "null"));
                 nspv_log_message("%s nspv-error %s\n", __func__, error);
 
                 return NULL;
@@ -130,8 +127,7 @@ static cJSON *check_jresult(cJSON *json, char *error)
             {
                 cJSON * jccerror = cJSON_GetObjectItem(jresult, "error");
                 if (cJSON_IsString(jccerror) && jccerror->valuestring != NULL) {
-                    snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", cJSON_GetObjectItem(jresult, "error")->valuestring);
-                    error[WR_MAXCCERRORLEN - 1] = '\0';
+                    safe_snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", cJSON_GetObjectItem(jresult, "error")->valuestring);
                     return NULL;
                 }
             }
@@ -143,10 +139,10 @@ static cJSON *check_jresult(cJSON *json, char *error)
                 return json;
 
         }
-        strncpy(error, "no result object", WR_MAXCCERRORLEN);
+        safe_strncpy(error, "no result object", WR_MAXCCERRORLEN);
     }
     else {
-        strncpy(error, "null", WR_MAXCCERRORLEN);
+        safe_strncpy(error, "null", WR_MAXCCERRORLEN);
     }
     return NULL;
 }
@@ -158,11 +154,11 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 {
     unity_int32_t retcode = 0;
 
-    strcpy(errorStr, "");
+    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
     nspv_log_message("%s entering, chainName=%s kogschain ptr=%p\n", __func__, chainName, kogschain);
 
     if (init_state != WR_NOT_INITED) {
-        strncpy(errorStr, "NSPV already initialized", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "NSPV already initialized", WR_MAXERRORLEN);
         nspv_log_message("%s exiting with error %s\n", __func__, errorStr);
         return -1;
     }
@@ -191,7 +187,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
                 nspv_log_message("%s discovered nodes %d\n", __func__, kogsclient->nodegroup->nodes->len);
                 if (kogsclient->nodegroup->nodes->len == 0)
                 {
-                    strncpy(errorStr, "no nodes discovered", WR_MAXERRORLEN);
+                    safe_strncpy(errorStr, "no nodes discovered", WR_MAXERRORLEN);
                     retcode = -1;
                 }
                 else
@@ -199,20 +195,18 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
                     //if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
                     if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void *)kogsclient) != 0)  // periodically connect nodes and process responses
                     {
-                        strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
+                        safe_strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
                         retcode = -1;
                     }
                     else
                     {
-                        //snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
-                        // errorStr[WR_MAXERRORLEN - 1] = '\0';
-                        // wcsncpy(wErrorStr, L"no error", WR_MAXERRORLEN);
+                        //safe_snprintf(errorStr, WR_MAXERRORLEN, "no error, kogschain ptr=%p", kogschain);
                     }
                 }
             }
             else
             {
-                strncpy(errorStr, "cannot create kogsclient", WR_MAXERRORLEN);
+                safe_strncpy(errorStr, "cannot create kogsclient", WR_MAXERRORLEN);
                 retcode = -1;
             }
         }
@@ -226,21 +220,20 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
                 char cwd[256];
                 getcwd(cwd, sizeof(cwd));
                 nspv_log_message("%s cwd=%s\n", __func__, cwd);
-                snprintf(errorStr, WR_MAXERRORLEN, "could not find coins file, cwd=%s", cwd);
-                errorStr[WR_MAXERRORLEN - 1] = '\0';
+                safe_snprintf(errorStr, WR_MAXERRORLEN, "could not find coins file, cwd=%s", cwd);
 #else
-                strncpy(errorStr, "could not find coins file", WR_MAXERRORLEN);
+                safe_strncpy(errorStr, "could not find coins file", WR_MAXERRORLEN);
 #endif
                 kogschain = NULL;
             }
             else
-                strncpy(errorStr, "could not find chain in coins file", WR_MAXERRORLEN);
+                safe_strncpy(errorStr, "could not find chain in coins file", WR_MAXERRORLEN);
             retcode = -1;
         }
     }
     else 
     {
-        strncpy(errorStr, "NSPV already initialized", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "NSPV already initialized", WR_MAXERRORLEN);
         retcode = -1;
     }
 
@@ -267,23 +260,22 @@ unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
     nspv_log_message("%s enterred\n", __func__);
 
     if (!kogs_plugin_mutex_init) {
-        strcpy(errorStr, "not inited");
+        safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
     if (init_state != WR_INITED) {
-        strncpy(errorStr, "LibNSPV not initialized", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "LibNSPV not initialized", WR_MAXERRORLEN);
         nspv_log_message("%s LibNSPV not initialized\n", __func__);
         return -1;
     }
-    strcpy(errorStr, "");
+    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
 
     portable_mutex_lock(&kogs_plugin_mutex);    
     cJSON *jresult = NSPV_login(kogschain, wifStr);
     portable_mutex_unlock(&kogs_plugin_mutex);
 
     if (!check_jresult(jresult, cc_error)) {
-        snprintf(errorStr, WR_MAXCCERRORLEN, "could not login to LibNSPV %s", cc_error);
-        errorStr[WR_MAXERRORLEN - 1] = '\0';
+        safe_snprintf(errorStr, WR_MAXCCERRORLEN, "could not login to LibNSPV %s", cc_error);
         retcode = -1;
     }
 
@@ -303,7 +295,7 @@ unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen,
     unity_int32_t retcode = 0;
 
     nspv_log_message("%s enterred\n", __func__);
-    strcpy(errorStr, "");
+    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
 
     if (inPtr != NULL)
     {
@@ -311,7 +303,7 @@ unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen,
     }
     else
     {
-        strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
         retcode = -1;
     }
     nspv_log_message("%s exiting retcode=%d\n", __func__, retcode);
@@ -324,15 +316,15 @@ unity_int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *error
     unity_int32_t retcode = 0;
 
     nspv_log_message("%s enterred\n", __func__);
-    strcpy(errorStr, "");
+    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
 
     if (inPtr != NULL)
     {
-        strcpy(pStr, (char*)inPtr);
+        strcpy(pStr, (char*)inPtr);  // assume sufficient buffer is provided
     }
     else
     {
-        strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "inPtr invalid", WR_MAXERRORLEN);
         retcode = -1;
     }
     nspv_log_message("%s exiting retcode=%d\n", __func__, retcode);
@@ -348,29 +340,29 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
 
     if (!kogs_plugin_mutex_init) {
-        strncpy(errorStr, "not inited", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
     if (init_state != WR_INITED) {
         nspv_log_message("%s: exiting, state not inited\n", __func__);
-        strncpy(errorStr, "not inited", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
 
     if (jsonStr == NULL || strlen(jsonStr) == 0) {
-        strncpy(errorStr, "method is null or empty", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "method is null or empty", WR_MAXERRORLEN);
         return -1;
     }
 
     cJSON *jrpcrequest = cJSON_Parse(jsonStr);
     if (jrpcrequest == NULL) {  
-        strncpy(errorStr, "could not parse json request", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "could not parse json request", WR_MAXERRORLEN);
         return -1;
     }
 
     cJSON *jmethod = cJSON_GetObjectItem(jrpcrequest, "method");
     if (jmethod == NULL || !cJSON_IsString(jmethod)) {
-        strncpy(errorStr, "could not find method param in json request", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "could not find method param in json request", WR_MAXERRORLEN);
         return -1;
     }
 
@@ -387,7 +379,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     nspv_log_message("%s rpcresult 2/2 str=%s\n", __func__, debStr ? debStr + 980 : "null-str");
     if (debStr) cJSON_free(debStr);
 
-    strcpy(errorStr, "");
+    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
     *resultPtrPtr = NULL;
 
     cJSON *jresult;
@@ -399,15 +391,14 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
         }
         else {
             retcode = -1;
-            strncpy(errorStr, "cannot serialize 'result' object to string", WR_MAXERRORLEN);
+            safe_strncpy(errorStr, "cannot serialize 'result' object to string", WR_MAXERRORLEN);
         }
         nspv_log_message("%s json result=%s\n", __func__, jsonStr ? jsonStr : "null-ptr");
 
         cJSON_Delete(jrpcresult);
     }
     else {
-        snprintf(errorStr, WR_MAXERRORLEN, "rpc result invalid %s", cc_error);
-        errorStr[WR_MAXERRORLEN - 1] = '\0';
+        safe_snprintf(errorStr, WR_MAXERRORLEN, "rpc result invalid %s", cc_error);
         retcode = -1;
     }
     cJSON_Delete(jrpcrequest);
@@ -424,17 +415,17 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
 
     if (!kogs_plugin_mutex_init) {
-        strncpy(errorStr, "not inited", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
     if (init_state != WR_INITED) {
         nspv_log_message("%s: exiting, state not inited\n", __func__);
-        strncpy(errorStr, "not inited", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
 
     if (method == NULL) {
-        strncpy(errorStr, "method is null", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "method is null", WR_MAXERRORLEN);
         return -1;
     }
 
@@ -443,12 +434,12 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     if (params && strlen(params) > 0) {  // if params set
         jparams = cJSON_Parse(params);
         if (jparams == NULL) {
-            strncpy(errorStr, "could not parse params", WR_MAXERRORLEN);
+            safe_strncpy(errorStr, "could not parse params", WR_MAXERRORLEN);
             return -1;
         }
 
         if (jparams != NULL && !cJSON_IsArray(jparams)) {
-            strncpy(errorStr, "params not an array", WR_MAXERRORLEN);
+            safe_strncpy(errorStr, "params not an array", WR_MAXERRORLEN);
             cJSON_Delete(jparams);
             return -1;
         }
@@ -472,7 +463,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
 
     if (debStr) cJSON_free(debStr);
 
-    strcpy(errorStr, "");
+    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
     *resultPtrPtr = NULL;
 
     cJSON *jresult;
@@ -484,15 +475,14 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
         }
         else {
             retcode = -1;
-            strncpy(errorStr, "cannot serialize 'result' object", WR_MAXERRORLEN);
+            safe_strncpy(errorStr, "cannot serialize 'result' object", WR_MAXERRORLEN);
         }
         nspv_log_message("%s json result=%s\n", __func__, jsonStr ? jsonStr : "null-ptr");
 
         cJSON_Delete(jrpcresult);
     }
     else {
-        snprintf(errorStr, WR_MAXERRORLEN, "rpc result invalid %s", cc_error);
-        errorStr[WR_MAXERRORLEN - 1] = '\0';
+        safe_snprintf(errorStr, WR_MAXERRORLEN, "rpc result invalid %s", cc_error);
         retcode = -1;
     }
     cJSON_Delete(jrpcrequest);
@@ -511,19 +501,19 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
     unity_int32_t retcode = 0;
 
     nspv_log_message("%s enterred\n", __func__);
-    strcpy(errorStr, "");
+    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
     if (init_state != WR_INITED) {
         nspv_log_message("%s: exiting, state not inited\n", __func__);
-        strcpy(errorStr, "not inited");
+        safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
 
     if (txdataStr == NULL) {
-        strncpy(errorStr, "txdata is null", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "txdata is null", WR_MAXERRORLEN);
         return -1;
     }
     if (resultPtrPtr == NULL) {
-        strncpy(errorStr, "resultPtrPtr is null", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "resultPtrPtr is null", WR_MAXERRORLEN);
         return -1;
     }
 
@@ -534,7 +524,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
 
     cJSON *jtxdata = cJSON_Parse(txdataStr);
     if (jtxdata == NULL) {
-        strncpy(errorStr, "could not parse txdata", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "could not parse txdata", WR_MAXERRORLEN);
         return -1;
     }
 
@@ -547,7 +537,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
         nspv_log_message("%s signed tx 2/2=%s\n", __func__, bufStr+982);
     }
     else {
-        strncpy(errorStr, "could not sign tx", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "could not sign tx", WR_MAXERRORLEN);
         retcode = -1;
     }
     if (jtxdata)
@@ -566,24 +556,24 @@ unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrP
     unity_int32_t retcode = 0;
 
     nspv_log_message("%s enterred\n", __func__);
-    strcpy(errorStr, "");
+    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
 
     if (!kogs_plugin_mutex_init) {
-        strncpy(errorStr, "not inited", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
     if (init_state != WR_INITED) {
         nspv_log_message("%s: exiting, state not inited\n", __func__);
-        strcpy(errorStr, "not inited");
+        safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
 
     if (txdataStr == NULL) {
-        strncpy(errorStr, "txdata is null", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "txdata is null", WR_MAXERRORLEN);
         return -1;
     }
     if (resultPtrPtr == NULL) {
-        strncpy(errorStr, "resultPtrPtr is null", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "resultPtrPtr is null", WR_MAXERRORLEN);
         return -1;
     }
 
@@ -596,7 +586,7 @@ unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrP
         *resultPtrPtr = cJSON_Print(jresult);
     }
     else {
-        strncpy(errorStr, "broadcast result null", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "broadcast result null", WR_MAXERRORLEN);
         retcode = -1;
     }
     if (jresult)
