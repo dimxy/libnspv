@@ -185,34 +185,35 @@ tests_SOURCES += \
     test/tool_tests.c
 endif
 instdir=$(prefix)/bin
-inst_PROGRAMS = bitcointool
-bitcointool_LDADD = libbtc.la
-bitcointool_SOURCES = \
-    src/tools/bitcointool.c
-bitcointool_CFLAGS = $(libbtc_la_CFLAGS) -O2
-bitcointool_CPPFLAGS = -I$(top_srcdir)/src
-bitcointool_LDFLAGS = -static
+#inst_PROGRAMS = bitcointool
+#bitcointool_LDADD = libbtc.la
+#bitcointool_SOURCES = \
+#    src/tools/bitcointool.c
+#bitcointool_CFLAGS = $(libbtc_la_CFLAGS) -O2
+#bitcointool_CPPFLAGS = -I$(top_srcdir)/src
+#bitcointool_LDFLAGS = -static
 
 if WITH_NET
-inst_PROGRAMS += bitcoin-send-tx
-bitcoin_send_tx_LDADD = libbtc.la $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
-bitcoin_send_tx_SOURCES = \
-    src/tools/bitcoin-send-tx.c
-bitcoin_send_tx_CFLAGS = $(libbtc_la_CFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2 
-bitcoin_send_tx_CPPFLAGS = -I$(top_srcdir)/src
-bitcoin_send_tx_LDFLAGS = -static
+#inst_PROGRAMS += bitcoin-send-tx
+#bitcoin_send_tx_LDADD = libbtc.la $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)
+#bitcoin_send_tx_SOURCES = \
+#    src/tools/bitcoin-send-tx.c
+#bitcoin_send_tx_CFLAGS = $(libbtc_la_CFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS) -O2 
+#bitcoin_send_tx_CPPFLAGS = -I$(top_srcdir)/src
+#bitcoin_send_tx_LDFLAGS = -static
 
-inst_PROGRAMS += bitcoin-spv
-bitcoin_spv_LDADD = libbtc.la $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)  $(ANDROID_LIBS)
-bitcoin_spv_SOURCES = \
-    src/tools/bitcoin-spv.c
-bitcoin_spv_CFLAGS = $(libbtc_la_CFLAGS) -O2 
-bitcoin_spv_CPPFLAGS = -I$(top_srcdir)/src
-bitcoin_spv_LDFLAGS = -static
+#inst_PROGRAMS += bitcoin-spv
+#bitcoin_spv_LDADD = libbtc.la $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS)  $(ANDROID_LIBS)
+#bitcoin_spv_SOURCES = \
+#    src/tools/bitcoin-spv.c
+#bitcoin_spv_CFLAGS = $(libbtc_la_CFLAGS) -O2 
+#bitcoin_spv_CPPFLAGS = -I$(top_srcdir)/src
+#bitcoin_spv_LDFLAGS = -static
 endif
 
 # building nspv executable
-inst_PROGRAMS += nspv
+#inst_PROGRAMS += nspv
+inst_PROGRAMS = nspv
 nspv_LDADD = libbtc.la $(LIBCRYPTOCONDITIONS) -lpthread -lsodium $(ANDROID_LIBS)
 #-lpthread -lsodium
 nspv_SOURCES = \
