@@ -69,6 +69,7 @@ static void safe_snprintf(char *dst, size_t n, const char *format, ...)
     va_list args;
     va_start(args, format);
     vsnprintf(dst, n, format, args);
+    dst[n - 1] = '\0';
     va_end(args);
 }
 
@@ -82,9 +83,9 @@ static void *run_spv_event_loop(btc_spv_client* client)
 // helpers:
 
 // check cJSON result from libnspv
-static cJSON *check_jresult(cJSON *json, char *error)
+static cJSON *check_jresult(cJSON *json, char *ccerror)
 {
-    safe_strncpy(error, "", WR_MAXERRORLEN);
+    safe_strncpy(ccerror, "", WR_MAXCCERRORLEN);
     if (json)
     {
         // check if nspv level error exists
@@ -96,16 +97,16 @@ static cJSON *check_jresult(cJSON *json, char *error)
                 cJSON * jmessage = cJSON_GetObjectItem(jerror, "message");
 
                 // add cc error:
-                safe_snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s\n", (jmessage ? jmessage->valuestring : "null"));
-                nspv_log_message("%s cc-error %s\n", __func__, error);
+                safe_snprintf(ccerror, WR_MAXCCERRORLEN, "cc-error: %s\n", (jmessage ? jmessage->valuestring : "null"));
+                nspv_log_message("%s cc-error %s\n", __func__, ccerror);
 
                 return NULL;
             }
             else if (jerror->valuestring != NULL)   {
                 // { "error" : "some-error-message" } }
                 // add nspv error:
-                safe_snprintf(error, WR_MAXCCERRORLEN, "nspv-error: %s", (jerror->valuestring ? jerror->valuestring : "null"));
-                nspv_log_message("%s nspv-error %s\n", __func__, error);
+                safe_snprintf(ccerror, WR_MAXCCERRORLEN, "nspv-error: %s", (jerror->valuestring ? jerror->valuestring : "null"));
+                nspv_log_message("%s nspv-error %s\n", __func__, ccerror);
 
                 return NULL;
             }
@@ -127,7 +128,7 @@ static cJSON *check_jresult(cJSON *json, char *error)
             {
                 cJSON * jccerror = cJSON_GetObjectItem(jresult, "error");
                 if (cJSON_IsString(jccerror) && jccerror->valuestring != NULL) {
-                    safe_snprintf(error, WR_MAXCCERRORLEN, "cc-error: %s", cJSON_GetObjectItem(jresult, "error")->valuestring);
+                    safe_snprintf(ccerror, WR_MAXCCERRORLEN, "cc-error: %s", cJSON_GetObjectItem(jresult, "error")->valuestring);
                     return NULL;
                 }
             }
@@ -139,10 +140,10 @@ static cJSON *check_jresult(cJSON *json, char *error)
                 return json;
 
         }
-        safe_strncpy(error, "no result object", WR_MAXCCERRORLEN);
+        safe_strncpy(ccerror, "no result object", WR_MAXCCERRORLEN);
     }
     else {
-        safe_strncpy(error, "null", WR_MAXCCERRORLEN);
+        safe_strncpy(ccerror, "null", WR_MAXCCERRORLEN);
     }
     return NULL;
 }
@@ -219,6 +220,7 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 #include <unistd.h>
                 char cwd[256];
                 getcwd(cwd, sizeof(cwd));
+                cwd[sizeof(cwd) / sizeof(cwd[0]) - 1] = '\0';
                 nspv_log_message("%s cwd=%s\n", __func__, cwd);
                 safe_snprintf(errorStr, WR_MAXERRORLEN, "could not find coins file, cwd=%s", cwd);
 #else
@@ -409,8 +411,6 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
 // cc rpc caller with json
 unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void **resultPtrPtr, char *errorStr)
 {
-    char cc_error[WR_MAXCCERRORLEN];
-
     nspv_log_message("%s enterred\n", __func__);
     nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
 
@@ -459,7 +459,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     nspv_log_message("%s rpcresult ptr=%p\n", __func__, jrpcresult);
     char *debStr = cJSON_Print(jrpcresult);
     nspv_log_message("%s rpcresult 1/2 str=%s\n", __func__, debStr ? debStr : "null-str");
-    nspv_log_message("%s rpcresult 2/2 str=%s\n", __func__, debStr ? debStr+980 : "null-str");
+    nspv_log_message("%s rpcresult 2/2 str=%s\n", __func__, (debStr && strlen(debStr) > 980 ? debStr +980 : "null-str"));
 
     if (debStr) cJSON_free(debStr);
 
@@ -467,6 +467,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     *resultPtrPtr = NULL;
 
     cJSON *jresult;
+    char cc_error[WR_MAXCCERRORLEN];
     if ((jresult = check_jresult(jrpcresult, cc_error)) != NULL)
     {
         char *jsonStr = cJSON_Print(jresult);
@@ -520,7 +521,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
     *resultPtrPtr = NULL;
 
     nspv_log_message("%s source tx 1/2=%s\n", __func__, txdataStr);
-    nspv_log_message("%s source tx 2/2=%s\n", __func__, txdataStr + 982);
+    nspv_log_message("%s source tx 2/2=%s\n", __func__, (strlen(txdataStr) > 982 ? txdataStr + 982 : ""));
 
     cJSON *jtxdata = cJSON_Parse(txdataStr);
     if (jtxdata == NULL) {
@@ -534,7 +535,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
         strcpy(bufStr, cstrTx->str);
         *resultPtrPtr = bufStr;
         nspv_log_message("%s signed tx 1/2=%s\n", __func__, bufStr);
-        nspv_log_message("%s signed tx 2/2=%s\n", __func__, bufStr+982);
+        nspv_log_message("%s signed tx 2/2=%s\n", __func__, (strlen(bufStr) > 982 ? bufStr + 982 : ""));
     }
     else {
         safe_strncpy(errorStr, "could not sign tx", WR_MAXERRORLEN);
