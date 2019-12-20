@@ -602,6 +602,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
     if (jhex && cJSON_IsString(jhex)) 
     {
         btc_tx *mtx = btc_tx_decodehex(jhex->valuestring);
+        nspv_log_message("%s decoded mtx ptr=%p\n", __func__, mtx);
         if (mtx != NULL)
         {
             btc_tx_hash(mtx, mtx_hash);  // remember unsigned txid
@@ -621,7 +622,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
                     char u2[sizeof(uint256) + 1];
                     decode_hex(vin->prevout.hash, sizeof(uint256), u2);
 
-                    nspv_log_message("%s %i vin-hash befor update=%s after %s\n", __func__, i, u1, u2);
+                    nspv_log_message("%s %i vin-hash before update=%s after %s\n", __func__, i, u1, u2);
                 }
             }
             cstring *updated_hex = btc_tx_to_cstr(mtx);
@@ -649,7 +650,9 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
         {
             uint256 mtx_signed_hash;
             btc_tx_hash(mtx_signed, mtx_signed_hash);
-            txid_map_add(mtx_hash, mtx_signed_hash);    // store unsigned and signed txids
+
+            if (memcmp(mtx_signed, txid_zero, sizeof(uint256)) != 0)
+                txid_map_add(mtx_hash, mtx_signed_hash);    // store unsigned and signed txids
 
             char u1[sizeof(uint256) + 1];
             char u2[sizeof(uint256) + 1];
