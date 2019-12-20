@@ -19,6 +19,7 @@
 #include <btc/netspv.h>
 #include <btc/utils.h>
 #include <btc/ecc.h>
+#include <btc/tx.h>
 
 #include "nSPV_defs.h"
 #include "kogswrapper.h"
@@ -57,6 +58,67 @@ static pthread_t libthread;
 
 //const char dbfile[] = "nlibnspv.dat";
 const char dbfile[] = "";  // no db in android
+
+typedef struct {
+    uint256 txid_unsigned;
+    uint256 txid_signed;
+} TXID_MAP_ITEM;
+
+static struct _txid_map {
+    size_t buf_size;
+    size_t count;
+    TXID_MAP_ITEM *items;
+} txid_map = { 0, 0, NULL };
+
+static uint256 txid_zero = { 0 };
+
+static void txid_map_init()
+{
+    txid_map.items = malloc(sizeof(TXID_MAP_ITEM) * 64);
+    txid_map.buf_size = 64;
+    txid_map.count = 0;
+}
+
+static void txid_map_add(uint256 txid_unsigned, uint256 txid_signed)
+{
+    if (txid_map.count == txid_map.buf_size) 
+    {
+        txid_map.buf_size += 64;
+        txid_map.items = realloc(txid_map.items, sizeof(TXID_MAP_ITEM) * txid_map.buf_size);
+    }
+    memcpy(txid_map.items[txid_map.count].txid_unsigned, txid_unsigned, sizeof(txid_map.items[txid_map.count].txid_unsigned));
+    memcpy(txid_map.items[txid_map.count].txid_signed, txid_signed, sizeof(txid_map.items[txid_map.count].txid_signed));
+    txid_map.count++;
+}
+
+static int txid_map_get(uint256 txid_unsigned, uint256 txid_signed)
+{
+
+    for (int i = 0; i < txid_map.count; i ++)
+    {
+        if (memcmp(txid_map.items[i].txid_unsigned, txid_unsigned, sizeof(txid_map.items[i].txid_unsigned)) == 0)
+        {
+            if (memcmp(txid_map.items[i].txid_signed, txid_zero, sizeof(txid_map.items[i].txid_signed)) != 0)
+            {
+                memcpy(txid_signed, txid_map.items[i].txid_signed, sizeof(txid_signed));
+                return TRUE;
+            }
+            break;
+        }
+    }
+    return FALSE;
+}
+
+static txid_map_delete()
+{
+    if (txid_map.items != NULL)
+        free(txid_map.items);
+
+    txid_map.buf_size = 0;
+    txid_map.count = 0;
+}
+
+
 
 static void safe_strncpy(char *dst, const char *src, size_t n)
 {
@@ -239,8 +301,12 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
         retcode = -1;
     }
 
+    // create txid_map
+    txid_map_init();
+
     if (retcode == 0)
         init_state = WR_INITED;
+
     portable_mutex_unlock(&kogs_plugin_mutex);
 
     // set test pubkey
@@ -301,7 +367,7 @@ unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen,
 
     if (inPtr != NULL)
     {
-        *plen = strlen((char*)inPtr);
+        *plen = (unity_int32_t)strlen((char*)inPtr);
     }
     else
     {
@@ -529,15 +595,57 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
         return -1;
     }
 
+    // save vin txids
+    cJSON *jhex = cJSON_GetObjectItem(jtxdata, "hex");
+    uint256 mtx_hash = { 0 };
+    uint256 *txids = NULL;
+    if (jhex && cJSON_IsString(jhex)) 
+    {
+        btc_tx *mtx = btc_tx_decodehex(jhex->valuestring);
+        if (mtx != NULL)
+        {
+            btc_tx_hash(mtx, mtx_hash);  // remember unsigned txid
+
+            for (int i = 0; i < mtx->vin->len; i++) 
+            {
+                btc_tx_in *vin = vector_idx(mtx->vin, i);
+                uint256 vin_tx_signed_hash;
+                if (txid_map_get(vin->prevout.hash, vin_tx_signed_hash)) {
+                    // update vin txid to the signed txid:
+                    memcpy(vin->prevout.hash, vin_tx_signed_hash, sizeof(vin->prevout.hash));
+                }
+            }
+            cstring *updated_hex = btc_tx_to_cstr(mtx);
+            if (jtxdata)
+                cJSON_Delete(jtxdata);
+            jtxdata = cJSON_CreateObject();
+            jaddstr(jtxdata, "hex", updated_hex->str);   // create new jtxdata with the updated vins
+
+            cstr_free(updated_hex, true);
+            btc_tx_free(mtx);
+        }
+    }
+
     cstring *cstrTx = FinalizeCCtx(kogsclient, jtxdata);
-    if (cstrTx != NULL) {
+    if (cstrTx != NULL) 
+    {
         char *bufStr = malloc(cstrTx->len+1);
         strcpy(bufStr, cstrTx->str);
         *resultPtrPtr = bufStr;
         nspv_log_message("%s signed tx 1/2=%s\n", __func__, bufStr);
         nspv_log_message("%s signed tx 2/2=%s\n", __func__, (strlen(bufStr) > 982 ? bufStr + 982 : ""));
+
+        btc_tx *mtx_signed = btc_tx_decodehex(cstrTx->str);
+        if (mtx_signed != NULL) 
+        {
+            uint256 mtx_signed_hash;
+            btc_tx_hash(mtx_signed, mtx_signed_hash);
+            txid_map_add(mtx_hash, mtx_signed_hash);    // store unsigned and signed txids
+            btc_tx_free(mtx_signed);
+        }
     }
-    else {
+    else 
+    {
         safe_strncpy(errorStr, "could not sign tx", WR_MAXERRORLEN);
         retcode = -1;
     }
