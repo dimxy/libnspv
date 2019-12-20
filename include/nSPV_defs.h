@@ -309,6 +309,8 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol, const btc_chainparams *t
 void *NSPV_rpcloop(void *args);
 
 cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata);
+btc_tx *btc_tx_decodehex(char *hexstr);
+cstring *btc_tx_to_cstr(btc_tx *tx);
 
 void nspv_log_message(const char *format, ...);
 
