@@ -613,16 +613,16 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
                 btc_tx_in *vin = vector_idx(mtx->vin, i);
                 uint256 vin_tx_signed_hash;
 
-                char u1[sizeof(uint256) + 1];
-                utils_bin_to_hex(vin->prevout.hash, sizeof(uint256), u1);
+                char hex1[sizeof(uint256)*2 + 1];
+                utils_bin_to_hex(vin->prevout.hash, sizeof(uint256), hex1);
 
                 if (txid_map_get(vin->prevout.hash, vin_tx_signed_hash)) {
                     // update vin txid to the signed txid:
                     memcpy(vin->prevout.hash, vin_tx_signed_hash, sizeof(vin->prevout.hash));
                     
-                    char u2[sizeof(uint256) + 1];
-                    utils_bin_to_hex(vin->prevout.hash, sizeof(uint256), u2);
-                    nspv_log_message("%s %i vin-hash before update=%s after %s\n", __func__, i, u1, u2);
+                    char hex2[sizeof(uint256)*2 + 1];
+                    utils_bin_to_hex(vin->prevout.hash, sizeof(uint256), hex2);
+                    nspv_log_message("%s %i vin-hash before update=%s after %s\n", __func__, i, hex1, hex2);
                 }
             }
             cstring *updated_hex = btc_tx_to_cstr(mtx);
@@ -676,12 +676,12 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             if (memcmp(mtx_signed, txid_zero, sizeof(uint256)) != 0)
                 txid_map_add(mtx_hash, mtx_signed_hash);    // store unsigned and signed txids
 
-            char u1[sizeof(uint256) + 1];
-            char u2[sizeof(uint256) + 1];
-            utils_bin_to_hex(mtx_hash, sizeof(uint256), u1);
-            utils_bin_to_hex(mtx_signed_hash, sizeof(uint256), u2);
+            char hex1[sizeof(uint256)*2 + 1];
+            char hex2[sizeof(uint256)*2 + 1];
+            utils_bin_to_hex(mtx_hash, sizeof(uint256), hex1);
+            utils_bin_to_hex(mtx_signed_hash, sizeof(uint256), hex2);
 
-            nspv_log_message("%s for unsigned txid=%s stored signed txid=%s\n", __func__, u1, u2);
+            nspv_log_message("%s for unsigned txid=%s stored signed txid=%s\n", __func__, hex1, hex2);
 
             btc_tx_free(mtx_signed);
         }
