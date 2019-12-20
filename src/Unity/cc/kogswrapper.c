@@ -627,6 +627,9 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
                 }
             }
             cstring *updated_hex = btc_tx_to_cstr(mtx);
+            cJSON * jSigDataNew = cJSON_Duplicate(jSigData, true);
+
+            // delete initial jtxdata
             if (jtxdata)
                 cJSON_Delete(jtxdata);
 
@@ -634,7 +637,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             jtxdata = cJSON_CreateObject();
             jaddstr(jtxdata, "hex", updated_hex->str); 
             if (jSigData)
-                jadd(jtxdata, "SigData", cJSON_Duplicate(jSigData, true));
+                jadd(jtxdata, "SigData", jSigDataNew);
 
             if (jSigData)
             {
@@ -650,6 +653,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             if (updated_txdataStr)
                 cJSON_free(updated_txdataStr);
 
+            // do not delete jSigDataNew (is was added to jtxdata)
             cstr_free(updated_hex, true);
             btc_tx_free(mtx);
         }
