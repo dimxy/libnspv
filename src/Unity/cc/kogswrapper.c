@@ -615,6 +615,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
 
                 char hex1[sizeof(uint256)*2 + 1];
                 utils_bin_to_hex(vin->prevout.hash, sizeof(uint256), hex1);
+                reverse_hexstr(hex1);
 
                 if (txid_map_get(vin->prevout.hash, vin_tx_signed_hash)) {
                     // update vin txid to the signed txid:
@@ -622,6 +623,8 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
                     
                     char hex2[sizeof(uint256)*2 + 1];
                     utils_bin_to_hex(vin->prevout.hash, sizeof(uint256), hex2);
+                    reverse_hexstr(hex2);
+
                     nspv_log_message("%s %i vin-hash before update=%s after %s\n", __func__, i, hex1, hex2);
                 }
             }
@@ -635,16 +638,16 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             // create new jtxdata with the updated vins:
             jtxdata = cJSON_CreateObject();
             jaddstr(jtxdata, "hex", updated_hex->str); 
-            if (jSigData)
+            if (jSigDataNew)
                 jadd(jtxdata, "SigData", jSigDataNew);
 
-            if (jSigData)
+            /*if (jSigDataNew)
             {
-                char *sigdataStr = cJSON_Print(jSigData);
+                char *sigdataStr = cJSON_Print(jSigDataNew);
                 nspv_log_message("%s SigData 1/2=%s\n", __func__, sigdataStr);
                 nspv_log_message("%s SigData 2/2=%s\n", __func__, (sigdataStr && strlen(sigdataStr) > 982 ? sigdataStr + 982 : ""));
                 cJSON_free(sigdataStr);
-            }
+            }*/
 
             char *updated_txdataStr = cJSON_Print(jtxdata);
             nspv_log_message("%s updated tx 1/2=%s\n", __func__, updated_txdataStr);
@@ -679,7 +682,9 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             char hex1[sizeof(uint256)*2 + 1];
             char hex2[sizeof(uint256)*2 + 1];
             utils_bin_to_hex(mtx_hash, sizeof(uint256), hex1);
+            reverse_hexstr(hex1);
             utils_bin_to_hex(mtx_signed_hash, sizeof(uint256), hex2);
+            reverse_hexstr(hex2);
 
             nspv_log_message("%s for unsigned txid=%s stored signed txid=%s\n", __func__, hex1, hex2);
 
