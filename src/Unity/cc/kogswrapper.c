@@ -633,7 +633,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             // create new jtxdata with the updated vins:
             jtxdata = cJSON_CreateObject();
             jaddstr(jtxdata, "hex", updated_hex->str);   
-            jadd(jtxdata, "SigData", jSigData);
+            jadd(jtxdata, "SigData", cJSON_Duplicate(jSigData, true));
 
             cstr_free(updated_hex, true);
             btc_tx_free(mtx);
