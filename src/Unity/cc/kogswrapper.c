@@ -636,6 +636,12 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             if (jSigData)
                 jadd(jtxdata, "SigData", cJSON_Duplicate(jSigData, true));
 
+            char *sigdataStr = cJSON_Print(jSigData);
+            nspv_log_message("%s SigData 1/2=%s\n", __func__, sigdataStr);
+            nspv_log_message("%s SigData 2/2=%s\n", __func__, (strlen(sigdataStr) > 982 ? sigdataStr + 982 : ""));
+            if (sigdataStr)
+                cJSON_free(sigdataStr);
+
             char *updated_txdataStr = cJSON_Print(jtxdata);
             nspv_log_message("%s updated tx 1/2=%s\n", __func__, updated_txdataStr);
             nspv_log_message("%s updated tx 2/2=%s\n", __func__, (strlen(updated_txdataStr) > 982 ? updated_txdataStr + 982 : ""));
