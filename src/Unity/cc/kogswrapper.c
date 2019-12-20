@@ -86,8 +86,8 @@ static void txid_map_add(uint256 txid_unsigned, uint256 txid_signed)
         txid_map.buf_size += 64;
         txid_map.items = realloc(txid_map.items, sizeof(TXID_MAP_ITEM) * txid_map.buf_size);
     }
-    memcpy(txid_map.items[txid_map.count].txid_unsigned, txid_unsigned, sizeof(txid_map.items[txid_map.count].txid_unsigned));
-    memcpy(txid_map.items[txid_map.count].txid_signed, txid_signed, sizeof(txid_map.items[txid_map.count].txid_signed));
+    memcpy(txid_map.items[txid_map.count].txid_unsigned, txid_unsigned, sizeof(uint256));
+    memcpy(txid_map.items[txid_map.count].txid_signed, txid_signed, sizeof(uint256));
     txid_map.count++;
 }
 
@@ -96,20 +96,20 @@ static int txid_map_get(uint256 txid_unsigned, uint256 txid_signed)
 
     for (int i = 0; i < txid_map.count; i ++)
     {
-        if (memcmp(txid_map.items[i].txid_unsigned, txid_unsigned, sizeof(txid_map.items[i].txid_unsigned)) == 0)
+        if (memcmp(txid_map.items[i].txid_unsigned, txid_unsigned, sizeof(uint256)) == 0)
         {
-            if (memcmp(txid_map.items[i].txid_signed, txid_zero, sizeof(txid_map.items[i].txid_signed)) != 0)
+            if (memcmp(txid_map.items[i].txid_signed, txid_zero, sizeof(uint256)) != 0)
             {
-                memcpy(txid_signed, txid_map.items[i].txid_signed, sizeof(txid_signed));
-                return TRUE;
+                memcpy(txid_signed, txid_map.items[i].txid_signed, sizeof(uint256));
+                return true;
             }
             break;
         }
     }
-    return FALSE;
+    return false;
 }
 
-static txid_map_delete()
+static void txid_map_delete()
 {
     if (txid_map.items != NULL)
         free(txid_map.items);
