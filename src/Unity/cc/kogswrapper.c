@@ -614,15 +614,14 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
                 uint256 vin_tx_signed_hash;
 
                 char u1[sizeof(uint256) + 1];
-                decode_hex(vin->prevout.hash, sizeof(uint256), u1);
+                utils_bin_to_hex(vin->prevout.hash, sizeof(uint256), u1);
 
                 if (txid_map_get(vin->prevout.hash, vin_tx_signed_hash)) {
                     // update vin txid to the signed txid:
                     memcpy(vin->prevout.hash, vin_tx_signed_hash, sizeof(vin->prevout.hash));
                     
                     char u2[sizeof(uint256) + 1];
-                    decode_hex(vin->prevout.hash, sizeof(uint256), u2);
-
+                    utils_bin_to_hex(vin->prevout.hash, sizeof(uint256), u2);
                     nspv_log_message("%s %i vin-hash before update=%s after %s\n", __func__, i, u1, u2);
                 }
             }
@@ -679,8 +678,8 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
 
             char u1[sizeof(uint256) + 1];
             char u2[sizeof(uint256) + 1];
-            decode_hex(mtx_hash, sizeof(uint256), u1);
-            decode_hex(mtx_signed_hash, sizeof(uint256), u2);
+            utils_bin_to_hex(mtx_hash, sizeof(uint256), u1);
+            utils_bin_to_hex(mtx_signed_hash, sizeof(uint256), u2);
 
             nspv_log_message("%s for unsigned txid=%s stored signed txid=%s\n", __func__, u1, u2);
 
