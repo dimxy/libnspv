@@ -597,8 +597,9 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
 
     // save vin txids
     cJSON *jhex = cJSON_GetObjectItem(jtxdata, "hex");
+    cJSON *jSigData = cJSON_GetObjectItem(jtxdata, "SigData");
     uint256 mtx_hash = { 0 };
-    uint256 *txids = NULL;
+    
     if (jhex && cJSON_IsString(jhex)) 
     {
         btc_tx *mtx = btc_tx_decodehex(jhex->valuestring);
@@ -628,8 +629,11 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             cstring *updated_hex = btc_tx_to_cstr(mtx);
             if (jtxdata)
                 cJSON_Delete(jtxdata);
+
+            // create new jtxdata with the updated vins:
             jtxdata = cJSON_CreateObject();
-            jaddstr(jtxdata, "hex", updated_hex->str);   // create new jtxdata with the updated vins
+            jaddstr(jtxdata, "hex", updated_hex->str);   
+            jadd(jtxdata, "SigData", jSigData);
 
             cstr_free(updated_hex, true);
             btc_tx_free(mtx);
