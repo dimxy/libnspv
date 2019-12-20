@@ -632,8 +632,15 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
 
             // create new jtxdata with the updated vins:
             jtxdata = cJSON_CreateObject();
-            jaddstr(jtxdata, "hex", updated_hex->str);   
-            jadd(jtxdata, "SigData", cJSON_Duplicate(jSigData, true));
+            jaddstr(jtxdata, "hex", updated_hex->str); 
+            if (jSigData)
+                jadd(jtxdata, "SigData", cJSON_Duplicate(jSigData, true));
+
+            char *updated_txdataStr = cJSON_Print(jtxdata);
+            nspv_log_message("%s updated tx 1/2=%s\n", __func__, updated_txdataStr);
+            nspv_log_message("%s updated tx 2/2=%s\n", __func__, (strlen(updated_txdataStr) > 982 ? updated_txdataStr + 982 : ""));
+            if (updated_txdataStr)
+                cJSON_free(updated_txdataStr);
 
             cstr_free(updated_hex, true);
             btc_tx_free(mtx);
