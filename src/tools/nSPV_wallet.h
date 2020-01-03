@@ -415,11 +415,17 @@ bool NSPV_SignTx(btc_tx *mtx,int32_t vini,int64_t utxovalue,cstring *scriptPubKe
     {
         sighash = NSPV_sapling_sighash(mtx,vini,utxovalue,(uint8_t *)scriptPubKey->str,scriptPubKey->len);
         btc_bits256_to_uint256(sighash,hash);
+        char hex[sizeof(uint256) * 2 + 1];
+        utils_bin_to_hex(hash, sizeof(uint256), hex);
+        nspv_log_message("%s NSPV_sapling_sighash=%s\n", __func__, hex);
     }
     else
     {
         memset(hash,0,sizeof(hash));
         btc_tx_sighash(mtx,scriptPubKey,vini,SIGHASH_ALL,utxovalue,SIGVERSION_BASE,hash);
+        char hex[sizeof(uint256) * 2 + 1];
+        utils_bin_to_hex(hash, sizeof(uint256), hex);
+        nspv_log_message("%s btc_tx_sighash=%s\n", __func__, hex);
     }
     siglen = sizeof(sig);
     if ( btc_key_sign_hash(&NSPV_key,hash,sig,&siglen) == 0 )
