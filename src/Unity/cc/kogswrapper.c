@@ -676,17 +676,19 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             uint256 mtx_signed_hash;
             btc_tx_hash(mtx_signed, mtx_signed_hash);
 
-            if (memcmp(mtx_signed, txid_zero, sizeof(uint256)) != 0)
-                txid_map_add(mtx_hash, mtx_signed_hash);    // store unsigned and signed txids
+            //if (memcmp(mtx_signed, txid_zero, sizeof(uint256)) != 0) 
+            //{
+            txid_map_add(mtx_hash, mtx_signed_hash);    // store unsigned and signed txids
 
-            char hex1[sizeof(uint256)*2 + 1];
-            char hex2[sizeof(uint256)*2 + 1];
+            char hex1[sizeof(uint256) * 2 + 1];
+            char hex2[sizeof(uint256) * 2 + 1];
             utils_bin_to_hex(mtx_hash, sizeof(uint256), hex1);
             reverse_hexstr(hex1);
             utils_bin_to_hex(mtx_signed_hash, sizeof(uint256), hex2);
             reverse_hexstr(hex2);
 
             nspv_log_message("%s for unsigned txid=%s stored signed txid=%s\n", __func__, hex1, hex2);
+            //}
 
             btc_tx_free(mtx_signed);
         }
