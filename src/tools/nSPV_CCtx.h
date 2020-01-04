@@ -55,7 +55,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
     {
         cJSON *item=jitem(sigData,i);
         vini=jint(item,"vin");
-        voutValue=jint(item,"amount");
+        voutValue= j64bitsi(item,"amount");
         if (cJSON_HasObjectItem(item,"cc")!=0)
         {
             CC *cond;
