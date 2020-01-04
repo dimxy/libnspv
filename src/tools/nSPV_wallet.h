@@ -57,7 +57,7 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
         }
 
         char prev_outs_hex[sizeof(prev_outs) * 2 + 1];
-        utils_bin_to_hex(prev_outs, sizeof(prev_outs), prev_outs_hex);
+        utils_bin_to_hex(prev_outs, prev_outs_len, prev_outs_hex);
         nspv_log_message("%s prev_outs_hex=%s\n", __func__, prev_outs_hex);
 
         crypto_generichash_blake2b_salt_personal(hash_prev_outs,32,prev_outs,(uint64_t)prev_outs_len,
@@ -141,7 +141,7 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
         sig_hash_personal = ZCASH_SIG_HASH_SAPLING_PERSONALIZATION;
 
     char for_sig_hash_hex[sizeof(for_sig_hash) * 2 + 1];
-    utils_bin_to_hex(for_sig_hash, sizeof(for_sig_hash), for_sig_hash_hex);
+    utils_bin_to_hex(for_sig_hash, len, for_sig_hash_hex);
     nspv_log_message("%s for_sig_hash_hex=%s\n", __func__, for_sig_hash_hex);
 
     crypto_generichash_blake2b_salt_personal(sigtxid.bytes,32,for_sig_hash,(uint64_t)len,
