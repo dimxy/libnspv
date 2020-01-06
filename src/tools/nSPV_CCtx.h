@@ -83,7 +83,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *error)
                 //return cstr_new(error);
                 nspv_log_message("%s cc error from cc_conditionFromJSON %s\n", __func__, ccerror);
                 if (error) {
-                    vsnprintf(error, NSPV_MAXERRORLEN - 1, "error from parse \"cc\" field %s", ccerror);
+                    snprintf(error, NSPV_MAXERRORLEN - 1, "error from parse \"cc\" field %s", ccerror);
                     error[NSPV_MAXERRORLEN - 1] = '\0';
                 }
                 return NULL;
