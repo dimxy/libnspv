@@ -1547,8 +1547,8 @@ cJSON *_NSPV_JSON(cJSON *argjson)
         cJSON *result=jobj(req,"result");
         if (!cJSON_IsNull(result) && cJSON_HasObjectItem(result,"result") && strcmp(jstr(result,"result"),"success")==0 && (jstr(result,"hex"))!=0 && jobj(result,"SigData")!=NULL)
         {     
-            char err[NSPV_MAXERRORLEN];
-            cstring *hex=FinalizeCCtx(NSPV_client,result, err);
+            char error[NSPV_MAXERRORLEN];
+            cstring *hex=FinalizeCCtx(NSPV_client,result, error);
             result=cJSON_CreateObject();
             if (hex != NULL)
             {
