@@ -696,7 +696,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
     }
     else 
     {
-        vsnprintf(errorStr, WR_MAXERRORLEN-1, "could not sign tx %s", error);
+        snprintf(errorStr, WR_MAXERRORLEN-1, "could not sign tx %s", error);
         errorStr[WR_MAXERRORLEN - 1] = '\0';
         retcode = -1;
     }

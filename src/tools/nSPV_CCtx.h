@@ -47,7 +47,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *error)
     if (!mtx) {
         nspv_log_message("%s Invalid hex tx in JSON response from fullnode (could not parse into mtx)\n", __func__);
         if (error) {
-            _vsnprintf(error, NSPV_MAXERRORLEN - 1, "Invalid hex tx in txdata parameter");
+            snprintf(error, NSPV_MAXERRORLEN - 1, "Invalid hex tx in txdata parameter");
             error[NSPV_MAXERRORLEN - 1] = '\0';
         }
         //return(cstr_new("Invalid hex in JSON response from fullnode"));
@@ -58,7 +58,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *error)
         nspv_log_message("%s No field \"SigData\" in JSON response from fullnode\n", __func__);
         // return(cstr_new("No field \"SigData\" in JSON response from fullnode"));
         if (error) {
-            _vsnprintf(error, NSPV_MAXERRORLEN - 1, "No field \"SigData\" in txdata parameter");
+            snprintf(error, NSPV_MAXERRORLEN - 1, "No field \"SigData\" in txdata parameter");
             error[NSPV_MAXERRORLEN - 1] = '\0';
         }
         return NULL;
@@ -83,7 +83,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *error)
                 //return cstr_new(error);
                 nspv_log_message("%s cc error from cc_conditionFromJSON %s\n", __func__, ccerror);
                 if (error) {
-                    _vsnprintf(error, NSPV_MAXERRORLEN - 1, "error from parse \"cc\" field %s", ccerror);
+                    vsnprintf(error, NSPV_MAXERRORLEN - 1, "error from parse \"cc\" field %s", ccerror);
                     error[NSPV_MAXERRORLEN - 1] = '\0';
                 }
                 return NULL;
@@ -115,7 +115,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *error)
                 //fprintf(stderr,"signing error for vini.%d\n",vini);
                 nspv_log_message("signing error for vini.%d\n", vini);
                 if (error) {
-                    _vsnprintf(error, NSPV_MAXERRORLEN - 1, "signing error for vini.%d", vini);
+                    snprintf(error, NSPV_MAXERRORLEN - 1, "signing error for vini.%d", vini);
                     error[NSPV_MAXERRORLEN - 1] = '\0';
                 }
                 cstr_free(voutScriptPubkey,1);
