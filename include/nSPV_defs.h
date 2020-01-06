@@ -27,6 +27,7 @@
 #define NSPV_KOMODO_MAXMEMPOOLTIME 3600 // affects consensus
 #define NSPV_MAX_BLOCK_HEADERS 128
 #define NSPV_ENCRYPTED_MAXSIZE 8192
+#define NSPV_MAXERRORLEN 256
 
 #define NSPV_MAXERRORLEN 256
 
@@ -310,7 +311,7 @@ cJSON *NSPV_broadcast(btc_spv_client *client, char *hex);
 const btc_chainparams *NSPV_coinlist_scan(char *symbol, const btc_chainparams *template);
 void *NSPV_rpcloop(void *args);
 
-cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata);
+cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *error /*=NSPV_MAXERRORLEN*/);
 btc_tx *btc_tx_decodehex(char *hexstr);
 cstring *btc_tx_to_cstr(btc_tx *tx);
 void reverse_hexstr(char *str);

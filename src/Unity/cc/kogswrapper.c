@@ -566,6 +566,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
 unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtrPtr, char *errorStr)
 {
     unity_int32_t retcode = 0;
+    char error[NSPV_MAXERRORLEN];
 
     nspv_log_message("%s enterred\n", __func__);
     safe_strncpy(errorStr, "", WR_MAXERRORLEN);
@@ -661,7 +662,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
         }
     }
 
-    cstring *cstrTx = FinalizeCCtx(kogsclient, jtxdata);
+    cstring *cstrTx = FinalizeCCtx(kogsclient, jtxdata, error);
     if (cstrTx != NULL) 
     {
         char *bufStr = malloc(cstrTx->len+1);
@@ -687,7 +688,7 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
             utils_bin_to_hex(mtx_signed_hash, sizeof(uint256), hex2);
             reverse_hexstr(hex2);
 
-            nspv_log_message("%s for unsigned txid=%s stored signed txid=%s\n", __func__, hex1, hex2);
+            nspv_log_message("%s for unsigned txid=%s stored signed txid=%s for future vin update\n", __func__, hex1, hex2);
             //}
 
             btc_tx_free(mtx_signed);
@@ -695,7 +696,8 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
     }
     else 
     {
-        safe_strncpy(errorStr, "could not sign tx", WR_MAXERRORLEN);
+        vsnprintf(errorStr, WR_MAXERRORLEN-1, "could not sign tx %s", error);
+        errorStr[WR_MAXERRORLEN - 1] = '\0';
         retcode = -1;
     }
     if (jtxdata)
