@@ -26,9 +26,13 @@
 
 extern bool NSPV_SignTx(btc_tx *mtx,int32_t vini,int64_t utxovalue,cstring *scriptPubKey,uint32_t nTime);
 
-cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
+cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *error)
 {
-    int32_t i,n,vini; cstring *finalHex,*hex; cJSON *sigData=NULL; char error[256]; int64_t voutValue;
+    int32_t i,n,vini; 
+    cstring *finalHex,*hex; 
+    cJSON *sigData=NULL; 
+    int64_t voutValue;
+    char ccerror[256];
     
     if (!cJSON_HasObjectItem(txdata, "hex")) {
         // return(cstr_new("No field \"hex\" in JSON response from fullnode"));
@@ -42,6 +46,10 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
     cstr_free(hex,1);
     if (!mtx) {
         nspv_log_message("%s Invalid hex tx in JSON response from fullnode (could not parse into mtx)\n", __func__);
+        if (error) {
+            _vsnprintf(error, NSPV_MAXERRORLEN - 1, "Invalid hex tx in txdata parameter");
+            error[NSPV_MAXERRORLEN - 1] = '\0';
+        }
         //return(cstr_new("Invalid hex in JSON response from fullnode"));
         return NULL;
     }
@@ -49,9 +57,13 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
     if (!sigData) {
         nspv_log_message("%s No field \"SigData\" in JSON response from fullnode\n", __func__);
         // return(cstr_new("No field \"SigData\" in JSON response from fullnode"));
+        if (error) {
+            _vsnprintf(error, NSPV_MAXERRORLEN - 1, "No field \"SigData\" in txdata parameter");
+            error[NSPV_MAXERRORLEN - 1] = '\0';
+        }
         return NULL;
     }
-    for (i=0; i<n; i++)
+    for (i=0; i < n; i++)
     {
         cJSON *item=jitem(sigData,i);
         vini=jint(item,"vin");
@@ -62,20 +74,24 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
             btc_tx_in *vin=btc_tx_vin(mtx,vini);
             bits256 sigHash;
             memset(error,0,256);
-            cond=cc_conditionFromJSON(jobj(item,"cc"),error);
+            cond=cc_conditionFromJSON(jobj(item,"cc"), ccerror);
             if (cond==NULL || error[0])
             {
                 btc_tx_free(mtx);
                 if (cond) 
                     cc_free(cond);
                 //return cstr_new(error);
-                nspv_log_message("%s cc error %s\n", __func__, error);
+                nspv_log_message("%s cc error from cc_conditionFromJSON %s\n", __func__, ccerror);
+                if (error) {
+                    _vsnprintf(error, NSPV_MAXERRORLEN - 1, "error from parse \"cc\" field %s", ccerror);
+                    error[NSPV_MAXERRORLEN - 1] = '\0';
+                }
                 return NULL;
             }
-            cstring *script=CCPubKey(cond);
-            sigHash=NSPV_sapling_sighash(mtx,vini,voutValue,(unsigned char *)script->str,script->len);
-            sigHash=bits256_rev(sigHash);
-            if ((cc_signTreeSecp256k1Msg32(cond,NSPV_key.privkey,sigHash.bytes))!=0)
+            cstring *script = CCPubKey(cond);
+            sigHash = NSPV_sapling_sighash(mtx,vini,voutValue,(unsigned char *)script->str,script->len);
+            sigHash = bits256_rev(sigHash);
+            if ((cc_signTreeSecp256k1Msg32(cond, NSPV_key.privkey, sigHash.bytes)) != 0)
             {
                 if (vin->script_sig)
                 {
@@ -83,6 +99,10 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
                     vin->script_sig=cstr_new("");                    
                 }
                 CCSig(cond,vin->script_sig);
+            }
+            else
+            {
+                nspv_log_message("%s cc_signTreeSecp256k1Msg32 returned null\n", __func__);
             }
             cstr_free(script,1);
             cc_free(cond);
@@ -94,15 +114,18 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata )
             {
                 //fprintf(stderr,"signing error for vini.%d\n",vini);
                 nspv_log_message("signing error for vini.%d\n", vini);
+                if (error) {
+                    _vsnprintf(error, NSPV_MAXERRORLEN - 1, "signing error for vini.%d", vini);
+                    error[NSPV_MAXERRORLEN - 1] = '\0';
+                }
                 cstr_free(voutScriptPubkey,1);
                 btc_tx_free(mtx);
-                // return(cstr_new(""));
                 return NULL;
             }
             cstr_free(voutScriptPubkey,1);
         }
     }
-    finalHex=btc_tx_to_cstr(mtx);
+    finalHex = btc_tx_to_cstr(mtx);
     btc_tx_free(mtx);
     return (finalHex);
 }
