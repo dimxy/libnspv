@@ -248,7 +248,7 @@ struct NSPV_CCmtxinfo
 struct NSPV_remoterpcresp
 {
     char method[64];
-    char json[11000];
+    char *json;
 };
 
 struct NSPV_header

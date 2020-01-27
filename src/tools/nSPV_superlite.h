@@ -56,7 +56,7 @@ struct NSPV_ntzsresp NSPV_ntzsresult;
 struct NSPV_ntzsproofresp NSPV_ntzsproofresult;
 struct NSPV_txproof NSPV_txproofresult;
 struct NSPV_broadcastresp NSPV_broadcastresult;
-struct NSPV_remoterpcresp NSPV_remoterpcresult;
+struct NSPV_remoterpcresp NSPV_remoterpcresult = { "", NULL };
 
 struct NSPV_ntzsresp NSPV_ntzsresp_cache[NSPV_MAXVINS];
 struct NSPV_ntzsproofresp NSPV_ntzsproofresp_cache[NSPV_MAXVINS * 2];
