@@ -504,14 +504,18 @@ int32_t NSPV_rwremoterpcresp(int32_t rwflag,uint8_t *serialized,struct NSPV_remo
 {
     int32_t len = 0;
     len+=iguana_rwbuf(rwflag,&serialized[len],sizeof(ptr->method),(uint8_t *)ptr->method);
+    ptr->json = calloc(slen-len+1, sizeof(char));
     len+=iguana_rwbuf(rwflag,&serialized[len],slen-len,(uint8_t *)ptr->json);
     return(len);
 }
 
 void NSPV_remoterpc_purge(struct NSPV_remoterpcresp *ptr)
 {
-    if ( ptr != 0 )
-        memset(ptr,0,sizeof(*ptr));
+    if (ptr != 0) {
+        if (ptr->json)
+            free(ptr->json);
+        memset(ptr, 0, sizeof(*ptr));
+    }
 }
 
 cJSON *NSPV_txproof_json(struct NSPV_txproof *ptr)
