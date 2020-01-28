@@ -32,8 +32,10 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
     cstring *finalHex,*hex; 
     cJSON *sigData=NULL; 
     int64_t voutValue;
-    char ccerror[256];
     
+    if (errorout)
+        errorout[0] = '\0';
+
     if (!cJSON_HasObjectItem(txdata, "hex")) {
         // return(cstr_new("No field \"hex\" in JSON response from fullnode"));
         nspv_log_message("%s No field \"hex\" in JSON response from fullnode\n", __func__);
@@ -73,16 +75,19 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
             CC *cond;
             btc_tx_in *vin=btc_tx_vin(mtx,vini);
             bits256 sigHash;
-            memset(ccerror,0,sizeof(ccerror));
-            cond=cc_conditionFromJSON(jobj(item,"cc"),ccerror);
-            if (cond==NULL || ccerror[0])
+            char ccerror[256] = "";
+
+            //if (errorout)
+            //    memset(errorout,0,256);
+            cond = cc_conditionFromJSON(jobj(item,"cc"), ccerror);
+            if (cond = =NULL)
             {
                 btc_tx_free(mtx);
                 if (cond) 
                     cc_free(cond);
                 //return cstr_new(error);
                 nspv_log_message("%s cc error from cc_conditionFromJSON %s\n", __func__, ccerror);
-                if (ccerror) {
+                if (errorout) {
                     snprintf(errorout, NSPV_MAXERRORLEN - 1, "error from parse \"cc\" field %s", ccerror);
                     errorout[NSPV_MAXERRORLEN - 1] = '\0';
                 }
