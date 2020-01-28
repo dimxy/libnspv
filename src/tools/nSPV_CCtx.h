@@ -80,7 +80,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
             //if (errorout)
             //    memset(errorout,0,256);
             cond = cc_conditionFromJSON(jobj(item,"cc"), ccerror);
-            if (cond = =NULL)
+            if (cond == NULL)
             {
                 btc_tx_free(mtx);
                 if (cond) 
