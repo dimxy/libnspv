@@ -309,7 +309,7 @@ cJSON *NSPV_broadcast(btc_spv_client *client, char *hex);
 const btc_chainparams *NSPV_coinlist_scan(char *symbol, const btc_chainparams *template);
 void *NSPV_rpcloop(void *args);
 
-cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *error /*=NSPV_MAXERRORLEN*/);
+cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout /*=NSPV_MAXERRORLEN*/);
 btc_tx *btc_tx_decodehex(char *hexstr);
 cstring *btc_tx_to_cstr(btc_tx *tx);
 void reverse_hexstr(char *str);
