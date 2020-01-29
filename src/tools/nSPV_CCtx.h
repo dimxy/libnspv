@@ -68,8 +68,8 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
     for (i=0; i < n; i++)
     {
         cJSON *item=jitem(sigData,i);
-        vini=jint(item,"vin");
-        voutValue= j64bits(item,"amount");
+        vini = jint(item,"vin");
+        voutValue = j64bits(item,"amount");
         if (cJSON_HasObjectItem(item,"cc")!=0)
         {
             CC *cond;
@@ -94,14 +94,31 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
                 return NULL;
             }
             cstring *script = CCPubKey(cond);
-            sigHash = NSPV_sapling_sighash(mtx,vini,voutValue,(unsigned char *)script->str,script->len);
+            uint8_t privkey[32];
+            if (cJSON_HasObjectItem(item, "globalPrivKey") != 0)
+            {
+                // use global privkey from the komodod
+                char *privhex = jstr(item, "globalPrivKey");
+                int privhexlen = strlen(privhex);
+                int outlen;
+
+                if (privhexlen / 2 > sizeof(privkey))
+                    privhexlen = sizeof(privkey) * 2;
+                utils_hex_to_bin(privhex, privkey, privhexlen, &outlen);
+            }
+            else
+            {
+                memcpy(privkey, NSPV_key.privkey, sizeof(privkey));
+            }
+
+            sigHash = NSPV_sapling_sighash(mtx, vini, voutValue, (unsigned char *)script->str, script->len);
             sigHash = bits256_rev(sigHash);
-            if ((cc_signTreeSecp256k1Msg32(cond, NSPV_key.privkey, sigHash.bytes)) != 0)
+            if ((cc_signTreeSecp256k1Msg32(cond, privkey, sigHash.bytes)) != 0)
             {
                 if (vin->script_sig)
                 {
                     cstr_free(vin->script_sig,1);
-                    vin->script_sig=cstr_new("");                    
+                    vin->script_sig = cstr_new("");                    
                 }
                 CCSig(cond,vin->script_sig);
             }
@@ -111,6 +128,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
             }
             cstr_free(script,1);
             cc_free(cond);
+            memset(privkey, '\0', sizeof(privkey));
         }
         else
         {            
