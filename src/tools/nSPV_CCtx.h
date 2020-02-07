@@ -45,7 +45,11 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
     hex=cstr_new(jstr(txdata,"hex"));
     cstr_append_c(hex,0);
     btc_tx *mtx=btc_tx_decodehex(hex->str);
+    nspv_log_message("%s btc_tx_decodehex height=%d\n", __func__, mtx->nExpiryHeight);
+
     cstr_free(hex,1);
+    nspv_log_message("%s cstr_free height=%d\n", __func__, mtx->nExpiryHeight);
+
     if (!mtx) {
         nspv_log_message("%s Invalid hex tx in JSON response from fullnode (could not parse into mtx)\n", __func__);
         if (errorout) {
@@ -63,6 +67,7 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
             snprintf(errorout, NSPV_MAXERRORLEN - 1, "No field \"SigData\" in txdata parameter");
             errorout[NSPV_MAXERRORLEN - 1] = '\0';
         }
+        btc_tx_free(mtx);
         return NULL;
     }
     for (i=0; i < n; i++)
@@ -77,8 +82,6 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
             bits256 sigHash;
             char ccerror[256] = "";
 
-            //if (errorout)
-            //    memset(errorout,0,256);
             cond = cc_conditionFromJSON(jobj(item,"cc"), ccerror);
             if (cond == NULL)
             {
@@ -110,8 +113,11 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
             {
                 memcpy(privkey, NSPV_key.privkey, sizeof(privkey));
             }
+            nspv_log_message("%s cJSON_HasObjectItem height=%d\n", __func__, mtx->nExpiryHeight);
 
             sigHash = NSPV_sapling_sighash(mtx, vini, voutValue, (unsigned char *)script->str, script->len);
+            nspv_log_message("%s NSPV_sapling_sighash height=%d\n", __func__, mtx->nExpiryHeight);
+
             sigHash = bits256_rev(sigHash);
             if ((cc_signTreeSecp256k1Msg32(cond, privkey, sigHash.bytes)) != 0)
             {
@@ -126,8 +132,12 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
             {
                 nspv_log_message("%s cc_signTreeSecp256k1Msg32 returned null\n", __func__);
             }
+            nspv_log_message("%s cc_signTreeSecp256k1Msg32 height=%d\n", __func__, mtx->nExpiryHeight);
+
             cstr_free(script,1);
             cc_free(cond);
+            nspv_log_message("%s cc_free height=%d\n", __func__, mtx->nExpiryHeight);
+
             memset(privkey, '\0', sizeof(privkey));
         }
         else
@@ -147,9 +157,12 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
                 return NULL;
             }
             cstr_free(voutScriptPubkey,1);
+            nspv_log_message("%s cstr_free height=%d\n", __func__, mtx->nExpiryHeight);
         }
     }
     finalHex = btc_tx_to_cstr(mtx);
+    nspv_log_message("%s btc_tx_to_cstr height=%d\n", __func__, mtx->nExpiryHeight);
+
     btc_tx_free(mtx);
     return (finalHex);
 }
