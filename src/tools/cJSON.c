@@ -345,7 +345,7 @@ CJSON_PUBLIC(long long) cJSON_SetIntegerHelper(cJSON *object, long long int64val
         object->valueint64 = (long long)int64val;
     }
 
-    object->valuedouble = int64val;
+    object->valuedouble = (double)int64val;
     return int64val;
 }
 
@@ -2153,17 +2153,17 @@ CJSON_PUBLIC(cJSON *) cJSON_CreateNumber(double num)
         item->valuedouble = num;
 
         /* use saturation in case of overflow */
-        if (num >= INT_MAX)
+        if (num >= LLONG_MAX)
         {
-            item->valueint64 = INT_MAX;
+            item->valueint64 = LLONG_MAX;
         }
-        else if (num <= INT_MIN)
+        else if (num <= LLONG_MIN)
         {
-            item->valueint64 = INT_MIN;
+            item->valueint64 = LLONG_MIN;
         }
         else
         {
-            item->valueint64 = (int)num;
+            item->valueint64 = (long long)num;
         }
     }
 
