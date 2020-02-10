@@ -5,18 +5,18 @@ ACLOCAL_AMFLAGS = -I build-aux/m4
 DIST_SUBDIRS = src/secp256k1
 
 if TARGET_WINDOWS
-WS2_32_FLAGS = -Wl,-lws2_32
+WS2_32_LIBS = -Wl,-lws2_32
 FPIC_FLAGS = 
 else
-WS2_32_FLAGS =
+WS2_32_LIBS =
 FPIC_FLAGS = -fPIC
 endif
 
 if ANDROID_SO
-ANDROID_LIBS_CFLAGS = -Wl,-llog -Wl,-landroid -Wl,-lm
+ANDROID_LIBS = -Wl,-llog -Wl,-landroid -Wl,-lm
 ANDROID_LOG_CFLAGS = -llog 
 else
-ANDROID_LIBS_CFLAGS =
+ANDROID_LIBS =
 ANDROID_LOG_CFLAGS =
 endif
 
@@ -242,8 +242,8 @@ libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
 
 # link as shared:
 # using '-Wl,-lcryptoconditions' instead of '$(LIBCRYPTOCONDITIONS)' for MINGW build:
-libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(WS2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread $(FPIC_FLAGS) $(ANDROID_LIBS_CFLAGS)
-# libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-soname,libcryptoconditions.so -Wl,-soname,libsecp256k1.so $(WS2_32_FLAGS) -Wl,-lsodium -Wl,-lpthread $(FPIC_FLAGS) $(ANDROID_LIBS)
+libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(WS2_32_LIBS) -Wl,-lsodium -Wl,-lpthread $(FPIC_FLAGS) $(ANDROID_LIBS)
+# libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-soname,libcryptoconditions.so -Wl,-soname,libsecp256k1.so $(WS2_32_LIBS) -Wl,-lsodium -Wl,-lpthread $(FPIC_FLAGS) $(ANDROID_LIBS)
 libnspv_la_LDFLAGS = -no-undefined
 libnspv_la_LIBADD = libbtc.la  # $(LIBCRYPTOCONDITIONS) and other .la do not work for MINGW
 
