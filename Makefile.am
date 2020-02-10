@@ -13,7 +13,7 @@ FPIC_FLAGS = -fPIC
 endif
 
 if ANDROID_SO
-ANDROID_LIBS_CFLAGS = -Wl,-llog -Wl,-landroid
+ANDROID_LIBS_CFLAGS = -Wl,-llog -Wl,-landroid -lm
 ANDROID_LOG_CFLAGS = -llog 
 else
 ANDROID_LIBS_CFLAGS =
