@@ -550,7 +550,7 @@ int btc_node_parse_message(btc_node* node, btc_p2p_msg_hdr* hdr, struct const_bu
             }
             if ( node->nodegroup->chainparams->nSPV != 0 && (v_msg_check.services & NODE_NSPV) == 0 )
             {
-                fprintf(stderr,"nServices.%x disconnect from node %d: %s (%d)\n",(uint32_t)v_msg_check.services, node->nodeid, v_msg_check.useragent, v_msg_check.start_height);
+                node->nodegroup->log_write_cb("nServices.%x disconnect from node %d: %s (%d)\n",(uint32_t)v_msg_check.services, node->nodeid, v_msg_check.useragent, v_msg_check.start_height);
                 btc_node_disconnect(node);
             }
             if ((v_msg_check.services & BTC_NODE_NETWORK) != BTC_NODE_NETWORK)
@@ -578,6 +578,9 @@ int btc_node_parse_message(btc_node* node, btc_p2p_msg_hdr* hdr, struct const_bu
             cstring* pongmsg = btc_p2p_message_new(node->nodegroup->chainparams->netmagic, BTC_MSG_PONG, &nonce, 8);
             btc_node_send(node, pongmsg);
             cstr_free(pongmsg, true);
+        }
+        else if (strcmp(hdr->command, "reject") == 0) {
+            node->nodegroup->log_write_cb("Rejected by peer %d, check protocol version\n", node->nodeid);
         }
     }
 

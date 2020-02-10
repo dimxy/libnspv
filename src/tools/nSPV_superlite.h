@@ -1280,7 +1280,7 @@ int32_t NSPV_periodic(btc_node *node) // called periodically
             } while ( havehdrht(NSPV_hdrheight_counter) >= 0 );
             reqht = NSPV_hdrheight_counter;
         } else NSPV_lastgetinfo = timestamp;
-        fprintf(stderr,"node.%i reqhdr.%i hdrtotal.%i delay.%u k.%i\n",node->nodeid, reqht, NSPV_num_headers, delay, k);
+        nspv_log_message("node.%i reqhdr.%i hdrtotal.%i delay.%u k.%i\n",node->nodeid, reqht, NSPV_num_headers, delay, k);
         len = 1;
         msg[len++] = NSPV_INFO;
         len += iguana_rwnum(1,&msg[len],sizeof(reqht),&reqht);
