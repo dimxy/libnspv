@@ -46,7 +46,7 @@
 #include <float.h>
 #include <memory.h>
 
-#include "cJSON64.h"
+#include "cJSON.h"
 
 //#include "../crypto777/OS_portable.h"
 
