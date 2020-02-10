@@ -13,11 +13,11 @@ FPIC_FLAGS = -fPIC
 endif
 
 if ANDROID_SO
-ANDROID_LIBS = -Wl,-llog -Wl,-landroid -Wl,-lm
-ANDROID_LOG_CFLAGS = -llog 
+ANDROID_LIBS = -Wl,-landroid -Wl,-lm
+ANDROID_LOG = -llog 
 else
 ANDROID_LIBS =
-ANDROID_LOG_CFLAGS =
+ANDROID_LOG =
 endif
 
 
@@ -89,7 +89,7 @@ libbtc_la_SOURCES = \
 libbtc_la_CPPFLAGS = -DLIBNSPV_BUILD
 libbtc_la_CFLAGS = -I$(top_srcdir)/include -I$(top_srcdir)/src/logdb/include -O2 $(FPIC_FLAGS)
 # -DLIBBTC_BUILD
-libbtc_la_LIBADD = $(LIBSECP256K1) $(ANDROID_LOG_CFLAGS)
+libbtc_la_LIBADD = $(LIBSECP256K1) $(ANDROID_LOG)
 
 
 if USE_TESTS
