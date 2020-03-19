@@ -302,7 +302,7 @@ loop_end:
     }
     else
     {
-        item->valueint64 = (long long)atoll(number_c_string);
+        item->valueint64 = (long long)atoll((const char*)number_c_string);
     }
 
     item->type = cJSON_Number;
