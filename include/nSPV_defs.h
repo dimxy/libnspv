@@ -28,6 +28,7 @@
 #define NSPV_MAX_BLOCK_HEADERS 128
 #define NSPV_ENCRYPTED_MAXSIZE 8192
 #define NSPV_MAXERRORLEN 256
+#define NSPV_GETADDR_INTERVAL 60 // sec
 
 #include <time.h>
 #ifndef __MINGW

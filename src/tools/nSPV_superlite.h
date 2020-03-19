@@ -1204,7 +1204,7 @@ int32_t NSPV_periodic(btc_node *node) // called periodically
     if ( starttime == 0 )
         starttime = timestamp;
     
-    if ( node->gotaddrs == 0 )
+    if (node->gotaddrs == 0 || timestamp - node->gotaddrs > NSPV_GETADDR_INTERVAL)
     {
         // void CAddrMan::GetAddr_(std::vector<CAddress>& vAddr) to use nSPV flag
         cstring *request = btc_p2p_message_new(node->nodegroup->chainparams->netmagic,"getaddr",NULL,0);
