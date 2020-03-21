@@ -504,16 +504,16 @@ void btc_net_spv_post_cmd(btc_node *node, btc_p2p_msg_hdr *hdr, struct const_buf
         if (connected) {
             if (client->header_connected) { client->header_connected(client); }
             time_t lasttime = pindex->header.timestamp;
-            printf("Downloaded new block with size %d at height %d (%s)\n", hdr->data_len, pindex->height, ctime(&lasttime));
+            client->nodegroup->log_write_cb("Downloaded new block with size %d at height %d (%s)\n", hdr->data_len, pindex->height, ctime(&lasttime));
             uint64_t start = time(NULL);
-            printf("Start parsing %d transactions...", amount_of_txs);
+            client->nodegroup->log_write_cb("Start parsing %d transactions...", amount_of_txs);
 
             size_t consumedlength = 0;
             for (unsigned int i=0;i<amount_of_txs;i++)
             {
                 btc_tx* tx = btc_tx_new(1);
                 if (!btc_tx_deserialize(buf->p, buf->len, tx, &consumedlength, true)) {
-                    printf("Error deserializing transaction\n");
+                    client->nodegroup->log_write_cb("Error deserializing transaction\n");
                 }
                 deser_skip(buf, consumedlength);
 
@@ -522,10 +522,10 @@ void btc_net_spv_post_cmd(btc_node *node, btc_p2p_msg_hdr *hdr, struct const_buf
 
                 btc_tx_free(tx);
             }
-            printf("done (took %llu secs)\n", (long long)(time(NULL) - start));
+            client->nodegroup->log_write_cb("done (took %llu secs)\n", (long long)(time(NULL) - start));
         }
         else {
-            fprintf(stderr, "Could not connect block on top of the chain\n");
+            client->nodegroup->log_write_cb("Could not connect block on top of the chain\n");
         }
 
         if (btc_hash_equal(node->last_requested_inv, pindex->hash)) {
