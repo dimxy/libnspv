@@ -301,3 +301,25 @@ void btc_file_commit(FILE *file)
 #endif
 }
 
+// log info message
+void nspv_log_message(const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+#if defined(LIBNSPV_BUILD)
+#if defined(__ANDROID__) || defined(ANDROID)
+    // print to android log
+    __android_log_vprint(ANDROID_LOG_INFO, "libnspv", format, args);
+#else
+    // for shared object lib print to debug file
+    FILE *fdebug = nspv_get_fdebug();
+    if (fdebug != NULL) {
+        vfprintf(fdebug, format, args);
+        fflush(fdebug);
+    }
+#endif
+#else
+    vfprintf(stdout, format, args);
+#endif
+    va_end(args);
+}
