@@ -194,6 +194,7 @@ void node_periodical_timer(int fd, short event, void* ctx)
         node->time_started_con = 0;
         node->state |= NODE_ERRORED;
         node->state |= NODE_TIMEOUT;
+        node->nodegroup->log_write_cb("node %d %s connection timeout %d\n", node->nodeid, node->ipaddr, BTC_CONNECT_TIMEOUT_S);
         btc_node_connection_state_changed(node);
     }
 
@@ -470,8 +471,7 @@ void btc_node_connection_state_changed(btc_node *node)
         node->nodegroup->node_connection_state_changed_cb(node);
 
     if ((node->state & NODE_ERRORED) == NODE_ERRORED) {
-        node->nodegroup->log_write_cb("node %s connection timeout %d\n", node->ipaddr, BTC_CONNECT_TIMEOUT_S);
-        btc_node_release_events(node);
+        btc_node_release_events(node);   // when all node release their events, the event_loop is finished 
 
         // connect to more nodes are required
         btc_bool should_connect_to_more_nodes = true;
