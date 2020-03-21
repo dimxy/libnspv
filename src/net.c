@@ -45,6 +45,7 @@ static const int BTC_PERIODICAL_NODE_TIMER_S = 5;
 static const int BTC_PING_INTERVAL_S = 180;
 static const int BTC_CONNECT_TIMEOUT_S = 10;
 
+/*
 #if defined(LIBNSPV_BUILD)
 #if !defined(__ANDROID__) && !defined(ANDROID)
 // for the lib logging is to a file
@@ -59,6 +60,9 @@ FILE *nspv_get_fdebug()
 }
 #endif
 #endif
+*/
+
+FILE *nspv_get_fdebug();
 
 // callback for logging debug messages
 int net_write_log_printf(const char* format, ...)

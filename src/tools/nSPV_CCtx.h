@@ -102,11 +102,11 @@ cstring *FinalizeCCtx(btc_spv_client *client, cJSON *txdata, char *errorout)
             {
                 // use global privkey from the komodod
                 char *privhex = jstr(item, "globalPrivKey");
-                int privhexlen = strlen(privhex);
+                int privhexlen = (int)strlen(privhex);
                 int outlen;
 
-                if (privhexlen / 2 > sizeof(privkey))
-                    privhexlen = sizeof(privkey) * 2;
+                if (privhexlen / 2 > (int)sizeof(privkey))
+                    privhexlen = (int)sizeof(privkey) * 2;
                 utils_hex_to_bin(privhex, privkey, privhexlen, &outlen);
             }
             else
