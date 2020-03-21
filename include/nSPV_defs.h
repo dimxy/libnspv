@@ -315,6 +315,6 @@ btc_tx *btc_tx_decodehex(char *hexstr);
 cstring *btc_tx_to_cstr(btc_tx *tx);
 void reverse_hexstr(char *str);
 
-void nspv_log_message(const char *format, ...);
+//void nspv_log_message(const char *format, ...);
 
 #endif // KOMODO_NSPV_DEFSH

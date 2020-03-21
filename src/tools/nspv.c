@@ -186,7 +186,7 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
     if ( (filestr= OS_filestr(&filesize,"coins")) != NULL )
     {
         nspv_log_message("loaded coins file size=%ld\n",filesize);
-        if ( (array= cJSON_Parse(filestr)) != 0 )
+        if ((array= cJSON_Parse(filestr)) != 0)
         {
             n = cJSON_GetArraySize(array);
             for (i=0; i<n; i++)
