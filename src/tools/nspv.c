@@ -171,11 +171,11 @@ const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *te
             {
                 coin = jitem(array,i);
                 nspv_log_message("checking coin config: %s\n", jprint(coin,0));
-                if ( (name= jstr(coin,"coin")) != 0 && strcmp(name,symbol) == 0 && jstr(coin,"asset") != 0 )
+                if ((name= jstr(coin,"coin")) != 0 && strcmp(name,symbol) == 0 && jstr(coin,"asset") != 0)
                 {
-                    if ( (seeds= jstr(coin,"nSPV")) != 0 && strlen(seeds) < sizeof(chain->dnsseeds[0].domain)-1 && (magic=jstr(coin,"magic")) != 0 && strlen(magic) == 8 )
+                    if ((seeds= jstr(coin,"nSPV")) != 0 && strlen(seeds) < sizeof(chain->dnsseeds[0].domain)-1 && (magic=jstr(coin, "magic")) != 0 && strlen(magic) == 8)
                     {
-                        if ( jstr(coin,"fname") != 0 )
+                        if (jstr(coin,"fname") != 0)
                             strcpy(NSPV_fullname,jstr(coin,"fname"));
                         chain->default_port = juint(coin,"p2p");
                         chain->rpcport = juint(coin,"rpcport");
@@ -330,9 +330,10 @@ int main(int argc, char* argv[])
             exit(EXIT_FAILURE);
         }
     }
-    if ( port == 0 )
+    if (port == 0)
         port = chain->rpcport;
-    else memcpy((void *)&chain->rpcport,&port,sizeof(chain->rpcport));
+    else 
+        memcpy((void *)&chain->rpcport,&port,sizeof(chain->rpcport));
     NSPV_chain = chain;
     if ( chain->komodo != 0 )
     {
@@ -349,7 +350,7 @@ int main(int argc, char* argv[])
         data = (char *)"scan";
     }
     pthread_t thread;
-    if ( OS_thread_create(&thread,NULL,NSPV_rpcloop,(void *)&port) != 0 )
+    if (OS_thread_create(&thread, NULL, NSPV_rpcloop, (void *)&port) != 0)
     {
         printf("error launching NSPV_rpcloop for port.%u\n",port);
         exit(-1);
@@ -362,7 +363,7 @@ int main(int argc, char* argv[])
         btc_ecc_start();
         btc_spv_client* client = btc_spv_client_new(chain, debug, (dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false);
         NSPV_client = client;
-        if ( chain->nSPV == 0 )
+        if (chain->nSPV == 0)
         {
             btc_wallet *wallet = btc_wallet_new(chain);
             btc_bool created;
@@ -405,22 +406,22 @@ int main(int argc, char* argv[])
             client->sync_transaction_ctx = wallet;
         }
         client->header_message_processed = spv_header_message_processed;
-        if ( chain->nSPV == 0 && !btc_spv_client_load(client, (dbfile ? dbfile : headersname)))
+        if (chain->nSPV == 0 && !btc_spv_client_load(client, (dbfile ? dbfile : headersname)))
         {
-            printf("Could not load or create %s database...aborting\n",headersname);
+            nspv_log_message("Could not load or create %s database...aborting\n",headersname);
             ret = EXIT_FAILURE;
         }
         else
         {
-            fprintf(stderr,"Discover %s peers...",chain->name);
+            nspv_log_message(stderr,"Discover %s peers...",chain->name);
             btc_spv_client_discover_peers(client,ips);
             btc_spv_client_runloop(client);
-            printf("end of client runloop\n");
+            nspv_log_message("end of client runloop\n");
             btc_spv_client_free(client);
 			NSPV_STOP_RECEIVED = (uint32_t)time(NULL);
 #if !defined(__ANDROID__) && !defined(ANDROID)
 			// no pthread_cancel in Android NDK
-			// actually no need to pthread_cancel if NSPV_STOP_RECEIVED is used to finishe the thread, 
+			// actually no need to pthread_cancel if NSPV_STOP_RECEIVED is used to finish the thread, 
 			// it is sufficient just to wait for the thread end in pthread_join
             pthread_cancel(thread); 
 #endif

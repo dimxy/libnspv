@@ -58,7 +58,7 @@ FILE *nspv_get_fdebug()
     return fdebug;
 }
 #endif
-#endif;
+#endif
 
 // callback for logging debug messages
 int net_write_log_printf(const char* format, ...)
@@ -238,7 +238,7 @@ void event_cb(struct bufferevent* ev, short type, void* ctx)
     }
     else if (type & BEV_EVENT_CONNECTED)
     {
-        fprintf(stderr,"Connected to node %d %s\n", node->nodeid,node->ipaddr);
+        //fprintf(stderr,"Connected to node %d %s\n", node->nodeid,node->ipaddr);
         node->nodegroup->log_write_cb("Successfull connected to node %d.\n", node->nodeid);
         node->state |= NODE_CONNECTED;
         node->state &= ~NODE_CONNECTING;
@@ -306,7 +306,7 @@ void btc_node_disconnect(btc_node* node)
     if ((node->state & NODE_CONNECTED) == NODE_CONNECTED || (node->state & NODE_CONNECTING) == NODE_CONNECTING)
     {
         node->nodegroup->log_write_cb("Disconnect node %d\n", node->nodeid);
-        fprintf(stderr,"Disconnect node %d %s\n", node->nodeid,node->ipaddr);
+        //fprintf(stderr,"Disconnect node %d %s\n", node->nodeid,node->ipaddr);
     }
     /* release buffer and timer event */
     btc_node_release_events(node);
@@ -387,9 +387,9 @@ void btc_node_group_event_loop(btc_node_group* group)
 btc_node *btc_node_group_add_node(btc_node_group* group, btc_node* node)
 {
     size_t j;
-    for ( j = 0; j < group->nodes->len; j++) {
+    for (j = 0; j < group->nodes->len; j++) {
         btc_node* existing_node = vector_idx(group->nodes, j);
-        if ( memcmp(&((struct sockaddr_in*)&existing_node->addr)->sin_addr, &((struct sockaddr_in*)&node->addr)->sin_addr, sizeof(&((struct sockaddr_in*)&existing_node->addr)->sin_addr)) == 0 ) 
+        if (memcmp(&((struct sockaddr_in*)&existing_node->addr)->sin_addr, &((struct sockaddr_in*)&node->addr)->sin_addr, sizeof(&((struct sockaddr_in*)&existing_node->addr)->sin_addr)) == 0)
             return(existing_node);
     }
     vector_add(group->nodes, node);
@@ -417,6 +417,8 @@ btc_bool btc_node_group_connect_next_nodes(btc_node_group* group)
         return true;
      
     connect_amount = connect_amount*3;
+    group->log_write_cb("%s number of needed nodes to connect %d\n", __func__, connect_amount);
+
     /* search for a potential node that has not errored and is not connected or in connecting state */
     for (size_t i = 0; i < group->nodes->len; i++) {
         btc_node* node = vector_idx(group->nodes, i);
@@ -441,13 +443,13 @@ btc_bool btc_node_group_connect_next_nodes(btc_node_group* group)
             struct timeval tv;
             tv.tv_sec = BTC_PERIODICAL_NODE_TIMER_S;
             tv.tv_usec = 0;
-            node->timer_event = event_new(group->event_base, 0, EV_TIMEOUT | EV_PERSIST,node_periodical_timer,(void*)node);
+            node->timer_event = event_new(group->event_base, 0, EV_TIMEOUT | EV_PERSIST, node_periodical_timer,(void*)node);
             event_add(node->timer_event, &tv);
             node->state |= NODE_CONNECTING;
             connected_at_least_to_one_node = true;
 
             node->nodegroup->log_write_cb("Trying to connect to %d...\n", node->nodeid);
-            fprintf(stderr,"Trying to connect to %d %s\n", node->nodeid,node->ipaddr);
+            //fprintf(stderr,"Trying to connect to %d %s\n", node->nodeid,node->ipaddr);
 
             connect_amount--;
             if (connect_amount <= 0)
@@ -464,6 +466,7 @@ void btc_node_connection_state_changed(btc_node *node)
         node->nodegroup->node_connection_state_changed_cb(node);
 
     if ((node->state & NODE_ERRORED) == NODE_ERRORED) {
+        node->nodegroup->log_write_cb("node %s connection timeout %d\n", node->ipaddr, BTC_CONNECT_TIMEOUT_S);
         btc_node_release_events(node);
 
         // connect to more nodes are required
@@ -478,10 +481,12 @@ void btc_node_connection_state_changed(btc_node *node)
     {
         if ((node->state & NODE_CONNECTED) == NODE_CONNECTED || (node->state & NODE_CONNECTING) == NODE_CONNECTING)
         {
-            //fprintf(stderr,"misbehaved\n");
+            node->nodegroup->log_write_cb("node %s misbehaved\n", node->ipaddr);
             btc_node_disconnect(node);
         }
-    } else btc_node_send_version(node);
+    } 
+    else 
+        btc_node_send_version(node);
 }
 
 void btc_node_send(btc_node* node, cstring* data)
@@ -548,7 +553,7 @@ int btc_node_parse_message(btc_node* node, btc_p2p_msg_hdr* hdr, struct const_bu
             if (!btc_p2p_msg_version_deser(&v_msg_check, buf)) {
                 return btc_node_missbehave(node);
             }
-            if ( node->nodegroup->chainparams->nSPV != 0 && (v_msg_check.services & NODE_NSPV) == 0 )
+            if (node->nodegroup->chainparams->nSPV != 0 && (v_msg_check.services & NODE_NSPV) == 0)
             {
                 node->nodegroup->log_write_cb("nServices.%x disconnect from node %d: %s (%d)\n",(uint32_t)v_msg_check.services, node->nodeid, v_msg_check.useragent, v_msg_check.start_height);
                 btc_node_disconnect(node);
