@@ -89,9 +89,24 @@ static void print_usage()
 
 #if defined(LIBNSPV_BUILD)
 #if !defined(__ANDROID__) && !defined(ANDROID)
-extern FILE *nspv_get_fdebug();
+// extern FILE *nspv_get_fdebug();
+// for the lib logging is to a file
+FILE *nspv_get_fdebug()
+{
+    static FILE *fdebug = NULL;
+    // TODO: make fdebug open multithreaded 
+    if (fdebug == NULL) {
+        fdebug = fopen("nspv-debug.log", "a");
+    }
+    return fdebug;
+}
 #endif
-#endif;
+#else
+FILE *nspv_get_fdebug()
+{
+    return stderr;
+}
+#endif
 
 // log info message
 void nspv_log_message(const char *format, ...)
