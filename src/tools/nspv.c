@@ -165,9 +165,16 @@ void spv_sync_completed(btc_spv_client* client) {
 //#include "nSPV_jpeg.h"
 #include "nSPV_superlite.h"
 #include "nSPV_wallet.h"
+
+#if !defined(LIBNSPV_BUILD)
 #include "nSPV_htmlgui.h"
+#endif
+
 #include "komodo_cJSON.c"
+
+#if !defined(LIBNSPV_BUILD)
 #include "nSPV_rpc.h"
+#endif
 
 const btc_chainparams *NSPV_coinlist_scan(char *symbol,const btc_chainparams *template)
 {
