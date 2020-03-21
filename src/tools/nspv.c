@@ -428,7 +428,7 @@ int main(int argc, char* argv[])
         }
         else
         {
-            nspv_log_message(stderr,"Discover %s peers...",chain->name);
+            nspv_log_message("Discover %s peers...",chain->name);
             btc_spv_client_discover_peers(client,ips);
             btc_spv_client_runloop(client);
             nspv_log_message("end of client runloop\n");
