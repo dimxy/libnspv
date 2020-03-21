@@ -422,7 +422,7 @@ btc_bool btc_node_group_connect_next_nodes(btc_node_group* group)
         return true;
      
     connect_amount = connect_amount*3;
-    group->log_write_cb("%s number of needed nodes to connect %d\n", __func__, connect_amount);
+    // group->log_write_cb("%s number of needed nodes to connect %d\n", __func__, connect_amount);  // unneeded log
 
     /* search for a potential node that has not errored and is not connected or in connecting state */
     for (size_t i = 0; i < group->nodes->len; i++) {
