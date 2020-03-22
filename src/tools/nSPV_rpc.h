@@ -30,6 +30,7 @@ char* methodfiles[] = {"wallet", "login", "broadcast", "getinfo", "receive", "ge
  * @remarks - #if (defined(_M_X64) || defined(__amd64__)) && defined(WIN32)
  *     is equivalent to #if defined(_M_X64) as _M_X64 is defined for MSVC only
  */
+/*
 #if defined(_M_X64)
 #define WIN32_LEAN_AND_MEAN
 #include <winsock2.h>
@@ -67,7 +68,7 @@ char* methodfiles[] = {"wallet", "login", "broadcast", "getinfo", "receive", "ge
 #endif
 #else
 #define MSG_NOSIGNAL 0
-#endif
+#endif*/
 
 static int32_t spawned, maxspawned, rpcdepth;
 portable_mutex_t NSPV_commandmutex;
