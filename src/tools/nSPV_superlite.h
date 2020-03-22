@@ -474,14 +474,14 @@ void komodo_nSPVresp(btc_node *from, uint8_t *response, int32_t len)
 
         // processing results for cc requests: 
         case NSPV_BROADCASTRESP:
-            NSPV_broadcast_purge(&from->nodegroup->NSPV_broadcastresult);
-            NSPV_rwbroadcastresp(0, &response[1], &from->nodegroup->NSPV_broadcastresult);
-            nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, from->nodegroup->NSPV_broadcastresult.txid), from->nodegroup->NSPV_broadcastresult.retcode);
+            NSPV_broadcast_purge(&from->nodegroup.NSPV_broadcastresult);
+            NSPV_rwbroadcastresp(0, &response[1], &from->nodegroup.NSPV_broadcastresult);
+            nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, from->nodegroup.NSPV_broadcastresult.txid), from->nodegroup.NSPV_broadcastresult.retcode);
             break;
         case NSPV_REMOTERPCRESP:
-            NSPV_remoterpc_purge(&from->nodegroup->NSPV_remoterpcresult);
-            NSPV_rwremoterpcresp(0, &response[1], &from->nodegroup->NSPV_remoterpcresult, len - 1);
-            nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, from->nodegroup->NSPV_remoterpcresult.method);
+            NSPV_remoterpc_purge(&from->nodegroup.NSPV_remoterpcresult);
+            NSPV_rwremoterpcresp(0, &response[1], &from->nodegroup.NSPV_remoterpcresult, len - 1);
+            nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, from->nodegroup.NSPV_remoterpcresult.method);
             break;
         default:
             nspv_log_message("unexpected response %02x size.%d at %u\n", response[0], len, timestamp);
@@ -897,7 +897,7 @@ cJSON *NSPV_broadcast(btc_spv_client *client,char *hex)
     int32_t i, n, iter, len = 3; 
     struct NSPV_broadcastresp B;
 
-    NSPV_broadcast_purge(&client->nodegroup->NSPV_broadcastresult);
+    NSPV_broadcast_purge(&client->nodegroup.NSPV_broadcastresult);
     n = (int32_t)strlen(hex) >> 1;
     data = (uint8_t *)malloc(n);
     decode_hex(data, n, hex);
@@ -916,13 +916,13 @@ cJSON *NSPV_broadcast(btc_spv_client *client,char *hex)
     {
         if ( NSPV_req(client, 0, msg, len, NODE_NSPV, NSPV_BROADCAST>>1) != 0 )
         {
-            for (i=0; i<NSPV_POLLITERS; i++)
+            for (i=0; i < NSPV_POLLITERS; i++)
             {
                 usleep(NSPV_POLLMICROS);
-                if (memcmp(&client->nodegroup->NSPV_broadcastresult.txid, &txid, sizeof(txid)) == 0)
+                if (memcmp(&client->nodegroup.NSPV_broadcastresult.txid, &txid, sizeof(txid)) == 0)
                 {
                     free(msg);
-                    return(NSPV_broadcast_json(&client->nodegroup->NSPV_broadcastresult, txid));
+                    return(NSPV_broadcast_json(&client->nodegroup.NSPV_broadcastresult, txid));
                 }
             }
         } 
@@ -930,21 +930,21 @@ cJSON *NSPV_broadcast(btc_spv_client *client,char *hex)
             sleep(1);
     }
     free(msg);
-    memset(&B,0,sizeof(B));
+    memset(&B, 0, sizeof(B));
     B.retcode = -2;
-    return(NSPV_broadcast_json(&B,txid));
+    return(NSPV_broadcast_json(&B, txid));
 }
 
 cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
 {
     uint8_t *msg; 
     int32_t i, iter, len, slen;
-    
+
     char *pubkey = utils_uint8_to_hex(NSPV_pubkey.pubkey, 33);
     nspv_log_message("%s pubkey=%s\n", __func__, pubkey);  //TODO: remove
 
     jaddstr(request,"mypk",pubkey);
-    NSPV_remoterpc_purge(&client->nodegroup->NSPV_remoterpcresult);
+    NSPV_remoterpc_purge(&client->nodegroup.NSPV_remoterpcresult);
 
     char *json = cJSON_Print(request);
     nspv_log_message("%s request json=%p (%s)\n", __func__, json, json ? json : "<NULL>");  // TODO: remove
@@ -978,9 +978,9 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
                 usleep(NSPV_POLLMICROS);
                 if (strcmp(client->nodegroup->NSPV_remoterpcresult.method, method) == 0)
                 {
-                    nspv_log_message("%s NSPV_remoterpcresult.json %s\n", __func__, client->nodegroup->NSPV_remoterpcresult.json);
-                    cJSON *result = cJSON_Parse(client->nodegroup->NSPV_remoterpcresult.json);
-                    NSPV_remoterpc_purge(&client->nodegroup->NSPV_remoterpcresult);
+                    nspv_log_message("%s NSPV_remoterpcresult.json %s\n", __func__, client->nodegroup.NSPV_remoterpcresult.json);
+                    cJSON *result = cJSON_Parse(client->nodegroup.NSPV_remoterpcresult.json);
+                    NSPV_remoterpc_purge(&client->nodegroup.NSPV_remoterpcresult);
                     free(msg);
                     return(result);
                 }
