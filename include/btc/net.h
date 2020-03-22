@@ -56,6 +56,7 @@ enum NODE_STATE {
 union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4]; uint64_t txid; };
 typedef union _bits256 bits256;
 
+
 /* nspv response structs: */
 struct NSPV_broadcastresp
 {
