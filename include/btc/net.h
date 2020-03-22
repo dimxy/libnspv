@@ -34,6 +34,8 @@
 #include "protocol.h"
 #include "vector.h"
 
+#include "nSPV_defs.h"
+
 LIBBTC_BEGIN_DECL
 
 #include <event2/event.h>
@@ -62,6 +64,10 @@ typedef struct btc_node_group_ {
     int desired_amount_connected_nodes;
     int32_t NSPV_num_connected_nodes;
     const btc_chainparams* chainparams;
+
+    // nspv request result objects:
+    struct NSPV_remoterpcresp NSPV_remoterpcresult;
+    struct NSPV_broadcastresp NSPV_broadcastresult;  
 
     /* callbacks */
     int (*log_write_cb)(const char* format, ...); /* log callback, default=printf */

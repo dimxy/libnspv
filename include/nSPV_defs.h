@@ -274,7 +274,7 @@ extern int32_t NSPV_rwequihdr(int32_t rwflag,uint8_t *serialized,struct NSPV_equ
 extern bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t *spendscript,int32_t spendlen);
 
 extern int32_t IS_IN_SYNC;
-extern uint32_t NSPV_logintime,NSPV_tiptime;
+extern uint32_t NSPV_logintime, NSPV_tiptime;
 extern char NSPV_lastpeer[64],NSPV_address[64],NSPV_wifstr[64],NSPV_pubkeystr[67],NSPV_symbol[64];
 extern btc_spv_client *NSPV_client;
 extern const btc_chainparams *NSPV_chain;
@@ -301,7 +301,7 @@ extern struct NSPV_header NSPV_blockheaders[128]; // limitation here is that 100
 extern int32_t NSPV_num_headers;
 extern int32_t NSPV_hdrheight_counter,NSPV_longestchain;
 extern int32_t IS_IN_SYNC;
-extern int64_t NSPV_totalsent,NSPV_totalrecv;
+extern int64_t NSPV_totalsent, NSPV_totalrecv;
 
 cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request);
 cJSON *NSPV_login(const btc_chainparams *chain, char *wifstr);

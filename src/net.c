@@ -349,6 +349,8 @@ btc_node_group* btc_node_group_new(const btc_chainparams* chainparams)
     node_group->chainparams = (chainparams ? chainparams : &btc_chainparams_main);
     node_group->parse_cmd_cb = NULL;
     node_group->NSPV_num_connected_nodes = 0;
+    node_group->NSPV_remoterpcresult.json = NULL;
+    node_group->NSPV_remoterpcresult.method[0] = '\0';
     strcpy(node_group->clientstr, "libnspv 0.1");
 
     /* nullify callbacks */

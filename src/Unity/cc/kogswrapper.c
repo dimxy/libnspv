@@ -1,6 +1,6 @@
 
 /******************************************************************************
- * Copyright © 2014-2019 The SuperNET Developers.                             *
+ * Copyright ï¿½ 2014-2019 The SuperNET Developers.                             *
  *                                                                            *
  * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
  * the top-level directory of this distribution for the individual copyright  *
@@ -242,12 +242,12 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
         {
             btc_ecc_start();
             kogsclient = btc_spv_client_new(kogschain, true, /*(dbfile && (dbfile[0] == '0' || (strlen(dbfile) > 1 && dbfile[0] == 'n' && dbfile[0] == 'o'))) ? true : false*/true);
-            nspv_log_message("%s after btc_spv_client_new, kogsclient ptr=%p\n", __func__, kogsclient);
+            //nspv_log_message("%s after btc_spv_client_new, kogsclient ptr=%p\n", __func__, kogsclient);
             if (kogsclient != NULL)
             {
 
                 btc_spv_client_discover_peers(kogsclient, NULL);
-                nspv_log_message("%s discovered nodes %d\n", __func__, kogsclient->nodegroup->nodes->len);
+                nspv_log_message("%s discovered nodes %ld\n", __func__, kogsclient->nodegroup->nodes->len);
                 if (kogsclient->nodegroup->nodes->len == 0)
                 {
                     safe_strncpy(errorStr, "no nodes discovered", WR_MAXERRORLEN);
@@ -405,14 +405,14 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     char cc_error[WR_MAXCCERRORLEN];
 
     nspv_log_message("%s enterred\n", __func__);
-    nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
+    //nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
 
     if (!kogs_plugin_mutex_init) {
-        safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
+        safe_strncpy(errorStr, "not initialized", WR_MAXERRORLEN);
         return -1;
     }
     if (init_state != WR_INITED) {
-        nspv_log_message("%s: exiting, state not inited\n", __func__);
+        nspv_log_message("%s: exiting, nspv client not initialized\n", __func__);
         safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
         return -1;
     }
@@ -441,7 +441,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     jrpcresult = NSPV_remoterpccall(kogsclient, jmethod->valuestring, jrpcrequest);
     portable_mutex_unlock(&kogs_plugin_mutex);
 
-    nspv_log_message("%s rpcresult ptr=%p\n", __func__, jrpcresult);
+    //nspv_log_message("%s rpcresult ptr=%p\n", __func__, jrpcresult);
     char *debStr = cJSON_Print(jrpcresult);
     nspv_log_message("%s rpcresult 1/2 str=%s\n", __func__, debStr ? debStr : "null-str");
     nspv_log_message("%s rpcresult 2/2 str=%s\n", __func__, debStr && strlen(debStr) > 980 ? debStr + 980 : "null-str");
@@ -478,7 +478,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
 unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void **resultPtrPtr, char *errorStr)
 {
     nspv_log_message("%s enterred\n", __func__);
-    nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
+    // nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
 
     if (!kogs_plugin_mutex_init) {
         safe_strncpy(errorStr, "not inited", WR_MAXERRORLEN);
@@ -522,7 +522,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     jrpcresult = NSPV_remoterpccall(kogsclient, method, jrpcrequest);
     portable_mutex_unlock(&kogs_plugin_mutex);
 
-    nspv_log_message("%s rpcresult ptr=%p\n", __func__, jrpcresult);
+    // nspv_log_message("%s rpcresult ptr=%p\n", __func__, jrpcresult);
     char *debStr = cJSON_Print(jrpcresult);
     nspv_log_message("%s rpcresult 1/2 str=%s\n", __func__, debStr ? debStr : "null-str");
     nspv_log_message("%s rpcresult 2/2 str=%s\n", __func__, (debStr && strlen(debStr) > 980 ? debStr +980 : "null-str"));
