@@ -32,8 +32,6 @@
 #include "headersdb.h"
 #include "tx.h"
 
-#include "nSPV_defs.h"
-
 LIBBTC_BEGIN_DECL
 
 enum SPV_CLIENT_STATE {
