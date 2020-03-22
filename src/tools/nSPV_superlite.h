@@ -469,16 +469,17 @@ void komodo_nSPVresp(btc_node *from, uint8_t *response, int32_t len)
             NSPV_rwspentinfo(0, &response[1], &NSPV_spentresult);
             nspv_log_message("got spentinfo response %u size.%d\n", timestamp, len);
             break;
+
         // processing results for cc requests: 
         case NSPV_BROADCASTRESP:
-            NSPV_broadcast_purge(&node->nodegroup->NSPV_broadcastresult);
-            NSPV_rwbroadcastresp(0, &response[1], &node->nodegroup->NSPV_broadcastresult);
-            nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, node->nodegroup->NSPV_broadcastresult.txid), node->nodegroup->NSPV_broadcastresult.retcode);
+            NSPV_broadcast_purge(&from->nodegroup->NSPV_broadcastresult);
+            NSPV_rwbroadcastresp(0, &response[1], &from->nodegroup->NSPV_broadcastresult);
+            nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, from->nodegroup->NSPV_broadcastresult.txid), from->nodegroup->NSPV_broadcastresult.retcode);
             break;
         case NSPV_REMOTERPCRESP:
-            NSPV_remoterpc_purge(&node->nodegroup->NSPV_remoterpcresult);
-            NSPV_rwremoterpcresp(0, &response[1], &node->nodegroup->NSPV_remoterpcresult, len - 1);
-            nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, node->nodegroup->NSPV_remoterpcresult.method);
+            NSPV_remoterpc_purge(&from->nodegroup->NSPV_remoterpcresult);
+            NSPV_rwremoterpcresp(0, &response[1], &from->nodegroup->NSPV_remoterpcresult, len - 1);
+            nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, from->nodegroup->NSPV_remoterpcresult.method);
             break;
         default:
             nspv_log_message("unexpected response %02x size.%d at %u\n", response[0], len, timestamp);
@@ -889,35 +890,43 @@ cJSON *NSPV_spentinfo(btc_spv_client *client,bits256 txid,int32_t vout)
 
 cJSON *NSPV_broadcast(btc_spv_client *client,char *hex)
 {
-    uint8_t *msg,*data; bits256 txid; int32_t i,n,iter,len = 3; struct NSPV_broadcastresp B;
-    NSPV_broadcast_purge(&NSPV_broadcastresult);
+    uint8_t *msg,*data; 
+    bits256 txid; 
+    int32_t i, n, iter, len = 3; 
+    struct NSPV_broadcastresp B;
+
+    NSPV_broadcast_purge(&client->nodegroup->NSPV_broadcastresult);
     n = (int32_t)strlen(hex) >> 1;
     data = (uint8_t *)malloc(n);
-    decode_hex(data,n,hex);
+    decode_hex(data, n, hex);
     txid = bits256_doublesha256(data,n);
     msg = (uint8_t *)malloc(4 + sizeof(txid) + sizeof(n) + n);
     msg[0] = msg[1] = msg[2] = 0;
     msg[len++] = NSPV_BROADCAST;
-    len += iguana_rwbignum(1,&msg[len],sizeof(txid),(uint8_t *)&txid);
-    len += iguana_rwnum(1,&msg[len],sizeof(n),&n);
+    len += iguana_rwbignum(1, &msg[len], sizeof(txid), (uint8_t *)&txid);
+    len += iguana_rwnum(1, &msg[len], sizeof(n), &n);
     memcpy(&msg[len],data,n), len += n;
     free(data);
-    for (i=0; i<8; i++)
-        NSPV_req(client,0,msg,len,NODE_NSPV,NSPV_BROADCAST>>1);
+    for (i=0; i < 8; i++)
+        NSPV_req(client, 0, msg, len, NODE_NSPV, NSPV_BROADCAST>>1);
     sleep(1);
     for (iter=0; iter<3; iter++)
-    if ( NSPV_req(client,0,msg,len,NODE_NSPV,NSPV_BROADCAST>>1) != 0 )
     {
-        for (i=0; i<NSPV_POLLITERS; i++)
+        if ( NSPV_req(client, 0, msg, len, NODE_NSPV, NSPV_BROADCAST>>1) != 0 )
         {
-            usleep(NSPV_POLLMICROS);
-            if ( memcmp(&NSPV_broadcastresult.txid,&txid,sizeof(txid)) == 0 )
+            for (i=0; i<NSPV_POLLITERS; i++)
             {
-                free(msg);
-                return(NSPV_broadcast_json(&NSPV_broadcastresult,txid));
+                usleep(NSPV_POLLMICROS);
+                if (memcmp(&client->nodegroup->NSPV_broadcastresult.txid, &txid, sizeof(txid)) == 0)
+                {
+                    free(msg);
+                    return(NSPV_broadcast_json(&client->nodegroup->NSPV_broadcastresult, txid));
+                }
             }
-        }
-    } else sleep(1);
+        } 
+        else 
+            sleep(1);
+    }
     free(msg);
     memset(&B,0,sizeof(B));
     B.retcode = -2;
@@ -963,11 +972,11 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
             for (i=0; i<NSPV_POLLITERS; i++)
             {
                 usleep(NSPV_POLLMICROS);
-                if ( strcmp(NSPV_remoterpcresult.method,method) == 0)
+                if (strcmp(client->nodegroup->NSPV_remoterpcresult.method, method) == 0)
                 {
-                    nspv_log_message("%s NSPV_remoterpcresult.json %s\n", __func__, NSPV_remoterpcresult.json);
-                    cJSON *result=cJSON_Parse(NSPV_remoterpcresult.json);
-                    NSPV_remoterpc_purge(&NSPV_remoterpcresult);
+                    nspv_log_message("%s NSPV_remoterpcresult.json %s\n", __func__, client->nodegroup->NSPV_remoterpcresult.json);
+                    cJSON *result = cJSON_Parse(client->nodegroup->NSPV_remoterpcresult.json);
+                    NSPV_remoterpc_purge(&client->nodegroup->NSPV_remoterpcresult);
                     free(msg);
                     return(result);
                 }
@@ -981,7 +990,7 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
     return (NULL);
 }
 
-cJSON *NSPV_login(const btc_chainparams *chain,char *wifstr)
+cJSON *NSPV_login(const btc_chainparams *chain, char *wifstr)
 {
     cJSON *result = cJSON_CreateObject(); char coinaddr[64],wif2[64]; uint8_t data[128]; int32_t valid = 0; size_t sz=0,sz2; bits256 privkey;
     NSPV_logout();
