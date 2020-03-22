@@ -35,7 +35,6 @@ extern char* NSPV_externalip;
 static uint32_t starttime = 0;
 cJSON* NSPV_spend(btc_spv_client* client, char* srcaddr, char* destaddr, int64_t satoshis);
 cJSON* NSPV_txproof(int32_t waitflag, btc_spv_client* client, int32_t vout, bits256 txid, int32_t height);
-void expand_ipbits(char* ipaddr, uint64_t ipbits);
 btc_tx* NSPV_gettransaction(btc_spv_client* client, int32_t* retvalp, int32_t isKMD, int32_t skipvalidation, int32_t v, bits256 txid, int32_t height, int64_t extradata, uint32_t tiptime, int64_t* rewardsump);
 
 uint32_t NSPV_logintime, NSPV_tiptime, NSPV_didfirstutxos, NSPV_didfirsttxids, NSPV_lastgetinfo;
@@ -1422,6 +1421,8 @@ void NSPV_argjson_addfields(char* method, cJSON* argjson, cJSON* params)
     //fprintf(stderr,"new argjson.(%s)\n",cJSON_Print(argjson));
 }
 
+// do not run rpc loop if lib
+#if !defined(LIBNSPV_BUILD)
 cJSON* NSPV_JSON_process(cJSON* argjson)
 {
     char* method;
@@ -1546,5 +1547,6 @@ cJSON* NSPV_JSON_process(cJSON* argjson)
     } else
         return (cJSON_Parse("{\"error\":\"invalid method\"}"));
 }
+#endif // !defined(LIBNSPV_BUILD)
 
 #endif // KOMODO_NSPVSUPERLITE_H

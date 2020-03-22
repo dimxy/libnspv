@@ -340,7 +340,7 @@ btc_bool btc_net_spv_request_headers(btc_spv_client *client)
 
     if (!new_headers_available && btc_node_group_amount_of_connected_nodes(client->nodegroup, NODE_CONNECTED) > 0) {
         // try to fetch blocks if no new headers are available but connected nodes are reachable
-        for(size_t i =0;i< client->nodegroup->nodes->len; i++)
+        for(size_t i = 0; i < client->nodegroup->nodes->len; i++)
         {
             btc_node *check_node = vector_idx(client->nodegroup->nodes, i);
             if (((check_node->state & NODE_CONNECTED) == NODE_CONNECTED) && check_node->version_handshake)
