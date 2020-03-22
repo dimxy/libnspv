@@ -54,6 +54,19 @@ enum NODE_STATE {
     NODE_DISCONNECTED_FROM_REMOTE_PEER = (1 << 8),
 };
 
+/* nspv response structs: */
+struct NSPV_broadcastresp
+{
+    bits256 txid;
+    int32_t retcode;
+};
+
+struct NSPV_remoterpcresp
+{
+    char method[64];
+    char *json;
+};
+
 /* basic group-of-nodes structure */
 struct btc_node_;
 typedef struct btc_node_group_ {
