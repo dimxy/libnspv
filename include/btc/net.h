@@ -52,24 +52,6 @@ enum NODE_STATE {
     NODE_DISCONNECTED_FROM_REMOTE_PEER = (1 << 8),
 };
 
-/* bits256: */
-union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4]; uint64_t txid; };
-typedef union _bits256 bits256;
-
-
-/* nspv response structs: */
-struct NSPV_broadcastresp
-{
-    bits256 txid;
-    int32_t retcode;
-};
-
-struct NSPV_remoterpcresp
-{
-    char method[64];
-    char *json;
-};
-
 /* basic group-of-nodes structure */
 struct btc_node_;
 typedef struct btc_node_group_ {
@@ -81,9 +63,9 @@ typedef struct btc_node_group_ {
     int32_t NSPV_num_connected_nodes;
     const btc_chainparams* chainparams;
 
-    // nspv request result objects:
-    struct NSPV_remoterpcresp NSPV_remoterpcresult;
-    struct NSPV_broadcastresp NSPV_broadcastresult;  
+    // nspv request result objects (added in node_group to prevent concurrent use):
+    void *NSPV_remoterpcresult_ptr;
+    void *NSPV_broadcastresult_ptr;  
 
     /* callbacks */
     int (*log_write_cb)(const char* format, ...); /* log callback, default=printf */

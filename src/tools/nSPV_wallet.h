@@ -58,7 +58,7 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
 
         char prev_outs_hex[sizeof(prev_outs) * 2 + 1];
         utils_bin_to_hex(prev_outs, prev_outs_len, prev_outs_hex);
-        nspv_log_message("%s prev_outs_hex=%s\n", __func__, prev_outs_hex);
+        // debug hash: nspv_log_message("%s prev_outs_hex=%s\n", __func__, prev_outs_hex);
 
         crypto_generichash_blake2b_salt_personal(hash_prev_outs,32,prev_outs,(uint64_t)prev_outs_len,
                                                  NULL,0,NULL,ZCASH_PREVOUTS_HASH_PERSONALIZATION);
@@ -101,7 +101,7 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
 
         char *outputs_hex = (char*)malloc (outputs_len * 2 + 1);
         utils_bin_to_hex(outputs, outputs_len, outputs_hex);
-        nspv_log_message("%s outputs_hex=%s\n", __func__, outputs_hex);
+        // debug hash: nspv_log_message("%s outputs_hex=%s\n", __func__, outputs_hex);
 
         crypto_generichash_blake2b_salt_personal(hash_outputs,32,outputs,(uint64_t)outputs_len,
                                                  NULL,0,NULL,ZCASH_OUTPUTS_HASH_PERSONALIZATION);
@@ -142,7 +142,7 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
 
     char for_sig_hash_hex[sizeof(for_sig_hash) * 2 + 1];
     utils_bin_to_hex(for_sig_hash, len, for_sig_hash_hex);
-    nspv_log_message("%s for_sig_hash_hex=%s\n", __func__, for_sig_hash_hex);
+    // debug hash: nspv_log_message("%s for_sig_hash_hex=%s\n", __func__, for_sig_hash_hex);
 
     crypto_generichash_blake2b_salt_personal(sigtxid.bytes,32,for_sig_hash,(uint64_t)len,
                                              NULL,0,NULL,sig_hash_personal);
@@ -154,7 +154,7 @@ int32_t NSPV_validatehdrs(btc_spv_client *client,struct NSPV_ntzsproofresp *ptr,
     int32_t i,height,txidht; btc_tx *tx; bits256 blockhash,txid,desttxid;
     if ( (ptr->common.nextht-ptr->common.prevht+1) != ptr->common.numhdrs )
     {
-        fprintf(stderr,"next.%d prev.%d -> %d vs %d\n",ptr->common.nextht,ptr->common.prevht,ptr->common.nextht-ptr->common.prevht+1,ptr->common.numhdrs);
+        nspv_log_message("next.%d prev.%d -> %d vs %d\n",ptr->common.nextht, ptr->common.prevht, ptr->common.nextht-ptr->common.prevht+1, ptr->common.numhdrs);
         return(-2);
     }
     else if ( ptr->nexttxlen == 0 || (tx= NSPV_txextract(ptr->nextntz,ptr->nexttxlen)) == 0 )
@@ -171,7 +171,7 @@ int32_t NSPV_validatehdrs(btc_spv_client *client,struct NSPV_ntzsproofresp *ptr,
     }
     else if ( height != ptr->common.nextht )
     {
-        fprintf(stderr,"height.%d %x != common %d %x\n",height,height,ptr->common.nextht,ptr->common.nextht);
+        nspv_log_message("height.%d %x != common %d %x\n",height,height,ptr->common.nextht,ptr->common.nextht);
         btc_tx_free(tx);
         return(-6);
     }
@@ -225,7 +225,7 @@ btc_tx *NSPV_gettransaction(btc_spv_client *client,int32_t *retvalp,int32_t isKM
     }
     if ( bits256_cmp(ptr->txid,txid) != 0 )
     {
-        fprintf(stderr,"txproof error %s != %s\n",bits256_str(str,ptr->txid),bits256_str(str2,txid));
+        nspv_log_message("txproof error %s != %s\n",bits256_str(str,ptr->txid),bits256_str(str2,txid));
         return(0);
     }
     else if ( ptr->txlen == 0 || (tx= NSPV_txextract(ptr->tx,ptr->txlen)) == 0 )
@@ -248,7 +248,7 @@ btc_tx *NSPV_gettransaction(btc_spv_client *client,int32_t *retvalp,int32_t isKM
             (*rewardsump) += rewards;
         }
         if ( rewards != extradata )
-            fprintf(stderr,"extradata %.8f vs rewards %.8f\n",dstr(extradata),dstr(rewards));
+            nspv_log_message("extradata %.8f vs rewards %.8f\n",dstr(extradata),dstr(rewards));
     }
     if ( skipvalidation == 0 )
     {
@@ -260,28 +260,28 @@ btc_tx *NSPV_gettransaction(btc_spv_client *client,int32_t *retvalp,int32_t isKM
         }
         if ( proof == NULL )
         {
-            fprintf(stderr, "proof is missing, try a higher block height\n");
+            nspv_log_message("proof is missing, try a higher block height\n");
             *retvalp = -2006;
             return(tx);
         }
         NSPV_notarizations(client,height); // gets the prev and next notarizations
         if ( NSPV_inforesult.notarization.height >= height && (NSPV_ntzsresult.prevntz.height == 0 || NSPV_ntzsresult.prevntz.height >= NSPV_ntzsresult.nextntz.height) )
         {
-            fprintf(stderr,"issue manual bracket\n");
+            nspv_log_message("issue manual bracket\n");
             NSPV_notarizations(client,height-1);
             NSPV_notarizations(client,height+1);
             NSPV_notarizations(client,height); // gets the prev and next notarizations
         }
         if ( NSPV_ntzsresult.prevntz.height != 0 && NSPV_ntzsresult.prevntz.height <= NSPV_ntzsresult.nextntz.height )
         {
-            fprintf(stderr,">>>>> gettx ht.%d prev.%d next.%d\n",height,NSPV_ntzsresult.prevntz.height, NSPV_ntzsresult.nextntz.height);
+            nspv_log_message(">>>>> gettx ht.%d prev.%d next.%d\n",height,NSPV_ntzsresult.prevntz.height, NSPV_ntzsresult.nextntz.height);
             offset = (height - NSPV_ntzsresult.prevntz.height);
             if ( offset >= 0 && height <= NSPV_ntzsresult.nextntz.height )
             {
-                //fprintf(stderr,"call NSPV_txidhdrsproof %s %s\n",bits256_str(str,NSPV_ntzsresult.prevntz.txid),bits256_str(str2,NSPV_ntzsresult.nextntz.txid));
+                //nspv_log_message("call NSPV_txidhdrsproof %s %s\n",bits256_str(str,NSPV_ntzsresult.prevntz.txid),bits256_str(str2,NSPV_ntzsresult.nextntz.txid));
                 NSPV_txidhdrsproof(client,NSPV_ntzsresult.prevntz.txid,NSPV_ntzsresult.nextntz.txid);
                 usleep(10000);
-                //fprintf(stderr,"call validate prooflen.%d\n",(int32_t)proof->len);
+                //nspv_log_message("call validate prooflen.%d\n",(int32_t)proof->len);
                 if ( (*retvalp= NSPV_validatehdrs(client,&NSPV_ntzsproofresult, &NSPV_ntzsresult)) == 0 )
                 {
                     uint256 mroot,revtxid; merkle_block MB; vector *vmatch;
@@ -295,18 +295,18 @@ btc_tx *NSPV_gettransaction(btc_spv_client *client,int32_t *retvalp,int32_t isKM
                     {
                         int32_t i;
                         for (i=0; i<32; i++)
-                            fprintf(stderr,"%02x",revtxid[i]);
-                        fprintf(stderr," vs. ");
+                            nspv_log_message("%02x",revtxid[i]);
+                        nspv_log_message(" vs. ");
                         for (i=0; i<32; i++)
-                            fprintf(stderr,"%02x",((uint8_t *)vmatch->data[0])[i]);
+                            nspv_log_message("%02x",((uint8_t *)vmatch->data[0])[i]);
 
-                        fprintf(stderr," prooflen.%d proofroot.%s vs %s\n",(int32_t)proof->len,bits256_str(str,proofroot),bits256_str(str2,NSPV_ntzsproofresult.common.hdrs[offset].hashMerkleRoot));
+                        nspv_log_message(" prooflen.%d proofroot.%s vs %s\n",(int32_t)proof->len,bits256_str(str,proofroot),bits256_str(str2,NSPV_ntzsproofresult.common.hdrs[offset].hashMerkleRoot));
                         *retvalp = -2003;
                     }
                     else
                     {
                         *retvalp = 0;
-                        fprintf(stderr,"%s merkleproof validated!\n",bits256_str(str,txid));
+                        nspv_log_message("%s merkleproof validated!\n",bits256_str(str,txid));
                     }
                     free_mblock_data(&MB);
                     vector_free(vmatch,1);
@@ -384,14 +384,14 @@ int64_t NSPV_addinputs(struct NSPV_utxoresp *used,btc_tx *mtx,int64_t total,int3
             break;
     }
     remains = total;
-//fprintf(stderr,"threshold %.8f n.%d num.%d for total %.8f, maxvins.%d NSPV_MAXVINS.%d\n",(double)threshold/COIN,num,n,(double)total/COIN,maxinputs,NSPV_MAXVINS);
+//nspv_log_message("threshold %.8f n.%d num.%d for total %.8f, maxvins.%d NSPV_MAXVINS.%d\n",(double)threshold/COIN,num,n,(double)total/COIN,maxinputs,NSPV_MAXVINS);
     for (i=0; i<maxinputs && n>0; i++)
     {
         below = above = 0;
         abovei = belowi = -1;
         if ( NSPV_vinselect(&abovei,&above,&belowi,&below,utxos,n,remains) < 0 )
         {
-            fprintf(stderr,"error finding unspent i.%d of %d, %.8f vs %.8f\n",i,n,(double)remains/COIN,(double)total/COIN);
+            nspv_log_message("error finding unspent i.%d of %d, %.8f vs %.8f\n",i,n,(double)remains/COIN,(double)total/COIN);
             return(0);
         }
         if ( belowi < 0 || abovei >= 0 )
@@ -399,10 +399,10 @@ int64_t NSPV_addinputs(struct NSPV_utxoresp *used,btc_tx *mtx,int64_t total,int3
         else ind = belowi;
         if ( ind < 0 )
         {
-            fprintf(stderr,"error finding unspent i.%d of %d, %.8f vs %.8f, abovei.%d belowi.%d ind.%d\n",i,n,(double)remains/COIN,(double)total/COIN,abovei,belowi,ind);
+            nspv_log_message("error finding unspent i.%d of %d, %.8f vs %.8f, abovei.%d belowi.%d ind.%d\n",i,n,(double)remains/COIN,(double)total/COIN,abovei,belowi,ind);
             return(0);
         }
-//fprintf(stderr,"i.%d ind.%d abovei.%d belowi.%d n.%d\n",i,ind,abovei,belowi,n);
+//nspv_log_message("i.%d ind.%d abovei.%d belowi.%d n.%d\n",i,ind,abovei,belowi,n);
         up = &utxos[ind];
         btc_tx_add_txin(mtx,up->txid,up->vout);
         used[i] = *up;
@@ -410,11 +410,11 @@ int64_t NSPV_addinputs(struct NSPV_utxoresp *used,btc_tx *mtx,int64_t total,int3
         remains -= up->satoshis;
         utxos[ind] = utxos[--n];
         memset(&utxos[n],0,sizeof(utxos[n]));
-//fprintf(stderr,"totalinputs %.8f vs total %.8f i.%d vs max.%d\n",(double)totalinputs/COIN,(double)total/COIN,i,maxinputs);
+//nspv_log_message("totalinputs %.8f vs total %.8f i.%d vs max.%d\n",(double)totalinputs/COIN,(double)total/COIN,i,maxinputs);
         if ( totalinputs >= total || (i+1) >= maxinputs )
             break;
     }
-    //fprintf(stderr,"totalinputs %.8f vs total %.8f\n",(double)totalinputs/COIN,(double)total/COIN);
+    //nspv_log_message("totalinputs %.8f vs total %.8f\n",(double)totalinputs/COIN,(double)total/COIN);
     if ( totalinputs >= total )
         return(totalinputs);
     return(0);
@@ -466,7 +466,7 @@ bool NSPV_SignTx(btc_tx *mtx,int32_t vini,int64_t utxovalue,cstring *scriptPubKe
             memcpy(vin->script_sig->str+2+siglen+1,NSPV_pubkey.pubkey,extralen-1);
         }
         vin->script_sig->len = siglen+2+extralen;
-        //fprintf(stderr," sighash %s, sigerr.%d siglen.%d\n",bits256_str(str,sighash),sigerr,vin!=0?(int32_t)vin->script_sig->len:(int32_t)siglen);
+        //nspv_log_message(" sighash %s, sigerr.%d siglen.%d\n",bits256_str(str,sighash),sigerr,vin!=0?(int32_t)vin->script_sig->len:(int32_t)siglen);
     }
     return(true);
 }
@@ -477,7 +477,7 @@ cstring *NSPV_signtx(btc_spv_client *client,int32_t isKMD,int64_t *rewardsump,in
     *rewardsump = *interestsump = 0;
     if ( mtx == 0 )
     {
-        fprintf(stderr,"cant sign null mtx\n");
+        nspv_log_message("cant sign null mtx\n");
         return(0);
     }
     if ( mtx->vout != 0 )
@@ -511,7 +511,7 @@ cstring *NSPV_signtx(btc_spv_client *client,int32_t isKMD,int64_t *rewardsump,in
     {
         if ( (vin= btc_tx_vin(mtx,i)) == 0 )
         {
-            fprintf(stderr,"mtx has no vin.%d\n",i);
+            nspv_log_message("mtx has no vin.%d\n",i);
             return(0);
         }
         utxovout = vin->prevout.n;
@@ -524,27 +524,29 @@ cstring *NSPV_signtx(btc_spv_client *client,int32_t isKMD,int64_t *rewardsump,in
         {
             if ( vout->value != used[i].satoshis )
             {
-                fprintf(stderr,"vintx mismatch %.8f != %.8f\n",(double)vout->value/COIN,(double)used[i].satoshis/COIN);
+                nspv_log_message("vintx mismatch %.8f != %.8f\n",(double)vout->value/COIN,(double)used[i].satoshis/COIN);
                 return(0);
             }
             else if ( utxovout != used[i].vout )
             {
-                fprintf(stderr,"vintx vout mismatch %d != %d\n",utxovout,used[i].vout);
+                nspv_log_message("vintx vout mismatch %d != %d\n",utxovout,used[i].vout);
                 return(0);
             }
             else if ( NSPV_SignTx(mtx,i,vout->value,vout->script_pubkey,0) == 0 )
             {
-                fprintf(stderr,"signing error for vini.%d\n",i);
+                nspv_log_message("signing error for vini.%d\n",i);
                 return(0);
-            } // else fprintf(stderr,"signed vini.%d\n",i);
-        } else fprintf(stderr,"couldnt find txid.%s/v%d or it was spent retcode.%d\n",bits256_str(str,prevhash),utxovout,validation); // of course much better handling is needed
+            } // else nspv_log_message("signed vini.%d\n",i);
+        } 
+        else 
+            nspv_log_message("couldnt find txid.%s/v%d or it was spent retcode.%d\n",bits256_str(str,prevhash),utxovout,validation); // of course much better handling is needed
         if ( vintx != 0 )
         {
             btc_tx_free(vintx);
             vintx = 0;
         }
     }
-    fprintf(stderr,"sign %d inputs %.8f + interest %.8f -> %d outputs %.8f change %.8f\n",(int32_t)mtx->vin->len,(double)totalinputs/COIN,(double)interest/COIN,(int32_t)mtx->vout->len,(double)totaloutputs/COIN,(double)change/COIN);
+    nspv_log_message("sign %d inputs %.8f + interest %.8f -> %d outputs %.8f change %.8f\n",(int32_t)mtx->vin->len,(double)totalinputs/COIN,(double)interest/COIN,(int32_t)mtx->vout->len,(double)totaloutputs/COIN,(double)change/COIN);
     return(btc_tx_to_cstr(mtx));
 }
 
@@ -613,7 +615,7 @@ cJSON *NSPV_spend(btc_spv_client *client,char *srcaddr,char *destaddr,int64_t sa
         scriptPubKey = cstr_new_sz(25);
         btc_script_build_p2pkh(scriptPubKey,rmd160+1);
     }
-    printf("%s numutxos.%d balance %.8f\n",NSPV_utxosresult.coinaddr,NSPV_utxosresult.numutxos,(double)NSPV_utxosresult.total/COIN);
+    nspv_log_message("%s numutxos.%d balance %.8f\n",NSPV_utxosresult.coinaddr,NSPV_utxosresult.numutxos,(double)NSPV_utxosresult.total/COIN);
     mtx = btc_tx_new(client->chainparams->komodo != 0 ? SAPLING_TX_VERSION : 1);
     isKMD = (strcmp(client->chainparams->name,"KMD") == 0);
     if ( isKMD != 0 )
