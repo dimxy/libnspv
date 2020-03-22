@@ -34,8 +34,6 @@
 #include "protocol.h"
 #include "vector.h"
 
-#include "nSPV_defs.h"
-
 LIBBTC_BEGIN_DECL
 
 #include <event2/event.h>
