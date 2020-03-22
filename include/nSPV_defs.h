@@ -301,6 +301,9 @@ cstring* FinalizeCCtx(btc_spv_client* client, cJSON* txdata, char* errorout /*=N
 btc_tx* btc_tx_decodehex(char* hexstr);
 cstring* btc_tx_to_cstr(btc_tx* tx);
 void reverse_hexstr(char* str);
+void expand_ipbits(char* ipaddr, uint64_t ipbits);  // moved to nSPV_utils.h because of shared use in libnspv.so (with no rpcloop)
+int portable_pton(int af, char* src, void* dst);    // moved to nSPV_utils.h
+
 
 //void nspv_log_message(const char *format, ...);
 
