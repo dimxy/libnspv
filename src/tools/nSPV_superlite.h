@@ -29,6 +29,8 @@
 #include <btc/utils.h>
 #include <btc/base58.h>
 
+#include "nSPV_defs.h"
+
 extern char *NSPV_externalip;
 static uint32_t starttime = 0;
 cJSON *NSPV_spend(btc_spv_client *client,char *srcaddr,char *destaddr,int64_t satoshis);
@@ -969,7 +971,7 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
     {
         if (NSPV_req(client, 0, msg, len, NODE_NSPV, NSPV_REMOTERPC >> 1) != 0)
         {
-            for (i=0; i<NSPV_POLLITERS; i++)
+            for (i=0; i < NSPV_POLLITERS; i++)
             {
                 usleep(NSPV_POLLMICROS);
                 if (strcmp(client->nodegroup->NSPV_remoterpcresult.method, method) == 0)
