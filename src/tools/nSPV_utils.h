@@ -17,6 +17,54 @@
 #ifndef NSPV_UTILS_H
 #define NSPV_UTILS_H
 
+/**
+ * - we need to include WinSock2.h header to correctly use windows structure
+ * as the application is still using 32bit structure from mingw so, we need to
+ * add the include based on checking
+ * @author - fadedreamz@gmail.com
+ * @remarks - #if (defined(_M_X64) || defined(__amd64__)) && defined(WIN32)
+ *     is equivalent to #if defined(_M_X64) as _M_X64 is defined for MSVC only
+ */
+#if defined(_M_X64)
+#define WIN32_LEAN_AND_MEAN
+#include <winsock2.h>
+#endif
+#ifdef _WIN32
+#include <winsock2.h>
+#endif
+
+#ifdef _WIN32
+#define PTW32_STATIC_LIB
+#include "pthread.h"
+
+#ifndef NATIVE_WINDOWS
+#define EADDRINUSE WSAEADDRINUSE
+#endif
+
+#else
+#include <netdb.h>
+#include <poll.h>
+#include <sys/time.h>
+#include <time.h>
+#define HAVE_STRUCT_TIMESPEC
+#include <pthread.h>
+#include <sys/mman.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#define closesocket close
+#endif
+
+#include <errno.h>
+
+#ifndef _WIN32
+#ifndef MSG_NOSIGNAL
+#define MSG_NOSIGNAL 0x4000 // Do not generate SIGPIPE
+#endif
+#else
+#define MSG_NOSIGNAL 0
+#endif
+
+
 static const bits256 zeroid;
 portable_mutex_t NSPV_netmutex;
 
