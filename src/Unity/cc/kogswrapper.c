@@ -213,9 +213,9 @@ static cJSON *check_jresult(cJSON *json, char *ccerror)
 // helpers end
 
 // wrapper for NSPV library init
-unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
+int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 {
-    unity_int32_t retcode = 0;
+    int32_t retcode = 0;
 
     safe_strncpy(errorStr, "", WR_MAXERRORLEN);
     nspv_log_message("%s entering, chainName=%s kogschain ptr=%p\n", __func__, chainName, kogschain);
@@ -255,10 +255,9 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
                 }
                 else
                 {
-                    //if (OS_thread_create(&libthread, NULL, NSPV_rpcloop, (void *)&kogschain->rpcport) != 0)
                     if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void *)kogsclient) != 0)  // periodically connect nodes and process responses
                     {
-                        safe_strncpy(errorStr, "error launching NSPV_rpcloop for port", WR_MAXERRORLEN);
+                        safe_strncpy(errorStr, "error launching eventloop", WR_MAXERRORLEN);
                         retcode = -1;
                     }
                     else
@@ -321,9 +320,9 @@ unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr)
 
 
 // kogslist rpc wrapper
-unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
+int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
 {
-    unity_int32_t retcode = 0;
+    int32_t retcode = 0;
     char cc_error[WR_MAXCCERRORLEN];
     nspv_log_message("%s enterred\n", __func__);
 
@@ -358,16 +357,16 @@ unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr)
 
 
 // return string length in string object
-unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen, char *errorStr)
+int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, int32_t *plen, char *errorStr)
 {
-    unity_int32_t retcode = 0;
+    int32_t retcode = 0;
 
     nspv_log_message("%s enterred\n", __func__);
     safe_strncpy(errorStr, "", WR_MAXERRORLEN);
 
     if (inPtr != NULL)
     {
-        *plen = (unity_int32_t)strlen((char*)inPtr);
+        *plen = (int32_t)strlen((char*)inPtr);
     }
     else
     {
@@ -379,9 +378,9 @@ unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen,
 }
 
 // return string length in string object
-unity_int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *errorStr)
+int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *errorStr)
 {
-    unity_int32_t retcode = 0;
+    int32_t retcode = 0;
 
     nspv_log_message("%s enterred\n", __func__);
     safe_strncpy(errorStr, "", WR_MAXERRORLEN);
@@ -400,7 +399,7 @@ unity_int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *error
 }
 
 // cc rpc caller 
-unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPtrPtr, char *errorStr)
+int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPtrPtr, char *errorStr)
 {
     char cc_error[WR_MAXCCERRORLEN];
 
@@ -435,9 +434,30 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     }
 
     cJSON *jrpcresult = NULL;
-    unity_int32_t retcode = 0;
+    int32_t retcode = 0;
 
     portable_mutex_lock(&kogs_plugin_mutex);
+
+    // if no connection exists then reconnect:
+    if (kogsclient->nodegroup->NSPV_num_connected_nodes = 0)
+    {
+        btc_spv_client_discover_peers(kogsclient, NULL);
+        nspv_log_message("%s reconnecting, discovered nodes %ld\n", __func__, kogsclient->nodegroup->nodes->len);
+        if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void *)kogsclient) != 0)  // periodically connect nodes and process responses
+        {
+            safe_strncpy(errorStr, "error launching eventloop", WR_MAXERRORLEN);
+            cJSON_Delete(jrpcrequest);
+            return -1;
+        }
+        // wait up to 20 sec to allow connection
+        for(int i = 0; i < 20; i ++)
+        {
+            sleep(1); // wait to allow to reconnect
+            if (kogsclient->nodegroup->NSPV_num_connected_nodes > 0)
+                break;
+        }
+    }
+    // call libnspv:
     jrpcresult = NSPV_remoterpccall(kogsclient, jmethod->valuestring, jrpcrequest);
     portable_mutex_unlock(&kogs_plugin_mutex);
 
@@ -475,7 +495,7 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPt
     return retcode;
 }
 // cc rpc caller with json
-unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void **resultPtrPtr, char *errorStr)
+int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void **resultPtrPtr, char *errorStr)
 {
     nspv_log_message("%s enterred\n", __func__);
     // nspv_log_message("%s resultPtrPtr=%p\n", __func__, resultPtrPtr);
@@ -512,13 +532,34 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     }
 
     cJSON *jrpcresult = NULL;
-    unity_int32_t retcode = 0;
+    int32_t retcode = 0;
 
     jaddstr(jrpcrequest, "method", method);
     if (jparams)
         jadd(jrpcrequest, "params", jparams); // add params if it is valid array
 
+    /*
     portable_mutex_lock(&kogs_plugin_mutex);
+    // if no connection exists then reconnect
+    if (kogsclient->nodegroup->NSPV_num_connected_nodes = 0)
+    {
+        btc_spv_client_discover_peers(kogsclient, NULL);
+        nspv_log_message("%s reconnecting, discovered nodes %ld\n", __func__, kogsclient->nodegroup->nodes->len);
+        if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void *)kogsclient) != 0)  // periodically connect nodes and process responses
+        {
+            safe_strncpy(errorStr, "error launching eventloop", WR_MAXERRORLEN);
+            cJSON_Delete(jrpcrequest);
+            return -1;
+        }
+        // wait up to 20 sec to allow connection
+        for(int i = 0; i < 20; i ++)
+        {
+            sleep(1); // wait to allow to reconnect
+            if (kogsclient->nodegroup->NSPV_num_connected_nodes > 0)
+                break;
+        }
+    }
+
     jrpcresult = NSPV_remoterpccall(kogsclient, method, jrpcrequest);
     portable_mutex_unlock(&kogs_plugin_mutex);
 
@@ -557,15 +598,18 @@ unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void
     // dont do delete as we added it to jrpcrequest!
     // if (jparams)
     //    cJSON_Delete(jparams);
-   
+    */
+
+    int32_t retcode = uplugin_CallRpcWithJson(jrpcrequest, resultPtrPtr, errorStr);
+
     nspv_log_message("%s exiting retcode=%d %s\n", __func__, retcode, errorStr);
     return retcode;
 }
 
 // FinalizeCCTx wrapper
-unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtrPtr, char *errorStr)
+int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtrPtr, char *errorStr)
 {
-    unity_int32_t retcode = 0;
+    int32_t retcode = 0;
     char error[NSPV_MAXERRORLEN];
 
     nspv_log_message("%s enterred\n", __func__);
@@ -711,9 +755,9 @@ unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtr
 
 
 // BroadcastTx wrapper
-unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrPtr, char *errorStr)
+int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrPtr, char *errorStr)
 {
-    unity_int32_t retcode = 0;
+    int32_t retcode = 0;
 
     nspv_log_message("%s enterred\n", __func__);
     safe_strncpy(errorStr, "", WR_MAXERRORLEN);
