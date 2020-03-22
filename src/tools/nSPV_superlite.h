@@ -55,8 +55,8 @@ struct NSPV_spentinfo NSPV_spentresult;
 struct NSPV_ntzsresp NSPV_ntzsresult;
 struct NSPV_ntzsproofresp NSPV_ntzsproofresult;
 struct NSPV_txproof NSPV_txproofresult;
-struct NSPV_broadcastresp NSPV_broadcastresult;
-struct NSPV_remoterpcresp NSPV_remoterpcresult = { "", NULL };
+// struct NSPV_broadcastresp NSPV_broadcastresult;                  // moved to node group to avoid thread concurrency
+// struct NSPV_remoterpcresp NSPV_remoterpcresult = { "", NULL };   // moved to node group to avoid thread concurrency
 
 struct NSPV_ntzsresp NSPV_ntzsresp_cache[NSPV_MAXVINS];
 struct NSPV_ntzsproofresp NSPV_ntzsproofresp_cache[NSPV_MAXVINS * 2];
@@ -469,15 +469,16 @@ void komodo_nSPVresp(btc_node *from, uint8_t *response, int32_t len)
             NSPV_rwspentinfo(0, &response[1], &NSPV_spentresult);
             nspv_log_message("got spentinfo response %u size.%d\n", timestamp, len);
             break;
+        // processing results for cc requests: 
         case NSPV_BROADCASTRESP:
-            NSPV_broadcast_purge(&NSPV_broadcastresult);
-            NSPV_rwbroadcastresp(0, &response[1], &NSPV_broadcastresult);
-            nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, NSPV_broadcastresult.txid), NSPV_broadcastresult.retcode);
+            NSPV_broadcast_purge(&node->nodegroup.NSPV_broadcastresult);
+            NSPV_rwbroadcastresp(0, &response[1], &node->nodegroup.NSPV_broadcastresult);
+            nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, node->nodegroup.NSPV_broadcastresult.txid), node->nodegroup.NSPV_broadcastresult.retcode);
             break;
         case NSPV_REMOTERPCRESP:
-            NSPV_remoterpc_purge(&NSPV_remoterpcresult);
-            NSPV_rwremoterpcresp(0, &response[1], &NSPV_remoterpcresult, len - 1);
-            nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, NSPV_remoterpcresult.method);
+            NSPV_remoterpc_purge(&node->nodegroup.NSPV_remoterpcresult);
+            NSPV_rwremoterpcresp(0, &response[1], &node->nodegroup.NSPV_remoterpcresult, len - 1);
+            nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, node->nodegroup.NSPV_remoterpcresult.method);
             break;
         default:
             nspv_log_message("unexpected response %02x size.%d at %u\n", response[0], len, timestamp);
@@ -953,24 +954,28 @@ cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
          msg[len++] = NSPV_REMOTERPC;
     }
     len += iguana_rwnum(1,&msg[len],sizeof(slen),&slen);
-    memcpy(&msg[len],json,slen), len += slen;
+    memcpy(&msg[len], json, slen),  len += slen;
     free(json);
     for (iter=0; iter<3; iter++)
-    if ( NSPV_req(client,0,msg,len,NODE_NSPV,NSPV_REMOTERPC>>1) != 0 )
     {
-        for (i=0; i<NSPV_POLLITERS; i++)
+        if (NSPV_req(client, 0, msg, len, NODE_NSPV, NSPV_REMOTERPC >> 1) != 0)
         {
-            usleep(NSPV_POLLMICROS);
-            if ( strcmp(NSPV_remoterpcresult.method,method) == 0)
+            for (i=0; i<NSPV_POLLITERS; i++)
             {
-                nspv_log_message("%s NSPV_remoterpcresult.json %s\n", __func__, NSPV_remoterpcresult.json);
-                cJSON *result=cJSON_Parse(NSPV_remoterpcresult.json);
-                NSPV_remoterpc_purge(&NSPV_remoterpcresult);
-                free(msg);
-                return(result);
+                usleep(NSPV_POLLMICROS);
+                if ( strcmp(NSPV_remoterpcresult.method,method) == 0)
+                {
+                    nspv_log_message("%s NSPV_remoterpcresult.json %s\n", __func__, NSPV_remoterpcresult.json);
+                    cJSON *result=cJSON_Parse(NSPV_remoterpcresult.json);
+                    NSPV_remoterpc_purge(&NSPV_remoterpcresult);
+                    free(msg);
+                    return(result);
+                }
             }
-        }
-    } else sleep(1);
+        } 
+        else 
+            sleep(1);
+    }
     nspv_log_message("%s returning null response\n", __func__);
     free(msg);
     return (NULL);
