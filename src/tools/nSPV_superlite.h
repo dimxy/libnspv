@@ -479,7 +479,7 @@ void komodo_nSPVresp(btc_node *from, uint8_t *response, int32_t len)
             nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, from->nodegroup->NSPV_broadcastresult.txid), from->nodegroup->NSPV_broadcastresult.retcode);
             break;
         case NSPV_REMOTERPCRESP:
-            NSPV_remoterpc_purge(&from->nodegroup>NSPV_remoterpcresult);
+            NSPV_remoterpc_purge(&from->nodegroup->NSPV_remoterpcresult);
             NSPV_rwremoterpcresp(0, &response[1], &from->nodegroup->NSPV_remoterpcresult, len - 1);
             nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, from->nodegroup->NSPV_remoterpcresult.method);
             break;
