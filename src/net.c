@@ -349,8 +349,8 @@ btc_node_group* btc_node_group_new(const btc_chainparams* chainparams)
     node_group->chainparams = (chainparams ? chainparams : &btc_chainparams_main);
     node_group->parse_cmd_cb = NULL;
     node_group->NSPV_num_connected_nodes = 0;
-    node_group->NSPV_remoterpcresult.json = NULL;
-    node_group->NSPV_remoterpcresult.method[0] = '\0';
+    node_group->NSPV_broadcastresult_ptr = calloc(1, sizeof(struct NSPV_broadcastresp));
+    node_group->NSPV_remoterpcresult_ptr = calloc(1, sizeof(struct NSPV_remoterpcresp));
     strcpy(node_group->clientstr, "libnspv 0.1");
 
     /* nullify callbacks */
@@ -383,6 +383,12 @@ void btc_node_group_free(btc_node_group* group)
     if (group->nodes) {
         vector_free(group->nodes, true);
     }
+
+    if (group->NSPV_broadcastresult_ptr)
+        free(group->NSPV_broadcastresult_ptr);
+
+    if (group->NSPV_remoterpcresult_ptr)
+        free(group->NSPV_remoterpcresult_ptr);    
     btc_free(group);
 }
 
