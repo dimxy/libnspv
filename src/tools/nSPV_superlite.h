@@ -937,12 +937,14 @@ cJSON *NSPV_broadcast(btc_spv_client *client,char *hex)
 
 cJSON *NSPV_remoterpccall(btc_spv_client *client, char* method, cJSON *request)
 {
-    uint8_t *msg; int32_t i,iter,len,slen;
-    char *pubkey=utils_uint8_to_hex(NSPV_pubkey.pubkey,33);
+    uint8_t *msg; 
+    int32_t i, iter, len, slen;
+    
+    char *pubkey = utils_uint8_to_hex(NSPV_pubkey.pubkey, 33);
     nspv_log_message("%s pubkey=%s\n", __func__, pubkey);  //TODO: remove
 
     jaddstr(request,"mypk",pubkey);
-    NSPV_remoterpc_purge(&NSPV_remoterpcresult);
+    NSPV_remoterpc_purge(&client->nodegroup->NSPV_remoterpcresult);
 
     char *json = cJSON_Print(request);
     nspv_log_message("%s request json=%p (%s)\n", __func__, json, json ? json : "<NULL>");  // TODO: remove
