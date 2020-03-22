@@ -291,7 +291,7 @@ extern struct NSPV_spentinfo NSPV_spentresult;
 extern struct NSPV_ntzsresp NSPV_ntzsresult;
 extern struct NSPV_ntzsproofresp NSPV_ntzsproofresult;
 extern struct NSPV_txproof NSPV_txproofresult;
-extern struct NSPV_broadcastresp NSPV_broadcastresult;
+//extern struct NSPV_broadcastresp NSPV_broadcastresult;
 
 extern struct NSPV_ntzsresp NSPV_ntzsresp_cache[NSPV_MAXVINS];
 extern struct NSPV_ntzsproofresp NSPV_ntzsproofresp_cache[NSPV_MAXVINS * 2];
