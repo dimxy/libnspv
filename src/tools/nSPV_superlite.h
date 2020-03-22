@@ -471,14 +471,14 @@ void komodo_nSPVresp(btc_node *from, uint8_t *response, int32_t len)
             break;
         // processing results for cc requests: 
         case NSPV_BROADCASTRESP:
-            NSPV_broadcast_purge(&node->nodegroup.NSPV_broadcastresult);
-            NSPV_rwbroadcastresp(0, &response[1], &node->nodegroup.NSPV_broadcastresult);
-            nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, node->nodegroup.NSPV_broadcastresult.txid), node->nodegroup.NSPV_broadcastresult.retcode);
+            NSPV_broadcast_purge(&node->nodegroup->NSPV_broadcastresult);
+            NSPV_rwbroadcastresp(0, &response[1], &node->nodegroup->NSPV_broadcastresult);
+            nspv_log_message("got broadcast response %u size.%d %s retcode.%d\n", timestamp, len, bits256_str(str, node->nodegroup->NSPV_broadcastresult.txid), node->nodegroup->NSPV_broadcastresult.retcode);
             break;
         case NSPV_REMOTERPCRESP:
-            NSPV_remoterpc_purge(&node->nodegroup.NSPV_remoterpcresult);
-            NSPV_rwremoterpcresp(0, &response[1], &node->nodegroup.NSPV_remoterpcresult, len - 1);
-            nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, node->nodegroup.NSPV_remoterpcresult.method);
+            NSPV_remoterpc_purge(&node->nodegroup->NSPV_remoterpcresult);
+            NSPV_rwremoterpcresp(0, &response[1], &node->nodegroup->NSPV_remoterpcresult, len - 1);
+            nspv_log_message("got remoterpc response %u size.%d %s\n", timestamp, len, node->nodegroup->NSPV_remoterpcresult.method);
             break;
         default:
             nspv_log_message("unexpected response %02x size.%d at %u\n", response[0], len, timestamp);
