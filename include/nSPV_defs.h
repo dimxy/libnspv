@@ -232,11 +232,12 @@ struct NSPV_spentinfo
     int32_t vout,spentvini;
 };
 
+/* moved to net.h
 struct NSPV_broadcastresp
 {
     bits256 txid;
     int32_t retcode;
-};
+}; */
 
 struct NSPV_CCmtxinfo
 {
@@ -244,11 +245,12 @@ struct NSPV_CCmtxinfo
     struct NSPV_utxoresp used[NSPV_MAXVINS];
 };
 
+/* moved to net.h
 struct NSPV_remoterpcresp
 {
     char method[64];
     char *json;
-};
+}; */
 
 struct NSPV_header
 {
@@ -258,8 +260,8 @@ struct NSPV_header
 };
 
 extern portable_mutex_t NSPV_netmutex;
-extern uint32_t NSPV_STOP_RECEIVED,NSPV_logintime; 
-extern char NSPV_lastpeer[],NSPV_pubkeystr[],NSPV_wifstr[],NSPV_address[];
+extern uint32_t NSPV_STOP_RECEIVED, NSPV_logintime; 
+extern char NSPV_lastpeer[], NSPV_pubkeystr[], NSPV_wifstr[], NSPV_address[];
 bits256 NSPV_hdrhash(struct NSPV_equihdr *hdr);
 
 extern int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp);
