@@ -276,7 +276,7 @@ extern struct NSPV_spentinfo NSPV_spentresult;
 extern struct NSPV_ntzsresp NSPV_ntzsresult;
 extern struct NSPV_ntzsproofresp NSPV_ntzsproofresult;
 extern struct NSPV_txproof NSPV_txproofresult;
-//extern struct NSPV_broadcastresp NSPV_broadcastresult;
+//extern struct NSPV_broadcastresp NSPV_broadcastresult;  // now stored in nodegroup
 
 extern struct NSPV_ntzsresp NSPV_ntzsresp_cache[NSPV_MAXVINS];
 extern struct NSPV_ntzsproofresp NSPV_ntzsproofresp_cache[NSPV_MAXVINS * 2];
@@ -306,6 +306,9 @@ void reverse_hexstr(char* str);
 void expand_ipbits(char* ipaddr, uint64_t ipbits);  // moved to nSPV_utils.h because of shared use in libnspv.so (with no rpcloop)
 int portable_pton(int af, char* src, void* dst);    // moved to nSPV_utils.h
 
+bits256 bits256_rev(bits256 hash);
+btc_tx_in* btc_tx_vin(btc_tx* tx, int32_t vini);
+btc_tx_out* btc_tx_vout(btc_tx* tx, int32_t v);
 
 //void nspv_log_message(const char *format, ...);
 

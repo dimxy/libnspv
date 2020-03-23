@@ -49,16 +49,16 @@ extern "C" {
 #endif
 
     // kogs wrapper functions:
-    unity_int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr);
-    unity_int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr);
-    //unity_int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr);
-    unity_int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void **resultPtrPtr, char *errorStr);
-    unity_int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPtrPtr, char *errorStr);
-    unity_int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtrPtr, char *errorStr);
-    unity_int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrPtr, char *errorStr);
+    int32_t LIBNSPV_API uplugin_InitNSPV(char *chainName, char *errorStr);
+    int32_t LIBNSPV_API uplugin_LoginNSPV(char *wifStr, char *errorStr);
+    //int32_t LIBNSPV_API uplugin_KogsList(void **inPtrPtr, char *errorStr);
+    int32_t LIBNSPV_API uplugin_CallRpcMethod(char *method, char *params, void **resultPtrPtr, char *errorStr);
+    int32_t LIBNSPV_API uplugin_CallRpcWithJson(char *jsonStr, void **resultPtrPtr, char *errorStr);
+    int32_t LIBNSPV_API uplugin_FinalizeCCTx(char *txdataStr, void **resultPtrPtr, char *errorStr);
+    int32_t LIBNSPV_API uplugin_BroadcastTx(char *txdataStr, void **resultPtrPtr, char *errorStr);
 
-    unity_int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, unity_int32_t *plen, char *errorStr);
-    unity_int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *errorStr);
+    int32_t LIBNSPV_API uplugin_StringLength(void *inPtr, int32_t *plen, char *errorStr);
+    int32_t LIBNSPV_API uplugin_GetString(void *inPtr, char *pStr, char *errorStr);
 
     void LIBNSPV_API uplugin_free(void *inPtr);
     void LIBNSPV_API uplugin_FinishNSPV();

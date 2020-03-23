@@ -435,6 +435,7 @@ btc_bool btc_node_group_connect_next_nodes(btc_node_group* group)
     /* search for a potential node that has not errored and is not connected or in connecting state */
     for (size_t i = 0; i < group->nodes->len; i++) {
         btc_node* node = vector_idx(group->nodes, i);
+        node->nodegroup->log_write_cb("%s checking node %d %s to connect, state 0x%08x\n", __func__, node->nodeid, node->ipaddr, node->state);
         if (
             !((node->state & NODE_CONNECTED) == NODE_CONNECTED) &&
             !((node->state & NODE_CONNECTING) == NODE_CONNECTING) &&
