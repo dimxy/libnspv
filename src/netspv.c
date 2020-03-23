@@ -117,7 +117,7 @@ void btc_spv_client_discover_peers(btc_spv_client* client, const char *ips)
 void btc_spv_client_runloop(btc_spv_client* client)
 {
     btc_node_group_connect_next_nodes(client->nodegroup);
-    btc_node_group_event_loop(client->nodegroup);
+    btc_node_group_event_loop(client->nodegroup); // event loop ends if no more events created (all nodes disconnected)
 }
 
 void btc_spv_client_free(btc_spv_client *client)
@@ -416,7 +416,7 @@ void btc_net_spv_post_cmd(btc_node *node, btc_p2p_msg_hdr *hdr, struct const_buf
                         btc_node *added_node;
                         if ((added_node = btc_node_group_add_node(node->nodegroup,tmpnode)) != tmpnode)
                         {
-                            // for libnspv addition: clear disconnected and errored state if a node is re-announced
+                            // for libnspv additionally: clear disconnected and errored state if a node was re-announced
                             added_node->state &= ~NODE_DISCONNECTED;
                             added_node->state &= ~NODE_ERRORED;
                             client->nodegroup->log_write_cb("%s cleared disconnected and errored state for node %s\n", __func__, added_node->ipaddr);

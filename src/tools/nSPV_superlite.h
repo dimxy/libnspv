@@ -158,7 +158,7 @@ struct NSPV_ntzsproofresp* NSPV_ntzsproof_add(struct NSPV_ntzsproofresp* ptr)
 void NSPV_logout()
 {
     if (NSPV_logintime != 0)
-        fprintf(stderr, "scrub wif and privkey from NSPV memory\n");
+        nspv_log_message("scrub wif and privkey from NSPV memory\n");
     memset(NSPV_ntzsproofresp_cache, 0, sizeof(NSPV_ntzsproofresp_cache));
     memset(NSPV_txproof_cache, 0, sizeof(NSPV_txproof_cache));
     memset(NSPV_ntzsresp_cache, 0, sizeof(NSPV_ntzsresp_cache));
