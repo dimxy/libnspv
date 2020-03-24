@@ -983,7 +983,7 @@ cJSON* NSPV_remoterpccall(btc_spv_client* client, char* method, cJSON* request)
                     nspv_log_message("%s NSPV_remoterpcresult.json %s\n", __func__, NSPV_remoterpcresult_ptr->json);
                     cJSON* result = cJSON_Parse(NSPV_remoterpcresult_ptr->json);
                     NSPV_remoterpc_purge(NSPV_remoterpcresult_ptr);
-                    free(pushed_msg);
+                    free(msg);
                     return (result);
                 }
             }
@@ -991,7 +991,7 @@ cJSON* NSPV_remoterpccall(btc_spv_client* client, char* method, cJSON* request)
             sleep(1);
     }
     nspv_log_message("%s returning null response\n", __func__);
-    free(pushed_msg);
+    free(msg);
     return (NULL);
 }
 
