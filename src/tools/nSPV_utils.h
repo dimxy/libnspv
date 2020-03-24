@@ -1650,7 +1650,7 @@ void expand_ipbits(char* ipaddr, uint64_t ipbits)
         ser_writedata64(os, nSize);
     }
 */
-void write_compact_size(uint8_t **ppmsg, int32_t *pmsg_len, uint8_t *var, int32_t var_len)
+void write_compact_size(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *var, uint32_t var_len)
 {
     uint32_t new_len;
     if (var_len < 1)
