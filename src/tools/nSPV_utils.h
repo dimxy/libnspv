@@ -1634,13 +1634,13 @@ void push_data(uint8_t **ppmsg, int32_t *pmsg_len, uint8_t *var, int32_t var_len
     if (var_len < 1)
         return;
     else if (var_len < PUSH_DATA1)    {  
-        *ppmsg = realloc(ppmsg, *pmsg_len + var_len + 1);
+        *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 1);
         *ppmsg[*pmsg_len] = var_len;  // this byte contain length 1..0x4b
         memcpy(ppmsg[*pmsg_len+1], var, var_len);
         *pmsg_len += var_len + 1;
     }
     else if (var_len < PUSH_DATA2)    {
-        *ppmsg = realloc(ppmsg, *pmsg_len + var_len + 3);
+        *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 3);
         *ppmsg[*pmsg_len] = PUSH_DATA2;  // next two bytes contain length
         *ppmsg[*pmsg_len+1] = *((uint8_t*)&var_len);
         *ppmsg[*pmsg_len+2] = *((uint8_t*)&var_len + 1);
@@ -1648,7 +1648,7 @@ void push_data(uint8_t **ppmsg, int32_t *pmsg_len, uint8_t *var, int32_t var_len
         *pmsg_len += var_len + 3;
     }
     else if (var_len < PUSH_DATA4)    {
-        *ppmsg = realloc(ppmsg, *pmsg_len + var_len + 5);
+        *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 5);
         *ppmsg[*pmsg_len] = PUSH_DATA4;  // next four bytes contain length
         *ppmsg[*pmsg_len+1] = *((uint8_t*)&var_len);
         *ppmsg[*pmsg_len+2] = *((uint8_t*)&var_len + 1);
