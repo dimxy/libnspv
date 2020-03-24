@@ -970,13 +970,13 @@ cJSON* NSPV_remoterpccall(btc_spv_client* client, char* method, cJSON* request)
     memcpy(&msg[msg_len], json, jlen);
     msg_len += jlen;
 
-    pushed_msg = NULL;
-    pushed_len = 0;
-    write_compact_size(&pushed_msg, &pushed_len, msg, msg_len);
+    //pushed_msg = NULL;
+    //pushed_len = 0;
+    //write_compact_size(&pushed_msg, &pushed_len, msg, msg_len);
     free(json);
-    free(msg);
+    //free(msg);
     for (iter = 0; iter < 3; iter++) {
-        if (NSPV_req(client, 0, pushed_msg, msg_len, NODE_NSPV, NSPV_REMOTERPC >> 1) != 0) {
+        if (NSPV_req(client, 0, msg, msg_len, NODE_NSPV, NSPV_REMOTERPC >> 1) != 0) {
             for (i = 0; i < NSPV_POLLITERS; i++) {
                 usleep(NSPV_POLLMICROS);
                 if (strcmp(NSPV_remoterpcresult_ptr->method, method) == 0) {
