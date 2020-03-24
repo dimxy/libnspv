@@ -169,7 +169,7 @@ void NSPV_logout()
     NSPV_didfirsttxproofs = 0;
 }
 
-btc_node* NSPV_req(btc_spv_client* client, btc_node* node, uint8_t* msg, int32_t len, uint64_t mask, int32_t ind)
+btc_node* NSPV_req(btc_spv_client* client, btc_node* node, uint8_t* msg, int32_t msg_len, uint64_t mask, int32_t ind)
 {
     int32_t i, n, flag = 0;
     btc_node* nodes[64];
@@ -201,19 +201,24 @@ btc_node* NSPV_req(btc_spv_client* client, btc_node* node, uint8_t* msg, int32_t
     } else
         flag = 1; // seems flag not used
     if (node != 0) {
-        if (len >= 0xfd) {
+        /*if (len >= 0xfd) {
             //fprintf(stderr,"len.%d overflow for 1 byte varint\n",len);
             msg[0] = 0xfd;
             msg[1] = (len - 3) & 0xff;
             msg[2] = ((len - 1) >> 8) & 0xff;
         } else
-            msg[0] = len - 1;
-        cstring* request = btc_p2p_message_new(node->nodegroup->chainparams->netmagic, "getnSPV", msg, len);
+            msg[0] = len - 1;*/
+
+        uint8_t *pushed_msg = NULL;
+        int32_t pushed_len = 0;    
+        push_data(&pushed_msg, &pushed_len, msg, msg_len);
+        cstring* request = btc_p2p_message_new(node->nodegroup->chainparams->netmagic, "getnSPV", pushed_msg, pushed_len);
         btc_node_send(node, request);
         cstr_free(request, true);
+        free(pushed_msg);
         //fprintf(stderr,"pushmessage [%d] len.%d\n",msg[1],len);
         node->prevtimes[ind] = timestamp;
-        NSPV_totalsent += len;
+        NSPV_totalsent += pushed_len;
         nspv_log_message("%s request sent to node\n", __func__);
         return (node);
     } else {
@@ -917,7 +922,8 @@ cJSON* NSPV_broadcast(btc_spv_client* client, char* hex)
 cJSON* NSPV_remoterpccall(btc_spv_client* client, char* method, cJSON* request)
 {
     uint8_t* msg;
-    int32_t i, iter, len, slen;
+    uint8_t* pushed_msg;
+    int32_t i, iter, msg_len, jlen, pushed_len;
 
     char* pubkey = utils_uint8_to_hex(NSPV_pubkey.pubkey, 33);
     nspv_log_message("%s pubkey=%s\n", __func__, pubkey); //TODO: remove
@@ -931,6 +937,7 @@ cJSON* NSPV_remoterpccall(btc_spv_client* client, char* method, cJSON* request)
     if (!json)
         return (NULL);
 
+    /*
     slen = (int32_t)strlen(json);
     if (slen > 254) {
         msg = (uint8_t*)malloc(4 + sizeof(slen) + slen);
@@ -944,17 +951,29 @@ cJSON* NSPV_remoterpccall(btc_spv_client* client, char* method, cJSON* request)
         msg[len++] = NSPV_REMOTERPC;
     }
     len += iguana_rwnum(1, &msg[len], sizeof(slen), &slen);
-    memcpy(&msg[len], json, slen), len += slen;
+    memcpy(&msg[len], json, slen), len += slen;*/
+
+    jlen = (int32_t)strlen(json);
+    msg = (uint8_t*)malloc(sizeof(jlen) + jlen);
+    msg_len = 0;
+    msg_len += iguana_rwnum(1, &msg[0], sizeof(jlen), &jlen);
+    memcpy(&msg[msg_len], json, jlen);
+    msg_len += jlen;
+
+    pushed_msg = NULL;
+    pushed_len = 0;
+    push_data(&pushed_msg, &pushed_len, msg, msg_len);
     free(json);
+    free(msg);
     for (iter = 0; iter < 3; iter++) {
-        if (NSPV_req(client, 0, msg, len, NODE_NSPV, NSPV_REMOTERPC >> 1) != 0) {
+        if (NSPV_req(client, 0, pushed_msg, msg_len, NODE_NSPV, NSPV_REMOTERPC >> 1) != 0) {
             for (i = 0; i < NSPV_POLLITERS; i++) {
                 usleep(NSPV_POLLMICROS);
                 if (strcmp(NSPV_remoterpcresult_ptr->method, method) == 0) {
                     nspv_log_message("%s NSPV_remoterpcresult.json %s\n", __func__, NSPV_remoterpcresult_ptr->json);
                     cJSON* result = cJSON_Parse(NSPV_remoterpcresult_ptr->json);
                     NSPV_remoterpc_purge(NSPV_remoterpcresult_ptr);
-                    free(msg);
+                    free(pushed_msg);
                     return (result);
                 }
             }
@@ -962,7 +981,7 @@ cJSON* NSPV_remoterpccall(btc_spv_client* client, char* method, cJSON* request)
             sleep(1);
     }
     nspv_log_message("%s returning null response\n", __func__);
-    free(msg);
+    free(pushed_msg);
     return (NULL);
 }
 
