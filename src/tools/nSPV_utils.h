@@ -1657,7 +1657,7 @@ void write_compact_size(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *var, uint3
         return;
     else if (var_len < 253)    {  
         *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 1);
-        (*ppmsg)[*pmsg_len] = var_len;  // this byte contain length 1..0x4b
+        (*ppmsg)[*pmsg_len] = var_len;  // this byte contains length 1..253
         memcpy(&((*ppmsg)[*pmsg_len + 1]), var, var_len);
         *pmsg_len += var_len + 1;
     }
