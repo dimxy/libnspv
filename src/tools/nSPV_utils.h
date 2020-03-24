@@ -1650,27 +1650,27 @@ void expand_ipbits(char* ipaddr, uint64_t ipbits)
         ser_writedata64(os, nSize);
     }
 */
-void write_compact_size(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *var, uint32_t var_len)
+void write_compact_size_and_msg(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *var, uint32_t var_len)
 {
     uint32_t new_len;
     if (var_len < 1)
         return;
     else if (var_len < 253)    {  
-        *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 1);
+        *ppmsg = malloc(*pmsg_len + var_len + 1);
         (*ppmsg)[*pmsg_len] = var_len;  // this byte contains length 1..253
         memcpy(&((*ppmsg)[*pmsg_len + 1]), var, var_len);
         *pmsg_len += var_len + 1;
     }
-    else if (var_len < 0xFFFFu)    {
-        *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 3);
+    else if (var_len <= 0xFFFFu)    {
+        *ppmsg = malloc(*pmsg_len + var_len + 3);
         (*ppmsg)[*pmsg_len] = 253;  // next two bytes contain length
         (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&var_len);
         (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&var_len + 1);
         memcpy(&((*ppmsg)[*pmsg_len + 3]), var, var_len);    
         *pmsg_len += var_len + 3;
     }
-    else if (var_len < 0xFFFFFFFFu)    {
-        *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 5);
+    else if (var_len <= 0xFFFFFFFFu)    {
+        *ppmsg = malloc(*pmsg_len + var_len + 5);
         *ppmsg[*pmsg_len] = 254;  // next four bytes contain length
         (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&var_len);
         (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&var_len + 1);
@@ -1680,7 +1680,7 @@ void write_compact_size(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *var, uint3
         *pmsg_len += var_len + 5;
     }
     else {
-        // len > int32 not supported
+        // len > uint32 not supported
     }
 }
 

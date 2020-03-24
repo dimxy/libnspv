@@ -211,7 +211,7 @@ btc_node* NSPV_req(btc_spv_client* client, btc_node* node, uint8_t* msg, uint32_
 
         uint8_t *pushed_msg = NULL;
         uint32_t pushed_len = 0;    
-        write_compact_size(&pushed_msg, &pushed_len, msg, msg_len);
+        write_compact_size_and_msg(&pushed_msg, &pushed_len, msg, msg_len);
         cstring* request = btc_p2p_message_new(node->nodegroup->chainparams->netmagic, "getnSPV", pushed_msg, pushed_len);
         btc_node_send(node, request);
         cstr_free(request, true);
