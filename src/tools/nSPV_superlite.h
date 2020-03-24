@@ -1290,7 +1290,7 @@ int32_t NSPV_periodic(btc_node* node) // called periodically
         } else
             NSPV_lastgetinfo = timestamp;
         nspv_log_message("node.%i reqhdr.%i hdrtotal.%i delay.%u k.%i\n", node->nodeid, reqht, NSPV_num_headers, delay, k);
-        len = 1;
+        len = 0;//1;
         msg[len++] = NSPV_INFO;
         len += iguana_rwnum(1, &msg[len], sizeof(reqht), &reqht);
         node->lastgetinfo = timestamp;
