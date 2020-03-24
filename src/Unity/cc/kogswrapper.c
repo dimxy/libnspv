@@ -239,7 +239,7 @@ int32_t LIBNSPV_API uplugin_InitNSPV(char* chainName, char* errorStr)
                     safe_strncpy(errorStr, "no nodes discovered", WR_MAXERRORLEN);
                     retcode = -1;
                 } else {
-                    if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void*)kogsclient) != 0) // periodically connect nodes and process responses
+                    if (OS_thread_create(&libthread, NULL, (void*(*)(void*))run_spv_event_loop, (void*)kogsclient) != 0) // periodically connect nodes and process responses
                     {
                         safe_strncpy(errorStr, "error launching eventloop", WR_MAXERRORLEN);
                         retcode = -1;
@@ -371,38 +371,11 @@ static int32_t call_NSPV_remoterpc(cJSON* jrpcrequest, void** resultPtrPtr, char
 {
     cJSON* jrpcresult = NULL;
     int32_t retcode = 0;
+    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
 
     if (!kogs_plugin_mutex_init) {
         safe_strncpy(errorStr, "nspv not initialized", WR_MAXERRORLEN);
         return -1;
-    }
-
-    // if no connection exists then reconnect:
-    if (btc_node_group_amount_of_connected_nodes(kogsclient->nodegroup, NODE_CONNECTED|NODE_CONNECTING) == 0) 
-    {
-        btc_spv_client_discover_peers(kogsclient, NULL);
-        nspv_log_message("%s reconnecting, discovered nodes %ld\n", __func__, kogsclient->nodegroup->nodes->len);
-
-        // clear node error state:
-        for (size_t i = 0; i < kogsclient->nodegroup->nodes->len; i++) {
-            btc_node* node = vector_idx(kogsclient->nodegroup->nodes, i);
-            node->state &= ~(NODE_ERRORED|NODE_DISCONNECTED);
-        }
-
-        // as no connected nodes, the previous event loop is ended
-        // create a new event loop:
-        if (OS_thread_create(&libthread, NULL, run_spv_event_loop, (void*)kogsclient) != 0) // periodically connect nodes and process responses
-        {
-            safe_strncpy(errorStr, "error launching eventloop", WR_MAXERRORLEN);
-            //do not delete outside object: cJSON_Delete(jrpcrequest);
-            return -1;
-        }
-        // wait up to 20 sec to allow connection
-        for (int i = 0; i < 20; i++) {
-            sleep(1); 
-            if (btc_node_group_amount_of_connected_nodes(kogsclient->nodegroup, NODE_CONNECTED) > 0)
-                break;
-        }
     }
 
     cJSON* jmethod = cJSON_GetObjectItem(jrpcrequest, "method");
@@ -411,10 +384,51 @@ static int32_t call_NSPV_remoterpc(cJSON* jrpcrequest, void** resultPtrPtr, char
         return -1;
     }
 
-    // call libnspv:
+    // do not allow GUI to reenter
     portable_mutex_lock(&kogs_plugin_mutex);
-    jrpcresult = NSPV_remoterpccall(kogsclient, jmethod->valuestring, jrpcrequest);
+
+    // if no connection exists then reconnect:
+    if (btc_node_group_amount_of_connected_nodes(kogsclient->nodegroup, NODE_CONNECTED) == 0) 
+    {
+        // if no connected or connecting nodes, the event loop is shutdowned
+        bool need_new_thread = (btc_node_group_amount_of_connected_nodes(kogsclient->nodegroup, NODE_CONNECTING) == 0);
+
+        btc_spv_client_discover_peers(kogsclient, NULL);
+        nspv_log_message("%s reconnecting, discovered nodes %ld\n", __func__, kogsclient->nodegroup->nodes->len);
+
+        // clear node error state:
+        for (size_t i = 0; i < kogsclient->nodegroup->nodes->len; i++) {    // TODO: should we recreate nodegroup when a new thread is starting ?
+            btc_node* node = vector_idx(kogsclient->nodegroup->nodes, i);
+            node->state &= ~(NODE_ERRORED|NODE_DISCONNECTED);
+        }
+
+        // as no connected nodes, the previous event loop is ended
+        // create a new event loop:
+        if (need_new_thread)
+        {
+            if (OS_thread_create(&libthread, NULL, (void*(*)(void*))run_spv_event_loop, (void*)kogsclient) != 0) // periodically connect nodes and process responses
+            {
+                safe_strncpy(errorStr, "error launching eventloop", WR_MAXERRORLEN);
+                //do not delete outside object: cJSON_Delete(jrpcrequest);
+                retcode = -1;
+            }
+        }
+        // wait up to 20 sec to allow connection
+        for (int i = 0; i < 20; i++) {
+            if (btc_node_group_amount_of_connected_nodes(kogsclient->nodegroup, NODE_CONNECTED) > 0)
+                break;
+            sleep(1); 
+        }
+    }
+
+    // call libnspv:
+    if (retcode == 0)
+        jrpcresult = NSPV_remoterpccall(kogsclient, jmethod->valuestring, jrpcrequest);
+
     portable_mutex_unlock(&kogs_plugin_mutex);
+
+    if (retcode < 0)
+        return retcode;
 
     //nspv_log_message("%s rpcresult ptr=%p\n", __func__, jrpcresult);
     char* debStr = cJSON_Print(jrpcresult);
@@ -423,7 +437,6 @@ static int32_t call_NSPV_remoterpc(cJSON* jrpcrequest, void** resultPtrPtr, char
     if (debStr)
         cJSON_free(debStr);
 
-    safe_strncpy(errorStr, "", WR_MAXERRORLEN);
     *resultPtrPtr = NULL;
     cJSON* jresult;
     char cc_error[WR_MAXCCERRORLEN] = { '\0' }; // cc_error should be inited to '\0'
