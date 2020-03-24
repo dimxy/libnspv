@@ -966,7 +966,7 @@ cJSON* NSPV_remoterpccall(btc_spv_client* client, char* method, cJSON* request)
     msg = (uint8_t*)malloc(1 + sizeof(jlen) + jlen);
     msg_len = 0;
     msg[msg_len++] = NSPV_REMOTERPC;
-    msg_len += iguana_rwnum(1, &msg[0], sizeof(jlen), &jlen);
+    msg_len += iguana_rwnum(1, &msg[msg_len], sizeof(jlen), &jlen);
     memcpy(&msg[msg_len], json, jlen);
     msg_len += jlen;
 
