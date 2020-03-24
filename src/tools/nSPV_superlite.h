@@ -211,7 +211,7 @@ btc_node* NSPV_req(btc_spv_client* client, btc_node* node, uint8_t* msg, int32_t
 
         uint8_t *pushed_msg = NULL;
         int32_t pushed_len = 0;    
-        push_data(&pushed_msg, &pushed_len, msg, msg_len);
+        write_compact_size(&pushed_msg, &pushed_len, msg, msg_len);
         cstring* request = btc_p2p_message_new(node->nodegroup->chainparams->netmagic, "getnSPV", pushed_msg, pushed_len);
         btc_node_send(node, request);
         cstr_free(request, true);
@@ -962,7 +962,7 @@ cJSON* NSPV_remoterpccall(btc_spv_client* client, char* method, cJSON* request)
 
     pushed_msg = NULL;
     pushed_len = 0;
-    push_data(&pushed_msg, &pushed_len, msg, msg_len);
+    write_compact_size(&pushed_msg, &pushed_len, msg, msg_len);
     free(json);
     free(msg);
     for (iter = 0; iter < 3; iter++) {
