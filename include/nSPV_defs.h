@@ -311,7 +311,7 @@ int portable_pton(int af, char* src, void* dst);    // moved to nSPV_utils.h
 bits256 bits256_rev(bits256 hash);
 btc_tx_in* btc_tx_vin(btc_tx* tx, int32_t vini);
 btc_tx_out* btc_tx_vout(btc_tx* tx, int32_t v);
-void push_data(uint8_t **ppmsg, int32_t *pmsg_len, uint8_t *var, int32_t var_len);
+void write_compact_size(uint8_t **ppmsg, int32_t *pmsg_len, uint8_t *var, int32_t var_len);
 
 
 //void nspv_log_message(const char *format, ...);

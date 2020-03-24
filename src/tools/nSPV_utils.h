@@ -1627,39 +1627,60 @@ void expand_ipbits(char* ipaddr, uint64_t ipbits)
     //sprintf(ipaddr,"%d.%d.%d.%d",(ipbits>>24)&0xff,(ipbits>>16)&0xff,(ipbits>>8)&0xff,(ipbits&0xff));
 }
 
-#define PUSH_DATA1 0x4c
-#define PUSH_DATA2 0x4d
-#define PUSH_DATA4 0x4e
-
-// push_data impl
-void push_data(uint8_t **ppmsg, int32_t *pmsg_len, uint8_t *var, int32_t var_len)
+// write compact size serialization
+// note: only little endian implemented yet
+/*
+    if (nSize < 253)
+    {
+        ser_writedata8(os, nSize);
+    }
+    else if (nSize <= 0xFFFFu)
+    {
+        ser_writedata8(os, 253);
+        ser_writedata16(os, nSize);
+    }
+    else if (nSize <= 0xFFFFFFFFu)
+    {
+        ser_writedata8(os, 254);
+        ser_writedata32(os, nSize);
+    }
+    else
+    {
+        ser_writedata8(os, 255);
+        ser_writedata64(os, nSize);
+    }
+*/
+void write_compact_size(uint8_t **ppmsg, int32_t *pmsg_len, uint8_t *var, int32_t var_len)
 {
     uint32_t new_len;
     if (var_len < 1)
         return;
-    else if (var_len < PUSH_DATA1)    {  
+    else if (var_len < 253)    {  
         *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 1);
         (*ppmsg)[*pmsg_len] = var_len;  // this byte contain length 1..0x4b
         memcpy(&((*ppmsg)[*pmsg_len + 1]), var, var_len);
         *pmsg_len += var_len + 1;
     }
-    else if (var_len < PUSH_DATA2)    {
+    else if (var_len < 0xFFFFu)    {
         *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 3);
-        (*ppmsg)[*pmsg_len] = PUSH_DATA2;  // next two bytes contain length
+        (*ppmsg)[*pmsg_len] = 253;  // next two bytes contain length
         (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&var_len);
         (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&var_len + 1);
         memcpy(&((*ppmsg)[*pmsg_len + 3]), var, var_len);    
         *pmsg_len += var_len + 3;
     }
-    else if (var_len < PUSH_DATA4)    {
+    else if (var_len < 0xFFFFFFFFu)    {
         *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 5);
-        *ppmsg[*pmsg_len] = PUSH_DATA4;  // next four bytes contain length
+        *ppmsg[*pmsg_len] = 254;  // next four bytes contain length
         (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&var_len);
         (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&var_len + 1);
         (*ppmsg)[*pmsg_len + 3] = *((uint8_t*)&var_len + 2);
         (*ppmsg)[*pmsg_len + 4] = *((uint8_t*)&var_len + 3);
         memcpy(&((*ppmsg)[*pmsg_len + 5]), var, var_len);    
         *pmsg_len += var_len + 5;
+    }
+    else {
+        // len > int32 not supported
     }
 }
 
