@@ -36,6 +36,12 @@
 
 #include <btc/utils.h>
 
+#if (defined(ANDROID) || defined(__ANDROID__)) && defined(LIBNSPV_BUILD)
+#include <android/asset_manager.h>
+#include <android/log.h>
+#include <stdarg.h>
+#endif
+
 #ifdef WIN32
 
 #ifdef _MSC_VER
