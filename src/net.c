@@ -509,11 +509,14 @@ void btc_node_send(btc_node* node, cstring* data)
 
     //portable_mutex_lock(&NSPV_netmutex);
     //fprintf(stderr,"sending message to node %d: %s\n", node->nodeid, data->str+4);
-    bufferevent_write(node->event_bev, data->str, data->len);
+    int retcode = bufferevent_write(node->event_bev, data->str, data->len);
+
+    // no point to call bufferevent_flush, socket events do not support this:
+
     char* dummy = data->str + 4;
     //fprintf(stderr,"sent message to node %d: %s\n", node->nodeid, data->str+4);
     //portable_mutex_unlock(&NSPV_netmutex);
-    node->nodegroup->log_write_cb("sending message to node %d: %s\n", node->nodeid, dummy);
+    node->nodegroup->log_write_cb("sending message to node %d: %s, retcode %d\n", node->nodeid, dummy, retcode);
 }
 
 void btc_node_send_version(btc_node* node)

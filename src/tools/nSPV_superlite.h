@@ -182,6 +182,9 @@ btc_node* NSPV_req(btc_spv_client* client, btc_node* node, uint8_t* msg, uint32_
             btc_node* ptr = vector_idx(client->nodegroup->nodes, i);
             if (ptr->prevtimes[ind] > timestamp)
                 ptr->prevtimes[ind] = 0;
+            
+            nspv_log_message("%s node %d state %d timestamp %d prevtimes[ind] %d nServices %d mask %d\n", __func__, ptr->nodeid, ptr->state, timestamp, ptr->prevtimes[ind], ptr->nServices, mask);
+
             if ((ptr->state & NODE_CONNECTED) == NODE_CONNECTED) {
                 if ((ptr->nServices & mask) == mask && timestamp > ptr->prevtimes[ind]) {
                     flag = 1;
@@ -219,7 +222,7 @@ btc_node* NSPV_req(btc_spv_client* client, btc_node* node, uint8_t* msg, uint32_
         //fprintf(stderr,"pushmessage [%d] len.%d\n",msg[1],len);
         node->prevtimes[ind] = timestamp;
         NSPV_totalsent += pushed_len;
-        nspv_log_message("%s request sent to node\n", __func__);
+        nspv_log_message("%s \"getnSPV\" request sent to node %d %s\n", __func__, node->nodeid, node->ipaddr);
         return (node);
     } else {
         //fprintf(stderr, "no nodes\n");
@@ -899,15 +902,17 @@ cJSON* NSPV_broadcast(btc_spv_client* client, char* hex)
     data = (uint8_t*)malloc(n);
     decode_hex(data, n, hex);
     txid = bits256_doublesha256(data, n);
-    msg = (uint8_t*)malloc(4 + sizeof(txid) + sizeof(n) + n);
-    msg[0] = msg[1] = msg[2] = 0;
+    msg = (uint8_t*)malloc(1 + sizeof(txid) + sizeof(n) + n);
+    //msg[0] = msg[1] = msg[2] = 0;
     msg[len++] = NSPV_BROADCAST;
     len += iguana_rwbignum(1, &msg[len], sizeof(txid), (uint8_t*)&txid);
     len += iguana_rwnum(1, &msg[len], sizeof(n), &n);
     memcpy(&msg[len], data, n), len += n;
     free(data);
-    for (i = 0; i < 8; i++)
-        NSPV_req(client, 0, msg, len, NODE_NSPV, NSPV_BROADCAST >> 1);
+
+    //No point in these 8 calls as only the first call would work. The rest 7 calls would not find a node as timestamp == prevtime[ind]:
+    //for (i = 0; i < 8; i++)
+    //    NSPV_req(client, 0, msg, len, NODE_NSPV, NSPV_BROADCAST >> 1);
     sleep(1);
     for (iter = 0; iter < 3; iter++) {
         if (NSPV_req(client, 0, msg, len, NODE_NSPV, NSPV_BROADCAST >> 1) != 0) {
@@ -1237,7 +1242,7 @@ int32_t NSPV_periodic(btc_node* node) // called periodically
     if (starttime == 0)
         starttime = timestamp;
 
-    if (node->gotaddrs == 0 || timestamp - node->gotaddrs > NSPV_GETADDR_INTERVAL) {
+    if (node->gotaddrs == 0  || timestamp - node->gotaddrs > NSPV_GETADDR_INTERVAL) {  // added periodical getaddr receiving
         // void CAddrMan::GetAddr_(std::vector<CAddress>& vAddr) to use nSPV flag
         cstring* request = btc_p2p_message_new(node->nodegroup->chainparams->netmagic, "getaddr", NULL, 0);
         btc_node_send(node, request);
