@@ -271,5 +271,5 @@ find . -name 'config.guess' -exec chmod u+w '{}' \; -exec cp -f "${PREFIX}/share
 
 #### Running nspv on Android
 
-Start nspv,
+Start nspv<br>
 Then visit 127.0.0.1:7771 in your Android browser.
