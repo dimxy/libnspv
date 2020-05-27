@@ -1629,9 +1629,8 @@ void expand_ipbits(char* ipaddr, uint64_t ipbits)
 
 // writes compact size and variable to the end of the message
 // adds buffer space
-// if ppmsg is empty, it should be init as NULL
-// TODO: only little endian implemented yet
-void write_compact_size_and_msg(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *var, uint32_t var_len)
+// if ppmsg is empty, it should be inited as NULL
+void write_compact_size_and_msg(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *var, uint64_t var_len)
 {
     uint32_t new_len;
     if (var_len < 1)
@@ -1643,25 +1642,42 @@ void write_compact_size_and_msg(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *va
         *pmsg_len += var_len + 1;
     }
     else if (var_len <= 0xFFFFu)    {
+        uint16_t os_var_len = htole16(var_len);
+
         *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 3);
-        (*ppmsg)[*pmsg_len] = 253;  // next two bytes contain length
-        (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&var_len);
-        (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&var_len + 1);
+        (*ppmsg)[*pmsg_len] = 253;  // next two bytes contain var length
+        (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&os_var_len);
+        (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&os_var_len + 1);
         memcpy(&((*ppmsg)[*pmsg_len + 3]), var, var_len);    
         *pmsg_len += var_len + 3;
     }
     else if (var_len <= 0xFFFFFFFFu)    {
+        uint32_t os_var_len = htole32(var_len);
+
         *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 5);
-        *ppmsg[*pmsg_len] = 254;  // next four bytes contain length
-        (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&var_len);
-        (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&var_len + 1);
-        (*ppmsg)[*pmsg_len + 3] = *((uint8_t*)&var_len + 2);
-        (*ppmsg)[*pmsg_len + 4] = *((uint8_t*)&var_len + 3);
+        *ppmsg[*pmsg_len] = 254;  // next four bytes contain var length
+        (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&os_var_len);
+        (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&os_var_len + 1);
+        (*ppmsg)[*pmsg_len + 3] = *((uint8_t*)&os_var_len + 2);
+        (*ppmsg)[*pmsg_len + 4] = *((uint8_t*)&os_var_len + 3);
         memcpy(&((*ppmsg)[*pmsg_len + 5]), var, var_len);    
         *pmsg_len += var_len + 5;
     }
     else {
-        // len > uint32 not supported
+        uint64_t os_var_len = htole64(var_len);
+
+        *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 5);
+        *ppmsg[*pmsg_len] = 255;  // next eight bytes contain var length
+        (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&os_var_len);
+        (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&os_var_len + 1);
+        (*ppmsg)[*pmsg_len + 3] = *((uint8_t*)&os_var_len + 2);
+        (*ppmsg)[*pmsg_len + 4] = *((uint8_t*)&os_var_len + 3);
+        (*ppmsg)[*pmsg_len + 5] = *((uint8_t*)&os_var_len + 4);
+        (*ppmsg)[*pmsg_len + 6] = *((uint8_t*)&os_var_len + 5);
+        (*ppmsg)[*pmsg_len + 7] = *((uint8_t*)&os_var_len + 6);
+        (*ppmsg)[*pmsg_len + 8] = *((uint8_t*)&os_var_len + 7);
+        memcpy(&((*ppmsg)[*pmsg_len + 9]), var, var_len);    
+        *pmsg_len += var_len + 9;    
     }
 }
 
