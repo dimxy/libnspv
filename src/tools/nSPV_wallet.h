@@ -44,7 +44,7 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
     // sapling tx sighash preimage
     uint8_t *for_sig_hash;
     
-    bits256 sigtxid; int32_t hashtype,version,i; uint32_t len; btc_tx_in *vin; btc_tx_out *vout;
+    bits256 sigtxid; int32_t hashtype,version,i; uint32_t len = 0; btc_tx_in *vin; btc_tx_out *vout;
 
     // alloc size until spendscript:
     for_sig_hash = malloc(sizeof(int32_t) + sizeof(int32_t) +
