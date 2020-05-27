@@ -244,7 +244,7 @@ void event_cb(struct bufferevent* ev, short type, void* ctx)
     else if (type & BEV_EVENT_CONNECTED)
     {
         //fprintf(stderr,"Connected to node %d %s\n", node->nodeid,node->ipaddr);
-        node->nodegroup->log_write_cb("Successfull connected to node %d.\n", node->nodeid);
+        node->nodegroup->log_write_cb("Successfully connected to node %d.\n", node->nodeid);
         node->state |= NODE_CONNECTED;
         node->state &= ~NODE_CONNECTING;
         node->state &= ~NODE_ERRORED;
