@@ -301,7 +301,7 @@ void* NSPV_rpcloop(void* args);
 
 bool NSPV_SignTx(btc_tx* mtx, int32_t vini, int64_t utxovalue, cstring* scriptPubKey, uint32_t nTime);
 
-cstring* FinalizeCCtx(btc_spv_client* client, cJSON* txdata, char* errorout /*=NSPV_MAXERRORLEN*/);
+cstring* FinalizeCCtx(/*btc_spv_client* client,*/ cJSON* txdata, char* errorout /*=NSPV_MAXERRORLEN*/);
 btc_tx* btc_tx_decodehex(char* hexstr);
 cstring* btc_tx_to_cstr(btc_tx* tx);
 void reverse_hexstr(char* str);
@@ -311,7 +311,7 @@ int portable_pton(int af, char* src, void* dst);    // moved to nSPV_utils.h
 bits256 bits256_rev(bits256 hash);
 btc_tx_in* btc_tx_vin(btc_tx* tx, int32_t vini);
 btc_tx_out* btc_tx_vout(btc_tx* tx, int32_t v);
-void write_compact_size_and_msg(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *var, uint32_t var_len);
+void write_compact_size_and_msg(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *var, uint64_t var_len);
 
 
 //void nspv_log_message(const char *format, ...);

@@ -666,7 +666,7 @@ int32_t LIBNSPV_API uplugin_FinalizeCCTx(char* txdataStr, void** resultPtrPtr, c
         }
     }
 
-    cstring* cstrTx = FinalizeCCtx(kogsclient, jtxdata, error);
+    cstring* cstrTx = FinalizeCCtx(jtxdata, error);
     if (cstrTx != NULL) {
         char* bufStr = malloc(cstrTx->len + 1);
         strcpy(bufStr, cstrTx->str);

@@ -122,22 +122,14 @@ void SerializeScript(cstring* script, unsigned char* buf, size_t len)
 }
 cstring* CCPubKey(const CC* cond)
 {
-    unsigned char buf[1000], ss[1024];
+    unsigned char buf[1000]; //, ss[1024];
     int32_t n = 0;
-        nspv_log_message("%s before cc_conditionBinary \n", __func__);
-
     size_t len = cc_conditionBinary(cond, buf);
-        nspv_log_message("%s after cc_conditionBinary \n", __func__);
 
     cstring* ccpk = cstr_new_sz(len + 24);
-        nspv_log_message("%s before SerializeScript \n", __func__);
-
     SerializeScript(ccpk, buf, len);
-            nspv_log_message("%s after SerializeScript \n", __func__);
-
     unsigned char c = OP_CHECKCRYPTOCONDITION;
     ser_bytes(ccpk, &c, 1);
-                nspv_log_message("%s after ser_bytes \n", __func__);
 
     return ccpk;
 }

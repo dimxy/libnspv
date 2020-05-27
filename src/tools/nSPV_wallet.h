@@ -93,17 +93,9 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
         free(sequence);
         len += 32;
     }
-    // removed limit: assumes script_pubkey < 256 bytes
+    // removed limit: "assumes script_pubkey < 256 bytes"
     {
         uint8_t *outputs = NULL, hash_outputs[32]; uint32_t outputs_len = 0;
-        /*for (i=0; i<(int32_t)tx->vout->len; i++)
-        {
-            vout = btc_tx_vout(tx,i);
-            outputs_len += sizeof(vout->value);
-            outputs_len++;
-            outputs_len += (uint8_t)vout->script_pubkey->len;
-        } // calc size for outputs buffer
-        outputs = malloc(outputs_len); */
         outputs_len = 0;
         for (i=0; i<(int32_t)tx->vout->len; i++)
         {
@@ -112,14 +104,7 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
             outputs_len += iguana_rwnum(1, &outputs[outputs_len], sizeof(vout->value), &vout->value);
 
             write_compact_size_and_msg(&outputs, &outputs_len, (uint8_t*)vout->script_pubkey->str, vout->script_pubkey->len);
-            /*outputs[outputs_len++] = vout->script_pubkey->len;
-            memcpy(&outputs[outputs_len],vout->script_pubkey->str,vout->script_pubkey->len);
-            outputs_len += vout->script_pubkey->len;*/
         }
-
-        // char *outputs_hex = (char*)malloc (outputs_len * 2 + 1);
-        // utils_bin_to_hex(outputs, outputs_len, outputs_hex);
-        // debug hash: nspv_log_message("%s outputs_hex=%s\n", __func__, outputs_hex);
 
         crypto_generichash_blake2b_salt_personal(hash_outputs,32,outputs,(uint64_t)outputs_len,
                                                  NULL,0,NULL,ZCASH_OUTPUTS_HASH_PERSONALIZATION);
@@ -127,8 +112,6 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
         memcpy(&for_sig_hash[len],hash_outputs,32);
         len += 32;
         free(outputs);
-        // free(outputs_hex);
-
     }
     // no join splits, fill the hashJoinSplits with 32 zeros
     memset(&for_sig_hash[len], 0, 32);
@@ -151,8 +134,6 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
     len += iguana_rwbignum2(1, &for_sig_hash[len], sizeof(vin->prevout.hash), vin->prevout.hash);
     len += iguana_rwnum(1, &for_sig_hash[len], sizeof(vin->prevout.n), &vin->prevout.n);
     
-    //for_sig_hash[len++] = (uint8_t)spendlen;
-    //memcpy(&for_sig_hash[len],spendscript,spendlen), len += spendlen;
     write_compact_size_and_msg(&for_sig_hash, &len, spendscript, spendlen);
 
     for_sig_hash = realloc(for_sig_hash, len + sizeof(spendamount) + sizeof(vin->sequence));
