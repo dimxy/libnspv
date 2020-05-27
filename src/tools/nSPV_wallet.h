@@ -42,73 +42,92 @@ int GetProofMerkleRoot(uint8_t *proof, int prooflen, merkle_block *pMblock, vect
 bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t *spendscript,int32_t spendlen)
 {
     // sapling tx sighash preimage
-    uint8_t for_sig_hash[11000]; bits256 sigtxid; int32_t hashtype,version,i,len=0; btc_tx_in *vin; btc_tx_out *vout;
+    uint8_t *for_sig_hash;
+    
+    bits256 sigtxid; int32_t hashtype,version,i; uint32_t len; btc_tx_in *vin; btc_tx_out *vout;
+
+    // alloc size until spendscript:
+    for_sig_hash = malloc(sizeof(int32_t) + sizeof(int32_t) +
+        32 + 32 + 32 + 32 + 32 + 32 +
+        sizeof(uint32_t) + sizeof(uint32_t) + sizeof(uint64_t) + sizeof(int32_t) + sizeof(uint256) + sizeof(int32_t) +
+        sizeof(spendlen) + spendlen + sizeof(int64_t) + sizeof(uint32_t));
+
     hashtype = SIGHASH_ALL;
     version = (tx->version & 0x7fffffff);
     len = iguana_rwnum(1, &for_sig_hash[len], sizeof(tx->version), &tx->version);
     len += iguana_rwnum(1, &for_sig_hash[len], sizeof(tx->nVersionGroupId), &tx->nVersionGroupId);
     {
-        uint8_t prev_outs[10000],hash_prev_outs[32]; int32_t prev_outs_len = 0;
+        uint8_t *prev_outs = NULL, hash_prev_outs[32]; int32_t prev_outs_len = 0;
         for (i=0; i<(int32_t)tx->vin->len; i++)
         {
             vin = btc_tx_vin(tx,i);
+            prev_outs = realloc(prev_outs, prev_outs_len + sizeof(vin->prevout.hash) + sizeof(vin->prevout.n));
             prev_outs_len += iguana_rwbignum2(1,&prev_outs[prev_outs_len],sizeof(vin->prevout.hash), (uint8_t *)vin->prevout.hash);
             prev_outs_len += iguana_rwnum(1, &prev_outs[prev_outs_len], sizeof(vin->prevout.n), &vin->prevout.n);
         }
 
-        char prev_outs_hex[sizeof(prev_outs) * 2 + 1];
-        utils_bin_to_hex(prev_outs, prev_outs_len, prev_outs_hex);
+        // char prev_outs_hex[sizeof(prev_outs) * 2 + 1];
+        // utils_bin_to_hex(prev_outs, prev_outs_len, prev_outs_hex);
         // debug hash: nspv_log_message("%s prev_outs_hex=%s\n", __func__, prev_outs_hex);
 
         crypto_generichash_blake2b_salt_personal(hash_prev_outs,32,prev_outs,(uint64_t)prev_outs_len,
                                                  NULL,0,NULL,ZCASH_PREVOUTS_HASH_PERSONALIZATION);
+
         memcpy(&for_sig_hash[len], hash_prev_outs, 32);
         len += 32;
+        free(prev_outs);
     }
     {
-        uint8_t sequence[1000], sequence_hash[32];
+        uint8_t *sequence = NULL, sequence_hash[32];
         int32_t sequence_len = 0;
         for (i=0; i<(int32_t)tx->vin->len; i++)
         {
             vin = btc_tx_vin(tx,i);
+            sequence = realloc(sequence, sequence_len+sizeof(vin->sequence));
             sequence_len += iguana_rwnum(1, &sequence[sequence_len], sizeof(vin->sequence),&vin->sequence);
         }
         crypto_generichash_blake2b_salt_personal(sequence_hash,32,sequence,(uint64_t)sequence_len,
                                                  NULL,0,NULL,ZCASH_SEQUENCE_HASH_PERSONALIZATION);
+        
         memcpy(&for_sig_hash[len],sequence_hash,32);
+        free(sequence);
         len += 32;
     }
-    // assumes script_pubkey < 256 bytes
+    // removed limit: assumes script_pubkey < 256 bytes
     {
-        uint8_t *outputs, hash_outputs[32]; int32_t outputs_len = 0;
-        for (i=0; i<(int32_t)tx->vout->len; i++)
+        uint8_t *outputs = NULL, hash_outputs[32]; uint32_t outputs_len = 0;
+        /*for (i=0; i<(int32_t)tx->vout->len; i++)
         {
             vout = btc_tx_vout(tx,i);
             outputs_len += sizeof(vout->value);
             outputs_len++;
             outputs_len += (uint8_t)vout->script_pubkey->len;
         } // calc size for outputs buffer
-        outputs = malloc(outputs_len);
+        outputs = malloc(outputs_len); */
         outputs_len = 0;
         for (i=0; i<(int32_t)tx->vout->len; i++)
         {
             vout = btc_tx_vout(tx,i);
+            outputs = realloc(outputs, outputs_len + sizeof(vout->value));
             outputs_len += iguana_rwnum(1, &outputs[outputs_len], sizeof(vout->value), &vout->value);
-            outputs[outputs_len++] = (uint8_t)vout->script_pubkey->len;
-            memcpy(&outputs[outputs_len],vout->script_pubkey->str,(uint8_t)vout->script_pubkey->len);
-            outputs_len += (uint8_t)vout->script_pubkey->len;
+
+            write_compact_size_and_msg(&outputs, &outputs_len, (uint8_t*)vout->script_pubkey->str, vout->script_pubkey->len);
+            /*outputs[outputs_len++] = vout->script_pubkey->len;
+            memcpy(&outputs[outputs_len],vout->script_pubkey->str,vout->script_pubkey->len);
+            outputs_len += vout->script_pubkey->len;*/
         }
 
-        char *outputs_hex = (char*)malloc (outputs_len * 2 + 1);
-        utils_bin_to_hex(outputs, outputs_len, outputs_hex);
+        // char *outputs_hex = (char*)malloc (outputs_len * 2 + 1);
+        // utils_bin_to_hex(outputs, outputs_len, outputs_hex);
         // debug hash: nspv_log_message("%s outputs_hex=%s\n", __func__, outputs_hex);
 
         crypto_generichash_blake2b_salt_personal(hash_outputs,32,outputs,(uint64_t)outputs_len,
                                                  NULL,0,NULL,ZCASH_OUTPUTS_HASH_PERSONALIZATION);
+        
         memcpy(&for_sig_hash[len],hash_outputs,32);
         len += 32;
         free(outputs);
-        free(outputs_hex);
+        // free(outputs_hex);
 
     }
     // no join splits, fill the hashJoinSplits with 32 zeros
@@ -132,20 +151,24 @@ bits256 NSPV_sapling_sighash(btc_tx *tx,int32_t vini,int64_t spendamount,uint8_t
     len += iguana_rwbignum2(1, &for_sig_hash[len], sizeof(vin->prevout.hash), vin->prevout.hash);
     len += iguana_rwnum(1, &for_sig_hash[len], sizeof(vin->prevout.n), &vin->prevout.n);
     
-    for_sig_hash[len++] = (uint8_t)spendlen;
-    memcpy(&for_sig_hash[len],spendscript,spendlen), len += spendlen;
+    //for_sig_hash[len++] = (uint8_t)spendlen;
+    //memcpy(&for_sig_hash[len],spendscript,spendlen), len += spendlen;
+    write_compact_size_and_msg(&for_sig_hash, &len, spendscript, spendlen);
+
+    for_sig_hash = realloc(for_sig_hash, len + sizeof(spendamount) + sizeof(vin->sequence));
     len += iguana_rwnum(1, &for_sig_hash[len], sizeof(spendamount), &spendamount);
     len += iguana_rwnum(1, &for_sig_hash[len], sizeof(vin->sequence), &vin->sequence);
     unsigned const char *sig_hash_personal = ZCASH_SIG_HASH_OVERWINTER_PERSONALIZATION;
     if (version == 4)
         sig_hash_personal = ZCASH_SIG_HASH_SAPLING_PERSONALIZATION;
 
-    char for_sig_hash_hex[sizeof(for_sig_hash) * 2 + 1];
-    utils_bin_to_hex(for_sig_hash, len, for_sig_hash_hex);
+    // char for_sig_hash_hex[sizeof(for_sig_hash) * 2 + 1];
+    // utils_bin_to_hex(for_sig_hash, len, for_sig_hash_hex);
     // debug hash: nspv_log_message("%s for_sig_hash_hex=%s\n", __func__, for_sig_hash_hex);
 
     crypto_generichash_blake2b_salt_personal(sigtxid.bytes,32,for_sig_hash,(uint64_t)len,
                                              NULL,0,NULL,sig_hash_personal);
+    free(for_sig_hash);
     return(bits256_rev(sigtxid));
 }
 
@@ -445,6 +468,10 @@ bool NSPV_SignTx(btc_tx *mtx,int32_t vini,int64_t utxovalue,cstring *scriptPubKe
         nspv_log_message("%s btc_tx_sighash=%s\n", __func__, hex);
     }
     siglen = sizeof(sig);
+    char privhex[64+1];
+    utils_bin_to_hex(NSPV_key.privkey, 32, privhex);
+    nspv_log_message("%s priv=%s utxovalue=%lld\n", __func__, privhex, utxovalue);
+
     if ( btc_key_sign_hash(&NSPV_key,hash,sig,&siglen) == 0 )
         sigerr = -1;
     else
