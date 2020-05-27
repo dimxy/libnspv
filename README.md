@@ -123,7 +123,7 @@ brew upgrade
 brew install libsodium libevent cmake git wget
 ```
 
-##### Intall using brew
+##### Install using brew
 
 ```shell
 brew tap jl777/homebrew-libnspv
@@ -154,14 +154,45 @@ cd libnspv
 
 ## Now you can follow the next instructions to compile and update
 
-#### Full library including CLI tool and wallet database
+### First build cryptoconditions library
+
+#### MacOS & Linux
+
+```
+cd ./src/tools/cryptoconditions
+./autogen.sh
+./configure
+make
+```
+
+#### Windows
+
+```
+cd ./src/tools/cryptoconditions
+./build_win.sh
+```
+
+
+### Full libnspv library including CLI tool and wallet database
+
+Go to libnspv directory and run:
+
+On Linux and MacOS:
 ```
 ./autogen.sh
 ./configure
 make check
 ```
+On Windows run 
+```
+./build_win.sh
+```
 
-#### Pure library without wallet support
+
+### Pure library without wallet support
+
+Go to libnspv directory and run:
+
 ```
 ./autogen.sh
 ./configure --disable-wallet --disable-tools
