@@ -31,7 +31,7 @@ LIBCRYPTOCONDITIONS=src/tools/cryptoconditions/libcryptoconditions.la
 $(LIBSECP256K1): $(wildcard src/secp256k1/src/*) $(wildcard src/secp256k1/include/*)
 	$(AM_V_at)$(MAKE) $(AM_MAKEFLAGS) -C $(@D) $(@F)
 
-$(LIBCRYPTOCONDITIONS): 
+$(LIBCRYPTOCONDITIONS):  $(wildcard src/tools/cryptoconditions/src/*) $(wildcard src/tools/cryptoconditions/include/*)
 	@echo "Building Libcryptoconditions ..." && $(MAKE) -C "$(@D)" "$(@F)"
 
 noinst_LTLIBRARIES = libbtc.la
