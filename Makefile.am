@@ -255,3 +255,4 @@ endif
 
 clean-local:
 	-$(MAKE) -C src/secp256k1 clean
+	-$(MAKE) -C src/tools/cryptoconditions clean
