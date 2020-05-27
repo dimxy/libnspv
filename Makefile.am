@@ -246,9 +246,9 @@ libnspv_la_CPPFLAGS = -I$(top_srcdir)/src -DLIBNSPV_BUILD
 
 # link as shared:
 # using '-Wl,-lcryptoconditions' instead of '$(LIBCRYPTOCONDITIONS)' for MINGW build:
-libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-lcryptoconditions -Wl,-lsecp256k1 $(WS2_32_LIBS) -Wl,-lsodium -Wl,-lpthread $(FPIC_FLAGS) $(ANDROID_LIBS_CFLAGS) $(ANDROID_MATH_CFLAGS)
+libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2 
 # libnspv_la_CFLAGS = $(libbtc_la_CFLAGS) -O2  -Wno-unused-parameter -Wl,-L$(top_srcdir)/src/secp256k1/.libs -Wl,-L$(top_srcdir)/src/tools/cryptoconditions/.libs -Xlinker -levent -Wl,-soname,libcryptoconditions.so -Wl,-soname,libsecp256k1.so $(WS2_32_LIBS) -Wl,-lsodium -Wl,-lpthread $(FPIC_FLAGS) $(ANDROID_LIBS)
-libnspv_la_LDFLAGS = -no-undefined
+libnspv_la_LDFLAGS = -no-undefined -L$(top_srcdir)/src/secp256k1/.libs -L$(top_srcdir)/src/tools/cryptoconditions/.libs -levent -lcryptoconditions -lsecp256k1 $(WS2_32_LIBS) -lsodium -lpthread $(FPIC_FLAGS) $(ANDROID_LIBS_CFLAGS) $(ANDROID_MATH_CFLAGS) -Wno-unused-parameter
 libnspv_la_LIBADD = libbtc.la  # $(LIBCRYPTOCONDITIONS) and other .la do not work for MINGW
 
 endif
