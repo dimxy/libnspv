@@ -230,20 +230,17 @@ void event_cb(struct bufferevent* ev, short type, void* ctx)
         node->state |= NODE_DISCONNECTED;
         if ((type & BEV_EVENT_EOF) != 0)
         {
-            //fprintf(stderr,"Disconnected from the remote peer %d.\n", node->nodeid);
             node->nodegroup->log_write_cb("Disconnected from the remote peer %d.\n", node->nodeid);
             node->state |= NODE_DISCONNECTED_FROM_REMOTE_PEER;
         }
         else
         {
-            //fprintf(stderr,"Error connecting to node %d.\n", node->nodeid);
             node->nodegroup->log_write_cb("Error connecting to node %d.\n", node->nodeid);
         }
         btc_node_connection_state_changed(node);
     }
     else if (type & BEV_EVENT_CONNECTED)
     {
-        //fprintf(stderr,"Connected to node %d %s\n", node->nodeid,node->ipaddr);
         node->nodegroup->log_write_cb("Successfully connected to node %d.\n", node->nodeid);
         node->state |= NODE_CONNECTED;
         node->state &= ~NODE_CONNECTING;
@@ -307,11 +304,9 @@ btc_bool btc_node_missbehave(btc_node* node)
 
 void btc_node_disconnect(btc_node* node)
 {
-    //fprintf(stderr,"btc_node_disconnect");
     if ((node->state & NODE_CONNECTED) == NODE_CONNECTED || (node->state & NODE_CONNECTING) == NODE_CONNECTING)
     {
         node->nodegroup->log_write_cb("Disconnect node %d\n", node->nodeid);
-        //fprintf(stderr,"Disconnect node %d %s\n", node->nodeid,node->ipaddr);
     }
     /* release buffer and timer event */
     btc_node_release_events(node);
