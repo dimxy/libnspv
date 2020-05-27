@@ -103,8 +103,8 @@ The application will try to connect to max 6 peers, send the transaction two two
 
     ./bitcoin-send-tx -d -s 5 -i 192.168.1.110:8333,127.0.0.1:8333 <txhex>
 
-How to Build
-----------------
+How to Build libnspv with libbtc and tools
+------------------------------------------
 
 You will need to have some dev tools prior to building libnspv for your system.
 
@@ -177,6 +177,9 @@ git pull
 make
 ```
 
+Running nspv
+------------
+
 libnspv does all the above, it also can launch a superlite nSPV client
 ./nspv KMD launches a KMD superlite
 ./nspv BTC launches the normal libbtc headers only SPV mode
@@ -229,12 +232,13 @@ find . -name 'config.sub' -exec chmod u+w '{}' \; -exec cp -f "${PREFIX}/share/l
 find . -name 'config.guess' -exec chmod u+w '{}' \; -exec cp -f "${PREFIX}/share/libtool/build-aux/config.guess" '{}' \;
 ```
 
-#### Then the usual:
+#### To build libnspv and tools for Android use one time script:
 
-```shell
-./autogen.sh
-./configure
-make
+```
+./androidonetime.sh
 ```
 
+#### Running nspv on Android
+
+Start nspv,
 Then visit 127.0.0.1:7771 in your Android browser.
