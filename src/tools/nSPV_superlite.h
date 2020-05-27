@@ -1581,7 +1581,7 @@ cJSON* NSPV_JSON_process(cJSON* argjson)
             else
             {
                 jaddstr(result, "result", "error");
-                jaddstr(result, "error", err);
+                jaddstr(result, "error", error);
             }
             cJSON_Delete(req);  
             return(result);

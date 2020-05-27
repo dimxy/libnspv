@@ -126,7 +126,6 @@ cstring* FinalizeCCtx(/*btc_spv_client* client,*/ cJSON* txdata, char* errorout)
                 }
                 cstr_free(voutScriptPubkey, 1);
                 btc_tx_free(mtx);
-                snprintf(err, NSPV_MAXERRORLEN, "signing error for vini.%d", vini);
                 return NULL;
             }
             cstr_free(voutScriptPubkey, 1);
