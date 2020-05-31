@@ -1666,7 +1666,7 @@ void write_compact_size_and_msg(uint8_t **ppmsg, uint32_t *pmsg_len, uint8_t *va
     else {
         uint64_t os_var_len = htole64(var_len);
 
-        *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 5);
+        *ppmsg = realloc(*ppmsg, *pmsg_len + var_len + 9);
         *ppmsg[*pmsg_len] = 255;  // next eight bytes contain var length
         (*ppmsg)[*pmsg_len + 1] = *((uint8_t*)&os_var_len);
         (*ppmsg)[*pmsg_len + 2] = *((uint8_t*)&os_var_len + 1);
