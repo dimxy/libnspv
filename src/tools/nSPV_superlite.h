@@ -482,7 +482,7 @@ cJSON* NSPV_getinfo_req(btc_spv_client* client, int32_t reqht)
     msg[len++] = NSPV_INFO;
     len += iguana_rwnum(1, &msg[len], sizeof(reqht), &reqht);
     for (iter = 0; iter < 3; iter++)
-        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[1] >> 1) != 0) {
+        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[0] >> 1) != 0) {
             for (i = 0; i < NSPV_POLLITERS; i++) {
                 usleep(NSPV_POLLMICROS);
                 if (NSPV_inforesult.height != 0)
@@ -653,7 +653,7 @@ cJSON* NSPV_addresstxids(int32_t waitflag, btc_spv_client* client, char* coinadd
     len += iguana_rwnum(1, &msg[len], sizeof(filter), &filter);
     //fprintf(stderr,"skipcount.%d\n",skipcount);
     for (iter = 0; iter < 3; iter++)
-        if (NSPV_req(client, 0, msg, len, NODE_ADDRINDEX, msg[1] >> 1) != 0) {
+        if (NSPV_req(client, 0, msg, len, NODE_ADDRINDEX, msg[0] >> 1) != 0) {
             if (waitflag != 0) {
                 for (i = 0; i < NSPV_POLLITERS; i++) {
                     usleep(NSPV_POLLMICROS);
@@ -699,7 +699,7 @@ cJSON* NSPV_mempooltxids(btc_spv_client* client, char* coinaddr, int32_t CCflag,
     memcpy(&msg[len], coinaddr, slen), len += slen;
     //fprintf(stderr,"(%s) func.%d CC.%d %s/v%d len.%d\n",coinaddr,memfunc,CCflag,bits256_str(str,txid),vout,len);
     for (iter = 0; iter < 3; iter++)
-        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[1] >> 1) != 0) {
+        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[0] >> 1) != 0) {
             for (i = 0; i < NSPV_POLLITERS; i++) {
                 usleep(NSPV_POLLMICROS);
                 if (NSPV_mempoolresult.nodeheight >= NSPV_inforesult.height && strcmp(coinaddr, NSPV_mempoolresult.coinaddr) == 0 && CCflag == NSPV_mempoolresult.CCflag && memfunc == NSPV_mempoolresult.memfunc)
@@ -775,7 +775,7 @@ cJSON* NSPV_notarizations(btc_spv_client* client, int32_t reqheight)
     msg[len++] = NSPV_NTZS;
     len += iguana_rwnum(1, &msg[len], sizeof(reqheight), &reqheight);
     for (iter = 0; iter < 3; iter++)
-        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[1] >> 1) != 0) {
+        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[0] >> 1) != 0) {
             for (i = 0; i < NSPV_POLLITERS; i++) {
                 usleep(NSPV_POLLMICROS);
                 if (NSPV_ntzsresult.reqheight == reqheight)
@@ -803,7 +803,7 @@ cJSON* NSPV_txidhdrsproof(btc_spv_client* client, bits256 prevtxid, bits256 next
     len += iguana_rwbignum(1, &msg[len], sizeof(prevtxid), (uint8_t*)&prevtxid);
     len += iguana_rwbignum(1, &msg[len], sizeof(nexttxid), (uint8_t*)&nexttxid);
     for (iter = 0; iter < 3; iter++)
-        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[1] >> 1) != 0) {
+        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[0] >> 1) != 0) {
             for (i = 0; i < NSPV_POLLITERS; i++) {
                 usleep(NSPV_POLLMICROS);
                 if (memcmp(&NSPV_ntzsproofresult.prevtxid, &prevtxid, sizeof(prevtxid)) == 0 && memcmp(&NSPV_ntzsproofresult.nexttxid, &nexttxid, sizeof(nexttxid)) == 0)
@@ -846,11 +846,11 @@ cJSON* NSPV_txproof(int32_t waitflag, btc_spv_client* client, int32_t vout, bits
     len += iguana_rwbignum(1, &msg[len], sizeof(txid), (uint8_t*)&txid);
     //fprintf(stderr,"req txproof %s/v%d at height.%d\n",bits256_str(str,txid),vout,height);
     if (height == -1) {
-        NSPV_req(client, 0, msg, len, NODE_NSPV, msg[1] >> 1);
+        NSPV_req(client, 0, msg, len, NODE_NSPV, msg[0] >> 1);
         return (0);
     }
     for (iter = 0; iter < 3; iter++)
-        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[1] >> 1) != 0) {
+        if (NSPV_req(client, 0, msg, len, NODE_NSPV, msg[0] >> 1) != 0) {
             if (waitflag != 0) {
                 for (i = 0; i < NSPV_POLLITERS; i++) {
                     usleep(NSPV_POLLMICROS);
@@ -876,7 +876,7 @@ cJSON* NSPV_spentinfo(btc_spv_client* client, bits256 txid, int32_t vout)
     len += iguana_rwnum(1, &msg[len], sizeof(vout), &vout);
     len += iguana_rwbignum(1, &msg[len], sizeof(txid), (uint8_t*)&txid);
     for (iter = 0; iter < 3; iter++)
-        if (NSPV_req(client, 0, msg, len, NODE_SPENTINDEX, msg[1] >> 1) != 0) {
+        if (NSPV_req(client, 0, msg, len, NODE_SPENTINDEX, msg[0] >> 1) != 0) {
             for (i = 0; i < NSPV_POLLITERS; i++) {
                 usleep(NSPV_POLLMICROS);
                 if (memcmp(&NSPV_spentresult.txid, &txid, sizeof(txid)) == 0 && NSPV_spentresult.vout == vout)
